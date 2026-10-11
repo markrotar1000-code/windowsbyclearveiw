@@ -192,7 +192,18 @@ const {
 
     .cta-bar {
       display: grid;
+      /* minmax(0, max-content), not the implicit auto column (min-content to max-content): the
+         phone number is nowrap, so at 200% text the column grew to 415px inside a 358px phone and
+         .cta-band (overflow hidden) cut the right edge off the heading, the badge and the phone
+         button. max-content keeps the column's usual width (it is not stretched, because
+         justify-content is space-between) until it no longer fits. */
+      grid-template-columns: minmax(0, max-content);
       gap: var(--space-l);
+    }
+
+    /* The number may break after the area code rather than be clipped when text is very large. */
+    .cta-phone-number {
+      white-space: normal;
     }
 
     .cta-bar strong {

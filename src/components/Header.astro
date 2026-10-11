@@ -188,6 +188,9 @@ const links = [
     gap: .65rem;
     min-height: 72px;
     transition: min-height var(--dur) var(--ease);
+    /* Lets the rule below react to the row's width measured in rem, so it follows the reader's
+       text size (a media query in px cannot). */
+    container: header-row / inline-size;
   }
 
   .site-header[data-scrolled='true'] .header-inner {
@@ -292,6 +295,15 @@ const links = [
 
   /* Extra social icons appear when navigation is inside the menu. */
   .header-social-extra { display: none; }
+
+  /* Large text on a phone: wordmark, Facebook icon and Menu button need about 38px + 12.7 rem, so
+     below ~15rem of row width (a 390px phone at 160% text or more) the Menu button was pushed off
+     the screen (at 200% the row needed 444px of 358px). Drop the icon first; the footer keeps every
+     social link, and the Menu button must always stay reachable. */
+  @container header-row (max-width: 15rem) {
+    .header-social { display: none; }
+    .nav-toggle { padding-inline: min(0.8rem, 14px); }
+  }
 
   /* Keep the phone header compact; all social links remain in the footer. */
   @media (max-width: 1400px) and (min-width: 481px) {

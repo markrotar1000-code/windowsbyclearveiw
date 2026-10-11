@@ -390,6 +390,9 @@ const startHere = [
 
   .guide-text {
     display: grid;
+    /* Explicit, shrinkable column: the implicit auto one grew to the longest word and pushed the
+       page sideways at 200% text on a 360px phone. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.15rem;
   }
 
@@ -471,7 +474,7 @@ const startHere = [
   @media (max-width: 900px) {
     .guide-hero-grid,
     .guide-section-heading {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .guide-hero-grid {
@@ -487,7 +490,7 @@ const startHere = [
     }
 
     .start-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .start-card {
@@ -539,7 +542,7 @@ const startHere = [
     }
 
     .guide-principle {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-s);
       padding: var(--space-m) 0;
     }

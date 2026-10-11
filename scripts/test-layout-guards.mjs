@@ -1,5 +1,6 @@
-// Guards for six layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, a
-// fifth found 2026-10-11 by the round 3 crawl (360 and 390 px), and and three by the round 4 sweep (short screens, text-field size on phones, jump links under the sticky header).
+// Guards for layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, a
+// fifth found 2026-10-11 by the round 3 crawl (360 and 390 px), three by the round 4 sweep (short screens, text-field size on phones,
+// jump links under the sticky header), and a group by the round 5 sweep (text enlarged to 150% and 200% at 390 px, 9-14 below).
 //
 //   1. `.split` (the two-column section on 11 pages) shared a rule with `.btn`: `.split, .btn { display:
 //      inline-flex; padding; border; font-size; ... }`. An inline-level box ignores `margin-inline: auto`,
@@ -31,6 +32,14 @@
 //   8. Jump links scrolled their target under the sticky header (63-75 px tall). On a guide the section heading was
 //      hidden behind it after tapping the table of contents (102 of 104 jump links on the guides and the gallery
 //      landed at or above the header's bottom edge). `html` now has `scroll-padding-top`.
+//   9-14. Round 5: a phone with its text size raised (Android "Font size", or a browser's default size) to 150% or 200%.
+//      Browser zoom was already clean; text-only scaling is different, because rem-based padding and the nowrap tags
+//      scale while the screen does not. Nearly every public page scrolled sideways (the credential tags were `nowrap`
+//      pills 371-493 px wide; the footer's email address and the privacy page's hostname have no break point; a bare `1fr`
+//      grid track will not shrink below its widest child, so /estimate, /new-construction and others grew past the screen),
+//      the header's Menu button was pushed off the screen at 200%, and the home page's four-claim strip, the service tiles
+//      and the bottom "Request an estimate" band were clipped by their own `overflow: hidden`. Measured with
+//      `html { font-size: 150% | 200% }` at 390 px on all 34 public pages: scrollWidth equals clientWidth on each now.
 //
 // Source check, no build or browser needed. The browser measurements that found them are in the 2026-10-10
 // "bug sweep" entry of .ai/CHANGELOG.md.
@@ -155,4 +164,66 @@ const scrollPad = css.match(/(?:^|\})\s*html\s*\{[^}]*scroll-padding-top:\s*([0-
 assert.ok(scrollPad, '`html` needs `scroll-padding-top` so jump links do not land under the sticky header');
 assert.ok(parseFloat(scrollPad[1]) * 16 >= 76, `scroll-padding-top must clear the sticky header (up to 75 px tall), found ${scrollPad[1]}rem`);
 
-console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header)`);
+// 10. The credential tags (licence, insurance, bond) may wrap. `white-space: nowrap` made the licence tag 371 px wide at 150% text
+//     and 493 px at 200%, wider than the phone, and so made the footer, and every page, scroll sideways.
+for (const name of ['LicenseTag', 'InsuranceTag', 'BondTag']) {
+  const tag = readFileSync(`${root}src/components/${name}.astro`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = tag.match(/\.(?:license|credential)-tag\s*\{([^}]*)\}/);
+  assert.ok(rule, `${name} must style its tag`);
+  assert.ok(!/white-space:\s*nowrap/.test(rule[1]), `${name} must not be nowrap; it is wider than a phone at large text sizes`);
+  assert.match(rule[1], /max-width:\s*100%/, `${name} must not be wider than its container`);
+  assert.match(rule[1], /overflow-wrap:\s*(?:anywhere|break-word)/, `${name} must wrap an over-long word instead of running past the screen`);
+}
+
+const footerCss = readFileSync(`${root}src/components/Footer.astro`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const badgeRule = footerCss.match(/\.site-footer \.builder-badge\s*\{([^}]*)\}/);
+assert.ok(badgeRule, 'Footer must style .builder-badge');
+assert.ok(!/white-space:\s*nowrap/.test(badgeRule[1]) && /max-width:\s*100%/.test(badgeRule[1]), 'the footer "Built by" pill must be able to wrap and must not be wider than its container (300 px at 200% text, wider than a 320 px phone)');
+
+// 11. Unbreakable text may break: an email address, inline code (the privacy page's hostname), and, as a safety net for
+//     large text, any word wider than its line (a heading word such as "manufacturer's" is wider than a phone at 200%).
+assert.match(css, /a\[href\^=['"]mailto:['"]\]\s*\{[^}]*overflow-wrap:\s*anywhere/, 'mailto links must be allowed to break; "owner@windowsbyclearveiw.com" is wider than a phone at 150% text');
+assert.match(css, /:not\(pre\)\s*>\s*code\s*\{[^}]*overflow-wrap:\s*anywhere/, 'inline code must be allowed to break (static.cloudflareinsights.com on the privacy page)');
+assert.match(css, /(?:^|\})\s*body\s*\{[^}]*overflow-wrap:\s*break-word/, '`body` needs overflow-wrap: break-word, so a word wider than its line breaks instead of scrolling the page sideways');
+
+// 12. No public single-column grid uses a bare `1fr` track. `1fr` is `minmax(auto, 1fr)`: the track will not shrink below its
+//     widest child's minimum width, so a nowrap phone number, a long word or a form widened every page it sat on at large
+//     text (/estimate by 100 px at 150%, /new-construction, /siding, the home page's service tiles). `minmax(0, 1fr)` does shrink.
+//     The same goes for the implicit auto column of a `display: grid` with no template, which the planner's rows had.
+const bareFr = [];
+for (const file of sources(`${root}src`)) {
+  const rel = file.slice(root.length).replaceAll('\\', '/');
+  const text = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of text.matchAll(/grid-template-columns:\s*1fr\s*[;}]/g)) bareFr.push(`${rel}: ${m[0].trim()}`);
+}
+assert.deepEqual(bareFr, [], `use \`grid-template-columns: minmax(0, 1fr)\` for a single column:\n  ${bareFr.join('\n  ')}`);
+const read = (rel) => readFileSync(`${root}${rel}`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const cta = read('src/components/CtaBar.astro');
+assert.match(cta.match(/@media \(max-width:\s*900px\)\s*\{([\s\S]*?)\n  \}\n/)[1], /\.cta-bar\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*max-content\)/, 'the stacked CTA band needs `grid-template-columns: minmax(0, max-content)`: its implicit auto column grew to 415 px at 200% text and `.cta-band` (overflow hidden) clipped the right edge. (max-content, not 1fr, keeps the column its usual width at normal sizes.)');
+const estimator = read('src/components/CostEstimator.astro');
+assert.match(estimator, /\.counter-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/, 'the planner counter list needs an explicit shrinkable column');
+assert.match(estimator, /\.est-choices\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/, 'the planner choice list needs an explicit shrinkable column');
+assert.match(estimator, /\.counter\s*\{[^}]*flex-wrap:\s*wrap/, 'a planner row must let its +/- buttons drop under the label when they do not fit (the label was squeezed to 70 px)');
+
+// 13. The header keeps its Menu button on screen at large text. The row is a named container measured in rem, so the rule
+//     follows the reader's text size (a px media query cannot); below 15rem the Facebook icon (the footer keeps every social
+//     link) and the place line under the wordmark are dropped and the wordmark stays whole.
+const hdr = read('src/components/Header.astro');
+assert.match(hdr, /\.header-inner\s*\{[^}]*container:\s*header-row\s*\/\s*inline-size/, 'the header row must be the `header-row` container');
+assert.match(hdr, /@container header-row \(max-width:\s*15rem\)\s*\{[^}]*\.header-social\s*\{\s*display:\s*none/, 'the header must drop the Facebook icon when the row is under 15rem wide');
+const brand = read('src/components/Brand.astro');
+assert.match(brand, /@container header-row \(max-width:\s*15rem\)\s*\{[\s\S]*?\.brand-sub\s*\{\s*display:\s*none[\s\S]*?overflow-wrap:\s*normal/, 'the wordmark must stay whole (and lose its place line) when the header row is under 15rem wide');
+assert.match(brand, /\.brand\s*\{[^}]*min-width:\s*0/, '.brand must be able to shrink so the Menu button is never pushed off');
+
+// 14. Captions and strips that sit inside an `overflow: hidden` box must be able to grow with their text.
+const home = read('src/pages/index.astro');
+assert.match(home, /\.service-tile\s*\{[^}]*display:\s*flex[^}]*justify-content:\s*flex-end/, 'a service tile must be a flex column that bottoms out its caption: an absolutely positioned caption in a fixed-height tile was clipped at the top at 200% text');
+assert.match(home, /\.service-tile-copy\s*\{[^}]*position:\s*relative/, 'the service tile caption must be in flow (`position: relative`), not absolute');
+const videoHero = read('src/components/VideoHero.astro');
+assert.match(videoHero, /\.trust-strip-wrap\s*\{[^}]*container-type:\s*inline-size/, 'the hero claims strip needs its container');
+assert.match(videoHero, /@container \(max-width:\s*16rem\)\s*\{[^}]*\.trust-strip\s*\{\s*grid-template-columns:\s*minmax\(0,\s*1fr\)/, 'the hero claims strip must stack to one column at large text (two columns ran past the hero and were clipped at 200%)');
+const globalCss = read('src/styles/global.css');
+assert.match(globalCss, /\.areas-inline\s*\{\s*container-type:\s*inline-size/, 'the city-page link paragraph needs its container');
+assert.match(globalCss, /@container \(max-width:\s*14rem\)\s*\{\s*\.areas-inline a\.is-phrase\s*\{\s*white-space:\s*normal/, 'the long "fiber cement and wood siding" link must be able to wrap at large text');
+
+console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header, round 5: credential tags wrap, no bare 1fr tracks (${bareFr.length}), header keeps Menu at large text)`);

@@ -198,11 +198,22 @@ body {
   line-height: var(--leading-body);
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
+  /* Safety net for large text: a word wider than its line (at 200% "manufacturer's" in a heading is
+     wider than a phone) breaks instead of running off the screen and making the page scroll
+     sideways. It only acts when a word cannot fit, so nothing changes at normal sizes. */
+  overflow-wrap: break-word;
 }
 
 img { max-width: 100%; display: block; }
 
 a { color: var(--ink); }
+
+/* An email address has no spaces to break at. At 150% text on a phone "owner@windowsbyclearveiw.com"
+   is wider than the screen and made the footer, and so every page, scroll sideways. */
+a[href^='mailto:'] { overflow-wrap: anywhere; }
+
+/* Same for inline code (a hostname such as static.cloudflareinsights.com on the privacy page). */
+:not(pre) > code { overflow-wrap: anywhere; }
 
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid currentColor;
@@ -713,6 +724,16 @@ input:focus, textarea:focus, select:focus {
   text-decoration-color: var(--line-strong);
 }
 
+/* A phrase link ("fiber cement and wood siding") stays whole like the city names, which is why the
+   rule above is nowrap. At 200% text on a phone it is 356px wide and overflowed, so once the
+   paragraph is under 14rem wide (measured in rem, so it follows the reader's text size) the phrase
+   may wrap. */
+.areas-inline { container-type: inline-size; }
+
+@container (max-width: 14rem) {
+  .areas-inline a.is-phrase { white-space: normal; }
+}
+
 .areas-inline a:hover {
   color: var(--accent-ink);
   text-decoration-color: currentColor;
@@ -855,7 +876,7 @@ html.reveal-ready [data-reveal].is-revealed {
 
 /* A single tall new-build shot should not stretch to fill the row. */
 .work-grid-newbuild {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 800px) {

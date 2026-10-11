@@ -320,7 +320,8 @@ const columns = [
     color: var(--ink-soft);
     font-size: 0.75rem;
     line-height: 1.4;
-    white-space: nowrap;
+    /* May wrap: nowrap made the pill 300px wide at 200% text, wider than a 320px phone. */
+    max-width: 100%;
     transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
   }
 
@@ -367,7 +368,7 @@ const columns = [
     }
 
     .footer-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-l);
     }
   }

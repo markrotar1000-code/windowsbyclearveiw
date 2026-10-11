@@ -491,16 +491,16 @@ const schema = {
   @media (max-width: 900px) {
     .style-row,
     .style-list-tight .style-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
 
     .two-col {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .spec-pair {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
 

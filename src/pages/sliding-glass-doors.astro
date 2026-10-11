@@ -480,16 +480,16 @@ const schema = {
 
   @media (max-width: 900px) {
     .style-row {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
 
     .compare {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .spec-pair {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
   }

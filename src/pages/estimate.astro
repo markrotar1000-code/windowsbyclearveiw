@@ -146,7 +146,7 @@ import { mailHref, site, telHref } from '../data/site';
   @media (max-width: 700px) {
     .start-points {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .start-points span {
@@ -162,7 +162,9 @@ import { mailHref, site, telHref } from '../data/site';
 
   @media (max-width: 900px) {
     .estimate-layout {
-      grid-template-columns: 1fr;
+      /* minmax(0, 1fr), not 1fr: a bare 1fr track will not shrink below its content's minimum,
+         so at 150-200% text the form pushed the page 100-250px wider than the phone. */
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-l);
     }
   }

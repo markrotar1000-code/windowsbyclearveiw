@@ -62,7 +62,7 @@ const googleUrl = site.social.google;
 
   @media (max-width: 900px) {
     .gr-list {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
@@ -70,7 +70,7 @@ const googleUrl = site.social.google;
     margin-top: var(--space-l);
   }
 
-  .gr-list:has(> :only-child) { grid-template-columns: 1fr; max-width: 960px; }
+  .gr-list:has(> :only-child) { grid-template-columns: minmax(0, 1fr); max-width: 960px; }
   .google-panel { padding: clamp(1rem, 3vw, 2rem); border: 1px solid #dadce0; border-radius: 20px; background: #fff; color: #202124; box-shadow: 0 8px 30px rgb(32 33 36 / .06); }
   .google-panel-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem; }
   .google-heading { display: flex; align-items: center; gap: .65rem; font-size: 1.65rem; margin: 0; color: #202124; }
@@ -82,7 +82,7 @@ const googleUrl = site.social.google;
   .google-write:hover { background: #1558b0; }
   .gr-attribution { font-size: .8rem; color: #5f6368; }
   .google-panel :global(.gr-review) { display: flex; flex-direction: column; padding: 1.3rem; border: 1px solid #dadce0; border-radius: 12px; background: #fff; color: #202124; box-shadow: none; }
-  .google-panel :global(.review-stars) { color: #fbbc04; font-size: 1.2rem; letter-spacing: .08em; }
+  .google-panel :global(.review-stars) { color: #fbbc04; font-size: min(1.2rem, 24px); letter-spacing: .08em; }
   .google-panel :global(.review-source) { background: transparent; padding: 0; font-size: .8rem; color: #5f6368; }
   .google-panel :global(.review-source svg) { width: 18px; height: 18px; }
   .google-panel :global(.review-quote-mark) { display: none; }
