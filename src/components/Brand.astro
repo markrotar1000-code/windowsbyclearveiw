@@ -40,6 +40,8 @@ const { compact = false } = Astro.props;
   .brand {
     display: flex;
     align-items: center;
+    /* The wordmark may give way before the Menu button does (large text on a phone). */
+    min-width: 0;
     gap: 0.7rem;
     text-decoration: none;
     color: var(--on-dark);
@@ -61,6 +63,7 @@ const { compact = false } = Astro.props;
   .brand-type {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     line-height: 1.05;
   }
 
@@ -95,6 +98,26 @@ const { compact = false } = Astro.props;
   @media (max-width: 380px) {
     .brand:not(.is-compact) .brand-sub {
       display: none;
+    }
+  }
+
+  /* Large text on a phone, measured by the header row's width in rem (the row is the
+     `header-row` container set in Header.astro). At 200% the row is ~294px and the wordmark plus
+     "VANCOUVER, WA" plus the Menu button need ~350, so the wordmark was broken mid-word
+     ("Clearv/iew"). Keep the wordmark whole and a little smaller, and drop the place line; the
+     link's accessible name still contains "Vancouver, WA". */
+  @container header-row (max-width: 15rem) {
+    .brand:not(.is-compact) {
+      gap: min(0.7rem, 10px);
+    }
+
+    .brand:not(.is-compact) .brand-sub {
+      display: none;
+    }
+
+    .brand:not(.is-compact) .brand-type strong {
+      font-size: min(1.05rem, 22px);
+      overflow-wrap: normal;
     }
   }
 </style>

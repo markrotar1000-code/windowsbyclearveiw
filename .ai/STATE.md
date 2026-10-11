@@ -1,5 +1,10 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-11 - Bug sweep, fifth round: large text (branch `claude/bug-sweep-5-2026-10-11`)
+
+Keith asked to keep fixing public-facing bugs; #211 (patio door leads the doors grid) is merged, main CI green. This round raised the phone's text size to 150 and 200% and found that nearly every page scrolled sideways (the nowrap licence, insurance and bond tags and the footer's email and credit pill), the header's Menu button left the screen, 40 bare `1fr` grid tracks would not shrink (`/estimate`, `/new-construction`, `/siding`...), the bottom "Request an estimate" band, the home claim strip and the service tiles were clipped, and long words ran off the screen. All fixed in CSS with guards 10 to 14 in `test:layout-guards` (mutation-checked). Verified: scrollWidth equals clientWidth on all 34 pages at 125 to 200% text (390 and 360 px; 412 px at 200%; 320 px to 150%); screenshots of all 34 pages at four widths are pixel-identical before and after (apart from lazy-image paint timing) except the planner rows at 390 px, which now put the +/- buttons under a readable label. `test:all` is 58 steps and passes. Open: which door photo for the home card and doors hero (Keith); 320 px at 200% text still has a few pixels of overflow in the planner and the 3D viewer.
+
+
 ## 2026-10-11 - 2026-10-11 photos confirmed as Clearview jobs (branch `claude/photos-confirmed-2026-10-11`)
 
 Keith confirmed the 2026-10-11 gallery photos are Clearview jobs. The patio door now leads the `/sliding-glass-doors` "Finished patio door installs" grid (it was already the home card and the doors hero); it stays out of `workPhotos` so `/gallery` shows it once. The doors-page social card is unchanged (the new door crops badly to 1200x630). The guard against the "every photo is from one of our jobs" line was removed; captions still describe only what is visible. `test:all` is still 58 steps. Open: Keith's reply on whether the door hero and card need a different photo (options sheet sent, A is live).

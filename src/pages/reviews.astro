@@ -178,13 +178,13 @@ const googleHeading = `${google.count === 1 ? 'One' : google.count} ${
   }
 
   .review-list:has(> :only-child) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     max-width: 960px;
   }
 
   @media (max-width: 800px) {
     .review-list {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
@@ -238,7 +238,7 @@ const googleHeading = `${google.count === 1 ? 'One' : google.count} ${
 
   @media (max-width: 800px) {
     .empty {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-m);
     }
   }

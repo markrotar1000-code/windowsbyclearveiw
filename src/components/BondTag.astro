@@ -52,7 +52,11 @@ const detail = bond
     font-size: var(--step--2);
     font-weight: 600;
     letter-spacing: 0.01em;
-    white-space: nowrap;
+    /* May wrap. A nowrap pill is 371px wide at 150% text and 493px at 200%, wider than a phone,
+       and made nearly every page scroll sideways. */
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .credential-tag svg {

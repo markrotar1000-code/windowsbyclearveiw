@@ -19,7 +19,7 @@
 }
 .review-spotlight-top, .review-footer { justify-content: space-between; flex-wrap: wrap; }
 .review-rating { gap: var(--space-xs); flex-wrap: wrap; }
-.review-stars { margin: 0; color: var(--review-gold); font-size: var(--step-2); letter-spacing: .12em; line-height: 1; }
+.review-stars { margin: 0; color: var(--review-gold); font-size: min(var(--step-2), 28px); letter-spacing: .12em; line-height: 1; /* capped: five stars at 200% text were 216px wide, wider than the card, and were clipped */ }
 .review-rating-label { color: var(--on-dark-soft); font-size: var(--step--1); font-weight: 600; }
 .review-source {
   display: inline-flex;

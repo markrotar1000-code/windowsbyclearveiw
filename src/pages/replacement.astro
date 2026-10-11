@@ -305,7 +305,7 @@ width={1580}
 
   @media (max-width: 900px) {
     .offer {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .offer-item,
@@ -316,7 +316,7 @@ width={1580}
     }
 
     .spec-pair {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
   }

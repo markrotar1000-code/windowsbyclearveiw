@@ -282,6 +282,12 @@ const groups = [
     margin-bottom: var(--space-l);
   }
 
+  /* A flex item will not shrink below its longest word: at 200% text "photographed" in the heading
+     is wider than a 360px phone and pushed the page sideways. */
+  .group-head > div {
+    min-width: 0;
+  }
+
   .group-head h2 {
     margin: 0;
     font-size: var(--step-3);

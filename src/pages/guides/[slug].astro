@@ -482,10 +482,10 @@ width={1140}
   .related-blurb { color: var(--ink-soft); font-size: var(--step--1); }
 
   @media (max-width: 800px) {
-    .visual-intro { grid-template-columns: 1fr; gap: var(--space-s); }
+    .visual-intro { grid-template-columns: minmax(0, 1fr); gap: var(--space-s); }
     .related-head { align-items: start; flex-direction: column; gap: var(--space-2xs); }
-    .answer-strip { grid-template-columns: 1fr; gap: .4rem; align-items: start; }
+    .answer-strip { grid-template-columns: minmax(0, 1fr); gap: .4rem; align-items: start; }
     .guide-outline { position: static; }
-    .guide-outline ol { grid-template-columns: 1fr; }
+    .guide-outline ol { grid-template-columns: minmax(0, 1fr); }
   }
 </style>

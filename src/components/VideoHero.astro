@@ -101,12 +101,14 @@ const heroStatic = await getImage({
         Free in-home measure. Written estimate before anything comes out of the wall.{' '}
         <a href="/tools/window-replacement-cost-calculator">Plan your project first</a>.
       </p>
-      <ul class="trust-strip">
-        <li><strong>Clearview</strong><span>quotes every job in person</span></li>
-        <li><strong>Both</strong><span>replacement &amp; new construction</span></li>
-        <li><strong>Local</strong><span>Vancouver, WA based</span></li>
-        <li><strong>Free</strong><span>written estimate, no pressure</span></li>
-      </ul>
+      <div class="trust-strip-wrap">
+        <ul class="trust-strip">
+          <li><strong>Clearview</strong><span>quotes every job in person</span></li>
+          <li><strong>Both</strong><span>replacement &amp; new construction</span></li>
+          <li><strong>Local</strong><span>Vancouver, WA based</span></li>
+          <li><strong>Free</strong><span>written estimate, no pressure</span></li>
+        </ul>
+      </div>
     </div>
   </section>
 ) : (
@@ -134,12 +136,14 @@ const heroStatic = await getImage({
           Free in-home measure. A written estimate before anything comes out of the wall.{' '}
           <a href="/tools/window-replacement-cost-calculator">Plan your project first</a>.
         </p>
-        <ul class="trust-strip">
-          <li><strong>Clearview</strong><span>quotes every job in person</span></li>
-          <li><strong>Both</strong><span>replacement &amp; new construction</span></li>
-          <li><strong>Local</strong><span>Vancouver, WA based</span></li>
-          <li><strong>Free</strong><span>written estimate, no pressure</span></li>
-        </ul>
+        <div class="trust-strip-wrap">
+          <ul class="trust-strip">
+            <li><strong>Clearview</strong><span>quotes every job in person</span></li>
+            <li><strong>Both</strong><span>replacement &amp; new construction</span></li>
+            <li><strong>Local</strong><span>Vancouver, WA based</span></li>
+            <li><strong>Free</strong><span>written estimate, no pressure</span></li>
+          </ul>
+        </div>
       </div>
       <figure class="photo-hero-frame">
         <div class="photo-hero-plate">
@@ -382,11 +386,18 @@ width={440}
 
   /* Four claims, each a value and a qualifier. The previous version was a row
      of undifferentiated 13px phrases that scanned as filler. */
+  /* The wrapper is the container the large-text rule below measures (in rem, so it follows the
+     reader's text size). Its margin is the strip's old top margin. */
+  .trust-strip-wrap {
+    container-type: inline-size;
+    margin: var(--space-l) 0 0;
+  }
+
   .trust-strip {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
-    margin: var(--space-l) 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
     border-top: 1px solid var(--dark-line-strong);
@@ -505,7 +516,7 @@ width={440}
     }
 
     .photo-hero-inner {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-l);
     }
 
@@ -528,7 +539,7 @@ width={440}
     }
 
     .trust-strip {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .trust-strip li:nth-child(2n) {
@@ -539,6 +550,28 @@ width={440}
     .trust-strip li:nth-child(n + 3) {
       border-top: 1px solid var(--dark-line);
       margin-top: var(--space-2xs);
+    }
+  }
+
+  /* Large text on a phone: two columns of "Clearview" / "replacement & new construction" no longer
+     fit (at 200% the second column ran 36px past the hero and was clipped). Stack the four claims
+     once the strip is under 16rem wide: a 390px phone at 150% text or more. */
+  @container (max-width: 16rem) {
+    .trust-strip {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .trust-strip li,
+    .trust-strip li:nth-child(2n),
+    .trust-strip li:nth-child(n + 3) {
+      border-right: 0;
+      border-top: 1px solid var(--dark-line);
+      margin-top: 0;
+      padding: var(--space-xs) 0;
+    }
+
+    .trust-strip li:first-child {
+      border-top: 0;
     }
   }
 </style>

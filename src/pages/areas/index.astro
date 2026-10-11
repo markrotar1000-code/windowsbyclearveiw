@@ -126,7 +126,7 @@ const heroBg = await getHeroBg(heroPhoto.image);
 
   @media (max-width: 900px) {
     .area-list a {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--space-3xs);
     }
 

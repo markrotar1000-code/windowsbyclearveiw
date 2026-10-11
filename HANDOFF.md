@@ -1,5 +1,21 @@
 # Project context — Clearview Windows
 
+## 2026-10-11 - Bug sweep, fifth round: large text (branch `claude/bug-sweep-5-2026-10-11`)
+
+Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).
+
+What the next agent must know:
+- **Test text size, not only width.** Set `html { font-size: 150% !important }` and `200%` at 390 and 360 px and compare `document.documentElement.scrollWidth` with `clientWidth` on every page; also look for `overflow: hidden` boxes whose `scrollWidth` exceeds their `clientWidth`, and for text whose Range rects pass the screen edge (a `<p>` or heading whose longest word is wider than the screen reports a normal box). Browser zoom does not find these. It takes under two minutes for 34 pages.
+- **Never write a bare `grid-template-columns: 1fr`** (or leave a `display: grid` with no template and long or nowrap content): use `minmax(0, 1fr)`. A bare `1fr` track will not shrink below its widest child. `test:layout-guards` guard 12 fails on it. A grid you do not want stretched can use `minmax(0, max-content)` (the CTA band does, because it sits under `justify-content: space-between`).
+- **No `white-space: nowrap` on a pill, tag, badge or link that can exceed a phone's width.** The licence, insurance and bond tags and the footer credit pill wrap; guard 10 fails if they go back. A phone number may stay nowrap only where its box can still shrink.
+- **The header and hero react to the text size through container queries in rem**, not media queries: `header-row` (Header.astro; Brand.astro and the Menu button react to it), `.trust-strip-wrap` (VideoHero.astro) and `.areas-inline` (global.css). A px media query cannot see the reader's text size. The 15 rem / 16 rem / 14 rem thresholds come from measurement (header: wordmark + icon + Menu ~ 38 px + 12.7 rem); re-measure if the header's contents change. Container queries cannot style their own container, hence the wrapper div on the claim strip.
+- **`body` has `overflow-wrap: break-word`** and mailto links and inline code `anywhere`. It only acts when one word cannot fit its line; do not replace it with `hyphens: auto` (that changes headings at normal sizes).
+- **Planner rows (`CostEstimator.astro`)** wrap the +/- buttons under the label when the row is narrow (390 px phones at normal text): intended, and the only visible change at normal text size this round. Buttons are capped at 56 px.
+- **How the "no visible change at normal size" claim was checked:** build `origin/main` and the branch, serve both, take full-page screenshots at 390, 768, 1280 and 1440 px with animations off and every image decoded, and count differing pixels. Pixel noise from lazy images is real; decode all images first.
+- **Open, for Keith:** which door photo for the home card and doors hero (A live patio door, B two-panel slider on gray siding, C slider with screen; the live patio door stays until he answers); the CSP header; the 1.5 MB logo video; the tagline "Great prices."; capping `--mobile-cta-h` (the bottom bar is 120 px at 200% text).
+- **Known limit:** 320 px wide at 200% text still overflows by a few pixels in the planner's +/- row, a fieldset legend and the 3D viewer's controls.
+
+
 ## 2026-10-11 - Bug sweep, fourth round (branch `claude/bug-sweep-4-2026-10-11`)
 
 Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).
