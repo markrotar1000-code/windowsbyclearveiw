@@ -23,36 +23,36 @@ const heroBg = await getHeroBg(ogPhoto.image);
 const groups = [
   {
     id: 'elevations',
-    label: 'Finished elevations',
-    blurb: 'What the street sees once the job is done.',
+    label: 'From the street',
+    blurb: 'What the new windows look like from outside.',
     density: 'is-large',
     photos: allWork.filter((photo) => photo.kind === 'after'),
   },
   {
     id: 'interiors',
     label: 'From inside the room',
-    blurb: 'The view from inside.',
+    blurb: 'What the windows look like from inside the room.',
     density: 'is-square',
     photos: allWork.filter((photo) => photo.kind === 'interior'),
   },
   {
     id: 'install-day',
     label: 'Install day',
-    blurb: 'Photos from install day.',
+    blurb: 'Photos taken while the windows are going in.',
     density: 'is-dense',
     photos: allWork.filter((photo) => photo.kind === 'process'),
   },
   {
     id: 'new-construction',
     label: 'New construction',
-    blurb: 'Windows set and flashed, ready for the next trade.',
+    blurb: 'Windows going into new homes.',
     density: 'is-large',
     photos: allWork.filter((photo) => photo.kind === 'new construction'),
   },
   {
     id: 'siding',
     label: 'Siding',
-    blurb: 'Siding jobs, some photographed mid-job.',
+    blurb: 'Siding work, some of it photographed before it was finished.',
     density: 'is-dense',
     photos: allWork.filter((photo) => photo.kind === 'siding'),
   },
@@ -72,7 +72,6 @@ const groups = [
           : SLOT_SIZES.threeAcross,
   }));
 
-const total = allWork.length + galleryAdditions.length;
 ---
 <BaseLayout
   title="Window Replacement Project Photos"
@@ -87,13 +86,11 @@ const total = allWork.length + galleryAdditions.length;
       <p class="kicker">Gallery</p>
       <h1>Real jobs, real photos.</h1>
       <p class="lede">
-        Replacement windows and siding on Washington homes: sliders, double-hungs, and
-        photos from install day. Every photo here is from one of our jobs.
+        Photos of new windows, sliding doors and siding on homes around Washington.
       </p>
       <p class="gallery-index">
-        <span class="gallery-count">{total}</span>
         <span>
-          <a href="#more-projects">More window projects</a> · {' '}
+          <a href="#more-projects">More photos</a> · {' '}
           {groups.map((group, index) => (
             <>
               <a href={`#${group.id}`}>{group.label.toLowerCase()}</a>
@@ -106,7 +103,7 @@ const total = allWork.length + galleryAdditions.length;
         <p class="gallery-social">
           <a class="inline-social" href={site.social.facebook} target="_blank" rel="noopener noreferrer">
             <FacebookIcon class="inline-social-icon" />
-            More jobs go up on Facebook as they finish
+            We post more photos on Facebook
           </a>
         </p>
       )}
@@ -117,10 +114,9 @@ const total = allWork.length + galleryAdditions.length;
     <div class="wrap is-wide" data-reveal>
       <div class="group-head">
         <div>
-          <p class="rule-label">More window projects</p>
-          <h2>A closer look at our work.</h2>
+          <p class="rule-label">More photos</p>
+          <h2>Windows and sliding doors, inside and out.</h2>
         </div>
-        <p class="group-count">{galleryAdditions.length} photos</p>
       </div>
       <div class="work-grid is-large">
         {galleryAdditions.map((photo, index) => <GalleryAddition {...photo} eager={index < 3} />)}
@@ -136,7 +132,6 @@ const total = allWork.length + galleryAdditions.length;
             <p class="rule-label">{group.label}</p>
             <h2>{group.blurb}</h2>
           </div>
-          <p class="group-count">{group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}</p>
         </div>
         {/* A lone photo in a three-column grid is not a large tile, it is a
             hole with a picture in the corner. Constrain it instead. */}
@@ -202,14 +197,6 @@ const total = allWork.length + galleryAdditions.length;
     border-top: 1px solid var(--dark-line);
     font-size: var(--step--1);
     color: var(--on-dark-faint);
-  }
-
-  .gallery-count {
-    font-size: var(--step-2);
-    font-weight: 600;
-    line-height: 1;
-    color: var(--accent-bright);
-    font-variant-numeric: tabular-nums;
   }
 
   .gallery-index a {
@@ -300,23 +287,6 @@ const total = allWork.length + galleryAdditions.length;
     font-size: var(--step-3);
   }
 
-  .group-count {
-    flex: none;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-label);
-    font-size: var(--step--2);
-    font-weight: 500;
-    color: var(--ink-faint);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Below 700px the label/count pair in .group-head wraps to two lines
-     rather than fighting for a single row next to the group heading. */
-  @media (max-width: 700px) {
-    .group-head {
-      display: grid;
-      gap: var(--space-2xs);
-    }
-  }
+  /* No photo counts anywhere on this page: a number next to a gallery reads as the
+     number of jobs Clearview has done (Keith, 2026-10-11). test:image-delivery fails on one. */
 </style>

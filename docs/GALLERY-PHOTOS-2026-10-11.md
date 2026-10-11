@@ -2,7 +2,7 @@
 
 Mark added 55 phone photos to the shared Drive folder (files named `IMG_20261010_1552xx`, including "(1)/(2)" copies at other resolutions). Keith asked for the best ones on the site and a better sliding glass door on the **main page card** and the **hero**.
 
-Result: **1 door photo** on the home "Sliding glass doors" tile and the `/sliding-glass-doors` hero, and **9 more** photos in the gallery's "More window projects" section (now 22 additions, 72 photos in the gallery in total). Nothing existing was removed.
+Result: **1 door photo** on the home "Sliding glass doors" tile and the `/sliding-glass-doors` hero, and **9 more** photos in the gallery's "More photos" section (now 22 additions; the gallery no longer prints any photo count). Nothing existing was removed.
 
 ## What "card" and "hero" mean here (VERIFY with Keith)
 
@@ -36,7 +36,7 @@ Keith asked that the best images be displayed higher, so the 22 additions are or
 
 That is a judgement call, not a measurement. Reorder freely; `test:image-delivery` only requires the door in the first six and only the first three tiles eager.
 
-**Position on the page.** The first photo row started 774 px down at 1440x900 (126 px visible), 764 px at 1280x720 and 813 px on a 390x844 phone (not visible). The gallery hero and the padding above the grid were tightened (page-scoped CSS): now 667 / 661 / 758 px. On a short laptop and on a phone the first row is still at or below the fold, because the hero text and jump links fill the first screen; shrinking those is a design call. The existing sections below (Finished elevations, From inside the room, and so on) were not re-ranked.
+**Position on the page.** The first photo row started 774 px down at 1440x900 (126 px visible), 764 px at 1280x720 and 813 px on a 390x844 phone (not visible). The gallery hero and the padding above the grid were tightened (page-scoped CSS): now 667 / 661 / 758 px. On a short laptop and on a phone the first row is still at or below the fold, because the hero text and jump links fill the first screen; shrinking those is a design call. The existing sections below (From the street, From inside the room, and so on) were not re-ranked.
 
 ## Excluded, and why
 

@@ -327,4 +327,12 @@ ok('the gallery renders every addition once, best photos first, and loads the fi
   for (const [page, markup] of pages) assert.ok(!/IMG_20\d{6}/.test(markup), `${page}: a camera filename leaked into the markup`);
 });
 
+ok('the gallery shows no photo count (a number there reads as the jobs Clearview has done)', () => {
+  const html = pages.get('gallery');
+  const text = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');
+  const counts = [...text.matchAll(/\b\d[\d,]*\s+(?:real\s+)?(?:photos?|photographs?|pictures?|projects?|jobs?|installs?)\b/gi)].map((m) => m[0]);
+  assert.deepEqual(counts, [], 'the gallery page prints a count of photos or jobs');
+  assert.ok(!/class="[^"]*\b(?:gallery-count|group-count)\b/.test(html), 'a count element is back on the gallery page');
+});
+
 console.log(`PASS  image delivery (${groups} groups, ${pages.size} pages)`);

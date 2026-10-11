@@ -118,6 +118,9 @@ const widths = tileWidths(scale);
 
   .work-card figcaption {
     display: flex;
+    /* Two-column phone tiles are ~160 px wide: the label ("FINISHED RESULT") cannot sit
+       beside the caption there and was clipped. Let it drop to its own line instead. */
+    flex-wrap: wrap;
     justify-content: space-between;
     gap: var(--space-2xs);
     align-items: baseline;
