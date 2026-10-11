@@ -9,10 +9,14 @@ import { Image } from 'astro:assets';
 import { site } from '../data/site';
 import { featuredWork, findWork, workKindLabel } from '../data/work';
 import { coverScale, scaleSizes } from '../lib/image-sizes';
+import { patioSliderPhoto } from '../data/gallery-additions';
 
 const replacementTile = findWork('gray-lap-siding-triple-hung')!;
 const newBuildTile = findWork('new-build-tan-corner')!;
-const slidingDoorsTile = findWork('gray-siding-white-slider-deck')!;
+// The sliding-doors tile shows the patio door added 2026-10-11 (4K, retouched; see
+// docs/GALLERY-PHOTOS-2026-10-11.md). It is not in workPhotos, so it never lands in a
+// "finished install" group before its provenance is confirmed.
+const slidingDoorsTile = patioSliderPhoto;
 
 // A service tile's frame is about 404 x 460 on a desktop and 341 x 320 on a phone. 0.85 is
 // the narrower ratio, so a landscape photo (the new-build tile) is asked for at a width that

@@ -20,6 +20,23 @@ Validation: `npm run test:all` (58 steps, was 52: +`test:pagination`, `test:visi
 
 Not done / open: no real phone, screen reader or voice-control check (Chromium emulation only); the Turnstile check cannot verify from the sandbox, so only its size and layout were tested, not a real submission; `astro check` reports 201 strict-mode errors, none a real bug (mostly null-check noise), and was not adopted (tooling before revenue); Command Center error text; the home hero's credential tags and the table headers read slightly low in contrast while fading in, and pass once settled (the audit waits for that).
 
+## 2026-10-11 - New gallery photos and a better sliding glass door (branch `claude/new-photos-2026-10-11`)
+
+Keith: "Mark added new photos to [the Drive folder] we need to identify the best ones to move to the website. And ad a better sliding glass door pic to the main page card and hero."
+
+Done:
+1. **Reviewed all 55 files** at full size and picked 10 (rank, source file, reason: `docs/GALLERY-PHOTOS-2026-10-11.md`). Rejected: a photo of another contractor's paperwork with a customer's personal details, shots with a person or a photographer's reflection, and cluttered interiors.
+2. **Upscaled** the 10 (11 incl. one dropped) with Higgsfield 4K (2 credits each; the starter plan runs 4 jobs at once), saved as JPEG q86, 3072x4096, no metadata. The sources are 600 to 1200 px, so the detail is generated, not captured; recorded in the doc.
+3. **Privacy check at full resolution.** The door's upscale showed a face in the glass: retouched with a feathered blur and darken (a rectangular blur looked like a smear). One gallery candidate showed a person inside the house through a screen: dropped.
+4. **Wired in.** `patioSliderPhoto` (new, `src/data/gallery-additions.ts`) is the home "Sliding glass doors" tile (`index.astro`) and the doors-page hero background (`sliding-glass-doors.astro`); nine more entries follow the first-batch gallery additions. The home hero was not changed (a windows photo; "hero" was read as the doors page).
+5. **Provenance.** The door is not in `workPhotos`, so it is not in "Real installs", "Finished result" groups, the replacement page or the OG image. All new alt text and captions describe only what is visible.
+6. **Tests.** `test:image-delivery` 12 to 16 groups, each assertion mutation-tested (an "installed" caption, the photo added to `work.ts`).
+
+Validation: `npm run test:all` (58 steps) and `npm run build` pass. Real-browser check (Chromium) of the home tile and the doors hero at desktop and phone widths, and of the gallery: 22 additions, no broken images. `docs/IMAGE-DELIVERY.md` has the new section on unconfirmed and upscaled photos.
+
+Not done / open: VERIFY with Mark which photos are his jobs, then promote the door into `workPhotos` and `doorWork`; delete the paperwork photo from the shared Drive; ask for original-resolution files; the old gray-slider photo (still in "Real installs") has a cluttered interior; no real phone check.
+
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith: "We still need to work on improving the images and display of the images on the website." Measured first (`scripts/audit-image-delivery.mjs`: every `<img>` on every built page at 1440 px 1x, 1440 px 2x and a 390 px phone at 3x, sharpness = chosen file width / pixels the tile needs), then fixed what the numbers showed.

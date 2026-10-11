@@ -8,6 +8,15 @@ Guards (all in CI): `test:pagination`, `test:visitor-errors`, `test:copilot-snap
 
 Bond and insurance coverage limits are now page text for screen readers (they were only a hover title); `test:no-public-pricing` and `test:siding` exempt exactly those two sentences. Not verified: a real phone, screen reader or live Turnstile submission. Before merging, look at the Cloudflare preview of `/about`, `/` and `/estimate` on a phone and a wide screen: the `.split` change makes those sections' text larger and centred.
 
+## 2026-10-11 - New gallery photos and a better sliding glass door (branch `claude/new-photos-2026-10-11`)
+
+Mark added 55 phone photos to the shared Drive folder; Keith asked for the best ones on the site and a better sliding glass door on the main-page card and the hero. Added 10: the door (home "Sliding glass doors" tile and the `/sliding-glass-doors` hero background) and 9 gallery photos (gallery additions 12 to 22, 72 photos in the gallery). The sources are 600 to 1200 px phone photos, so each was upscaled to 3072x4096 with Higgsfield (11 upscales, about 22 credits), EXIF-free. Selection, exclusions, privacy findings and provenance: `docs/GALLERY-PHOTOS-2026-10-11.md`.
+
+Privacy: the upscale made a face legible in the door glass (retouched out) and a person visible inside another house (photo dropped); a photo of another contractor's paperwork with a customer's details was not used. Guard: `test:image-delivery` is now 16 groups (door on the tile and doors hero, door not a `workPhoto`, visual-only alt and captions with no install claims, no EXIF, gallery renders all 22). `test:all` is still 58 steps.
+
+VERIFY with Mark: which of these photos are Clearview jobs (the batch holds another contractor's paperwork, and the gallery says "Every photo here is from one of our jobs"). Until then the door is kept out of `workPhotos`, "Real installs" and the OG image, and captions describe only what is visible. The paperwork photo should be deleted from the shared Drive folder. "Hero" was read as the doors page; the home hero (a windows photo in the video reveal) is unchanged. Not verified: the live site (pending merge) or a real phone.
+
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith asked for better images and image display. Measured every photo in a real browser (desktop 1x, laptop 2x, 390 px phone at 3x; 37 pages, 141 photos), found four causes of soft or over-cropped pictures, and fixed them: `sizes` now match the real tile widths (`SLOT_SIZES` in `src/lib/image-sizes.ts`), cropped photos are downloaded wide enough for `object-fit: cover` (`coverScale`), all-landscape groups (siding, new construction) get a landscape frame, and the home hero, lead photos, service tiles, guide heroes and guide graphics offer larger files. Soft photos (<0.9x) on the 12 key pages: desktop 14 to 0, laptop 2x 18 to 2, phone 41 to 0. Three remain site-wide on a 2x laptop, all source-limited or capped (0.85 to 0.89).
