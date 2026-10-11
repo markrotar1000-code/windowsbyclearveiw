@@ -1,5 +1,13 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
+
+Keith asked to keep finding and fixing bugs. Found and fixed with a regression test each: CI never ran `test:pagination`; the estimate form and quote-signing page showed the browser's "Failed to fetch" to customers (`visitorMessage`); the Copilot summary compared ISO timestamps to SQLite's clock format (`copilotSnapshot`); bond and insurance detail unreachable by screen readers, a logo link whose name did not contain its visible text, 12 gallery link labels, six unlabelled-group divs; the two-column `.split` section shared a rule with `.btn` (flush left on wide screens, small text), its phone grid and the estimate form grew to their widest child, and the Turnstile widget (300 px) made `/estimate` scroll sideways at 360 px and below.
+
+Guards (all in CI): `test:pagination`, `test:visitor-errors`, `test:copilot-snapshot`, `test:layout-guards` (before the build), `test:a11y-names` (after it). `test:all` is 57 steps. Browser tools, not in CI: `scripts/audit-a11y.mjs` (axe-core, 152 page-views, last run clean) and the existing image audit. Docs: `docs/ACCESSIBILITY.md`.
+
+Bond and insurance coverage limits are now page text for screen readers (they were only a hover title); `test:no-public-pricing` and `test:siding` exempt exactly those two sentences. Not verified: a real phone, screen reader or live Turnstile submission. Before merging, look at the Cloudflare preview of `/about`, `/` and `/estimate` on a phone and a wide screen: the `.split` change makes those sections' text larger and centred.
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith asked for better images and image display. Measured every photo in a real browser (desktop 1x, laptop 2x, 390 px phone at 3x; 37 pages, 141 photos), found four causes of soft or over-cropped pictures, and fixed them: `sizes` now match the real tile widths (`SLOT_SIZES` in `src/lib/image-sizes.ts`), cropped photos are downloaded wide enough for `object-fit: cover` (`coverScale`), all-landscape groups (siding, new construction) get a landscape frame, and the home hero, lead photos, service tiles, guide heroes and guide graphics offer larger files. Soft photos (<0.9x) on the 12 key pages: desktop 14 to 0, laptop 2x 18 to 2, phone 41 to 0. Three remain site-wide on a 2x laptop, all source-limited or capped (0.85 to 0.89).

@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { withoutCredentialDetail } from './_lib/credential-detail.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
@@ -15,6 +16,11 @@ if (/export const publicPricing = true/.test(readFileSync(join(root, 'src/data/p
   console.log('publicPricing is on: nothing to check.');
   process.exit(0);
 }
+
+// The bond and insurance coverage limits read aloud by screen readers are set aside; any other hidden text is not.
+assert.ok(!/\$/.test(withoutCredentialDetail('<span class="visually-hidden" data-x="1">General liability insured — Acme, $300,000 per occurrence.</span>')), 'the insurance disclosure is exempt');
+assert.ok(!/\$/.test(withoutCredentialDetail('<span class="visually-hidden">WA L&amp;I contractor surety bond #1 — $30,000, Acme.</span>')), 'the bond disclosure is exempt');
+assert.ok(/\$99/.test(withoutCredentialDetail('<span class="visually-hidden">Installed for $99</span>')), 'other visually hidden text is still scanned');
 
 function* htmlFiles(dir) {
   for (const name of readdirSync(dir)) {
@@ -27,7 +33,7 @@ function* htmlFiles(dir) {
 }
 
 const visible = (html) =>
-  html
+  withoutCredentialDetail(html)
     .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, (m) => (/ld\+json/.test(m) ? m : ' '))
     .replace(/<[^>]+>/g, ' ')
     .replace(/&#36;|&dollar;/g, '$')

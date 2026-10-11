@@ -135,7 +135,7 @@ const pageHeadings = [...guide.body.matchAll(/^##\s+(.+)$/gm)]
       <p class="kicker">{guide.data.kicker}</p>
       <h1>{guide.data.title}</h1>
       <p class="lede">{guide.data.description}</p>
-      <div class="article-tools" aria-label="Guide actions">
+      <div class="article-tools" role="group" aria-label="Guide actions">
         <a href="/guides">All guides</a>
         <a href="/ask">Ask a question</a>
         <button type="button" class="share-native" hidden data-share-title={guide.data.title} data-share-url={`${site.url}/guides/${guide.id}`}>

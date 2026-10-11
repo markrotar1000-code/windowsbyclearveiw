@@ -2,12 +2,17 @@
 // A factual disclosure tag for general liability insurance, not a trust
 // seal — same reasoning as LicenseTag.astro. The visible text is
 // deliberately short ("Insured"); the real carrier, policy number, and
-// per-occurrence limit live in title/aria-label so a hover or long-press
-// (and every screen reader) still gets the specific number that makes
-// this defensible, rather than the vague "insured" claim Washington
-// treats as misleading advertising when paired with "bonded" (see
+// per-occurrence limit live in the title (hover or long-press) and in
+// visually-hidden text (screen readers) so everyone still gets the specific
+// number that makes this defensible, rather than the vague "insured" claim
+// Washington treats as misleading advertising when paired with "bonded" (see
 // HANDOFF.md's 2026-09-22 entry). Renders nothing when site.insurance is
 // unset.
+//
+// Not aria-label: a bare <span> has no role, and ARIA forbids naming a
+// role-less element (axe: aria-prohibited-attr), so screen readers may skip it
+// and the policy detail would never reach them. Visible text stays aria-hidden
+// so the reader announces the detail once. scripts/test-a11y-names.mjs guards this.
 import { site } from '../data/site';
 
 interface Props {
@@ -21,7 +26,7 @@ const detail = insurance
   : '';
 ---
 {insurance && (
-  <span class:list={['credential-tag', { 'is-on-dark': onDark }]} title={detail} aria-label={detail}>
+  <span class:list={['credential-tag', { 'is-on-dark': onDark }]} title={detail}>
     <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
       <rect x="2.5" y="4.5" width="15" height="11" rx="1" />
       <line x1="5.5" y1="8" x2="14.5" y2="8" />
@@ -29,6 +34,7 @@ const detail = insurance
       <line x1="5.5" y1="13" x2="9.5" y2="13" />
     </svg>
     <span aria-hidden="true">Insured</span>
+    <span class="visually-hidden">{detail}</span>
   </span>
 )}
 

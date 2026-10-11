@@ -20,6 +20,7 @@ import '../styles/estimate-form.css';
 <script>
 import { site } from "../data/site";
 import { readIntent, trackIntent } from "../scripts/intent-tracking";
+import { visitorMessage } from "../lib/visitor-errors";
 const phoneDisplay = site.phoneDisplay;
 function bindEstimate() {
   const form = document.getElementById('estimate-form');
@@ -90,8 +91,16 @@ function bindEstimate() {
       else status.textContent = 'The security check did not load. Please call ' + phoneDisplay + ' instead.';
       return;
     }
+    // The normal widget is a fixed 300 px and the compact one 150 px (Cloudflare has no size between, and
+    // `flexible` has a 300 px floor). It may spill into the form's right padding but not past the form, so
+    // it is normal only when the slot plus that padding (less 8 px of air) holds 300 px. Measured on the
+    // built page: that keeps the normal widget at 390 px and up, and uses compact at 375 px and below.
+    // Before, the form was stretched to the widget's 300 px, and /estimate scrolled sideways at 360 px
+    // (15 px) and 320 px (54 px).
+    const room = slot.getBoundingClientRect().width + parseFloat(getComputedStyle(form).paddingRight) - 8;
     widgetId = window.turnstile.render(slot, {
       sitekey: slot.dataset.sitekey,
+      size: room < 300 ? 'compact' : 'normal',
       'error-callback': () => { status.textContent = 'The security check could not load. Please call ' + phoneDisplay + ' instead.'; },
     });
   }
@@ -150,7 +159,7 @@ function bindEstimate() {
       const ok = result !== null && typeof result === 'object' && !Array.isArray(result) && Object.keys(result).length === 1 && result.ok === true;
       if (!response.ok || !ok) {
         if (result && typeof result === 'object' && result.fields && typeof result.fields === 'object') applyFieldErrors(result.fields);
-        throw new Error(result && typeof result.error === 'string' ? result.error : 'Could not send.');
+        throw new Error(result && typeof result.error === 'string' ? result.error : 'Could not send. Please call ' + phoneDisplay + ' instead.');
       }
       form.hidden = true;
       success.hidden = false;
@@ -161,7 +170,8 @@ function bindEstimate() {
     } catch (error) {
       trackIntent('estimate_form_error', false);
       try { if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId); } catch {}
-      status.textContent = error instanceof Error ? error.message : 'Could not send. Please call us instead.';
+      // A dropped connection throws a TypeError whose text is the browser's ("Failed to fetch"); show our own line instead.
+      status.textContent = visitorMessage(error, 'Could not send. Check your connection, or call ' + phoneDisplay + ' instead.');
       if (button instanceof HTMLButtonElement) { button.disabled = false; button.textContent = idleLabel || 'Send estimate request'; }
     }
   });
