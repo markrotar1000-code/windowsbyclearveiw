@@ -36,6 +36,7 @@
     "test:form-patterns": "node scripts/test-form-patterns.mjs",
     "test:visitor-errors": "node scripts/test-visitor-errors.mjs",
     "test:a11y-names": "node scripts/test-a11y-names.mjs",
+    "test:text-gaps": "node scripts/test-text-gaps.mjs",
     "test:layout-guards": "node scripts/test-layout-guards.mjs",
     "test:pagination": "node --disable-warning=ExperimentalWarning scripts/test-pagination.mjs",
     "test:copilot": "node scripts/test-copilot.mjs",
