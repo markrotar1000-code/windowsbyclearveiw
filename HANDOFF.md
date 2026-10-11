@@ -1,5 +1,17 @@
 # Project context — Clearview Windows
 
+## 2026-10-11 - Bug sweep, third round (branch `claude/bug-sweep-3-2026-10-11`)
+
+Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).
+
+What the next agent must know:
+- **A tag or label in a narrow card must be able to shrink.** `WorkCard`'s `.work-kind` is `flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere` and the figcaption wraps. A phone's two-column tile is about 150 px wide; "NEW CONSTRUCTION" in tracked capitals is wider than that, and `flex: none` clipped it. `test:layout-guards` (guard 6) fails if either goes back.
+- **`/api/google-reviews` 404s under `astro preview`.** It is a Cloudflare Pages Function (`functions/api/google-reviews.js`), so a local browser crawl always logs one failed request per page. Production returns 200 JSON. Not a bug; do not "fix" it.
+- **Headless-sandbox console noise is not a site bug:** the Turnstile error on `/estimate` and the WebGPU warning. Check `/estimate` on a real phone if the security check matters to a change.
+- **Open, for Keith:** no `Content-Security-Policy` header anywhere. Adding one is hardening; it must allow GA4, GTM, Meta, Turnstile and the review feed, so trial it as `Content-Security-Policy-Report-Only` first.
+- **Open, for Mark:** are the 2026-10-11 gallery photos Clearview jobs? (`docs/GALLERY-PHOTOS-2026-10-11.md`.) Until yes, no "every photo is from one of our jobs" claim, and the door stays out of `workPhotos`.
+
+
 ## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
 
 Keith said "Keep going". Details: `.ai/CHANGELOG.md` (2026-10-11).
