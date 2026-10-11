@@ -16,6 +16,19 @@ What the next agent must know:
 - `scripts/audit-a11y.mjs` needs `npm i --no-save playwright axe-core` (not in CI). `npm i --no-save` can remove the repo's `node_modules/playwright` link.
 - Open: no real-device, screen-reader or live Turnstile test; Command Center pages still show raw "Failed to fetch"; `astro check` has 201 strict-mode errors (none a real bug, not adopted).
 
+## 2026-10-11 - New gallery photos and a better sliding glass door (branch `claude/new-photos-2026-10-11`)
+
+Details: `docs/GALLERY-PHOTOS-2026-10-11.md`, `.ai/CHANGELOG.md` (2026-10-11).
+
+What the next agent must know:
+- **Provenance is unconfirmed.** The batch contains another contractor's paperwork. The door is `patioSliderPhoto` in `src/data/gallery-additions.ts`, deliberately **not** in `workPhotos` (that feeds "Real installs", "Finished result" and the "every photo is from one of our jobs" copy). `test:image-delivery` fails if it is added to `work.ts` or if a gallery caption says install / finished / job. Once Mark confirms, promote it and rewrite the captions.
+- **Look at upscaled photos at full size before committing them, glass first.** The 4K upscale made a face legible in the door glass and showed a person inside another house. "View full photo" serves the committed file.
+- **Hero = the doors page** (`getHeroBg(patioSliderPhoto.image)`); the home hero (`heroPhoto` in `index.astro`, a windows photo in the video reveal) is unchanged. Say so if Keith meant the home hero.
+- Higgsfield: upload is `media_upload`, then `curl -X PUT` with headers `Content-Type: image/jpeg` and `If-None-Match: *`, then `media_confirm`, then `upscale_image` (2 credits, 4 concurrent jobs at most on the starter plan). Source photos are 600 to 1200 px: the result is generated detail.
+- Tests read `gallery-additions.ts` and `work.ts` as text (plain Node cannot import `.jpg`) and the built `dist/`.
+- Open: Mark confirms the jobs; delete the paperwork photo (it shows a customer's details) from the shared Drive; ask for original-resolution files; the old `gray-siding-white-slider-deck` photo has a cluttered interior.
+
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith asked for the website's images and their display to be improved. Done by measurement: a real-browser audit of every photo, then fixes to which file the browser downloads and to how photos are framed. Numbers, rules and the add-a-photo checklist: `docs/IMAGE-DELIVERY.md`; summary: `.ai/CHANGELOG.md` (2026-10-10, photo delivery).

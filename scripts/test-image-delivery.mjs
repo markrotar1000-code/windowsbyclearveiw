@@ -243,4 +243,80 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
   assert.ok(graphics >= 1, 'the double-pane glass guide graphic was not found');
 });
 
+// ── 2026-10-11 batch: the sliding glass door photo and the gallery additions ──────────────────
+// docs/GALLERY-PHOTOS-2026-10-11.md. The door shows on the home "Sliding glass doors" tile and as the
+// /sliding-glass-doors hero background. It is deliberately NOT a workPhoto, so it never lands in a
+// "Finished result" group, the "Real installs" grid or the page's OG image until Mark confirms the job.
+// The data modules import .jpg files, which plain Node cannot load, so read them as text.
+const additionsSource = readFileSync(join(root, 'src/data/gallery-additions.ts'), 'utf8');
+const workSource = readFileSync(join(root, 'src/data/work.ts'), 'utf8');
+const importPaths = new Map([...additionsSource.matchAll(/^import (\w+) from '(\.\.\/assets\/work\/[^']+)';$/gm)].map((m) => [m[1], m[2]]));
+const entryPattern = /\{ image: (\w+), alt: '((?:[^'\\]|\\.)*)', caption: '((?:[^'\\]|\\.)*)'/g;
+const patioBlock = /export const patioSliderPhoto = \{([\s\S]*?)\n\};/.exec(additionsSource)?.[1] ?? '';
+const patioSliderPhoto = {
+  image: /image: (\w+)/.exec(patioBlock)?.[1],
+  alt: /alt: '((?:[^'\\]|\\.)*)'/.exec(patioBlock)?.[1] ?? '',
+  caption: /caption: '((?:[^'\\]|\\.)*)'/.exec(patioBlock)?.[1] ?? '',
+};
+const additionsBlock = /export const galleryAdditions = \[([\s\S]*?)\n\];/.exec(additionsSource)?.[1] ?? '';
+const galleryAdditions = [...additionsBlock.matchAll(entryPattern)].map((m) => ({ image: m[1], alt: m[2], caption: m[3], at: m.index }));
+// `patioSliderPhoto,` sits in the array by reference; put it back where it is authored.
+const patioAt = /^\s*patioSliderPhoto,/m.exec(additionsBlock)?.index;
+assert.notEqual(patioAt, undefined, 'galleryAdditions must include patioSliderPhoto');
+galleryAdditions.splice(galleryAdditions.filter((entry) => entry.at < patioAt).length, 0, { ...patioSliderPhoto, at: patioAt });
+const PATIO = 'tan-siding-patio-slider';
+const sharp = (await import('sharp')).default;
+const originals = new Map();
+for (const [name, path] of importPaths) originals.set(name, await sharp(join(root, 'src/data', path)).metadata());
+
+ok('the home sliding-glass-doors tile and the doors-page hero use the patio slider photo', () => {
+  const tile = /<a class="service-tile" href="\/sliding-glass-doors"[^>]*>[\s\S]*?<\/a>/.exec(pages.get('index'))?.[0] ?? '';
+  const [tileImg] = images(tile);
+  assert.ok(tileImg, 'the home "Sliding glass doors" tile was not found');
+  assert.ok((attr(tileImg, 'src') ?? '').includes(PATIO), 'the home sliding-glass-doors tile must show the patio slider photo');
+  assert.ok(widestCandidate(tileImg) >= 1600, 'the home tile tops out below 1600 px (a 3:4 tile at 3x needs it)');
+  const doors = pages.get('sliding-glass-doors');
+  const hero = /<section class="page-hero page-hero-photo"[^>]*style="([^"]*)"/.exec(doors)?.[1] ?? '';
+  assert.ok(hero.includes(PATIO), 'the /sliding-glass-doors hero background must be the patio slider photo');
+  // It is a hero wash background only: not an <img> in the page body, and not the OG image.
+  assert.ok(!images(doors).some((tag) => (attr(tag, 'src') ?? '').includes(PATIO)), 'the patio photo should be the hero background, not a body <img>');
+  assert.ok(!/property="og:image"[^>]*tan-siding-patio-slider/.test(doors) && !/tan-siding-patio-slider[^>]*property="og:image"/.test(doors), 'the doors-page OG image must stay a confirmed job photo');
+});
+
+ok('the patio slider photo is not a workPhoto (provenance not confirmed)', () => {
+  assert.ok(!workSource.includes(PATIO) && !/gallery-additions/.test(workSource), 'the patio photo must not be in work.ts: workPhotos feeds "Real installs" and the "our job" claims');
+  assert.equal(importPaths.get(patioSliderPhoto.image), `../assets/work/${PATIO}.jpg`, 'patioSliderPhoto should import the patio slider file');
+  assert.ok(patioSliderPhoto.alt && patioSliderPhoto.caption);
+});
+
+ok('gallery additions: every photo has a visual alt and caption, none claims a job', () => {
+  const claims = /\b(install(?:ed|ation|s)?|finish(?:ed)?|complete(?:d)?|replac(?:ed|ement)|new[- ]construction|our (?:work|job|crew)|before|after)\b/i;
+  const seen = new Set();
+  for (const entry of galleryAdditions) {
+    assert.ok(entry.alt.trim().length >= 25, `alt too short: "${entry.alt}"`);
+    assert.ok(entry.caption.trim().length >= 8, `caption too short: "${entry.caption}"`);
+    assert.ok(!seen.has(entry.image), `${entry.caption}: a photo is listed twice`);
+    seen.add(entry.image);
+    assert.ok(!claims.test(entry.alt) && !claims.test(entry.caption), `"${entry.caption}": describes the picture only. No install/finish/job claims until the source is confirmed.`);
+    const meta = originals.get(entry.image);
+    assert.ok(meta, `${entry.caption}: image "${entry.image}" is not imported from src/assets/work`);
+    assert.ok(meta.width === 3072 && meta.height === 4096, `${entry.caption}: expected a 3072x4096 original, got ${meta.width}x${meta.height}`);
+  }
+  // Privacy: a customer's house photo must not carry GPS or device metadata (the "View full photo" link ships the original).
+  for (const [name, meta] of originals) assert.ok(!meta.exif && !meta.xmp && !meta.iptc, `${name}: embedded EXIF/XMP/IPTC found. Strip it before committing a customer photo.`);
+  assert.equal(galleryAdditions.length, 22, '12 first-batch + 10 from 2026-10-11');
+});
+
+ok('the gallery renders every addition once, with the 2026-10-11 photos last', () => {
+  const html = pages.get('gallery');
+  const cards = [...html.matchAll(/<figure class="gallery-addition[^"]*"[^>]*>[\s\S]*?<\/figure>/g)].map((m) => m[0]);
+  assert.equal(cards.length, galleryAdditions.length, 'gallery additions rendered != gallery additions declared');
+  for (const card of cards) {
+    const [tag] = images(card);
+    assert.ok(tag && attr(tag, 'srcset') && attr(tag, 'sizes') && (attr(tag, 'alt') ?? '').length > 0, 'a gallery addition without srcset, sizes and alt text');
+  }
+  assert.ok(cards.slice(12).some((card) => card.includes(PATIO)), 'the patio slider should be in the 2026-10-11 gallery additions');
+  for (const [page, markup] of pages) assert.ok(!/IMG_20\d{6}/.test(markup), `${page}: a camera filename leaked into the markup`);
+});
+
 console.log(`PASS  image delivery (${groups} groups, ${pages.size} pages)`);

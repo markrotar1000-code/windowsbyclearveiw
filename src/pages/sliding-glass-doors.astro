@@ -7,6 +7,7 @@ import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES } from '../lib/image-sizes';
 import { pricing, showPublicPrices } from '../data/pricing';
 import { findWork, workKindLabel } from '../data/work';
+import { patioSliderPhoto } from '../data/gallery-additions';
 import { site } from '../data/site';
 
 // Real installed sliding-door jobs, added 2026-09-27 — the OG image and the
@@ -15,9 +16,11 @@ import { site } from '../data/site';
 const doorWork = [findWork('gray-siding-white-slider-deck')!, findWork('tan-slider-kitchen-view')!];
 const ogPhoto = doorWork[0];
 
-// Full-bleed hero background, cropped from the same real elevation as the
-// gallery below (see the "Real installs" section) rather than AI imagery.
-const heroBg = await getHeroBg(doorWork[0].image);
+// Full-bleed hero background: the patio door added 2026-10-11 (a whole door, one panel slid
+// open, 4K source). It is deliberately not in the "Real installs" grid below or the OG image
+// until Mark confirms the job is ours (docs/GALLERY-PHOTOS-2026-10-11.md); the grid keeps the
+// two confirmed installs.
+const heroBg = await getHeroBg(patioSliderPhoto.image);
 
 // The estimator already prices sliding patio doors as their own opening type
 // (doors are not brand-specific — see pricing.ts) — reuse that single source

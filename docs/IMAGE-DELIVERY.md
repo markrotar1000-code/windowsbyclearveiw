@@ -66,9 +66,15 @@ Other deliberate choices:
 2. Add it to `src/data/work.ts`. Render it through `<WorkCard>`; choose the `sizes` preset for its grid and let `frameForGroup` choose the frame.
 3. `npm run build && npm run test:image-delivery`. For a layout the presets do not cover, measure the slot at several viewport widths, add a preset to `SLOT_SIZES` **with the measurement in its comment and a row in the table above**, and extend the test.
 
+### Photos whose job is not confirmed, and upscaled phone photos
+
+`src/data/gallery-additions.ts` is the path for photos that should be on the site but whose job Mark has not confirmed (`workPhotos` feeds "Real installs", "Finished result" groups and the "from one of our jobs" copy). Entries carry visual-only alt text and captions, render through `GalleryAddition` (webp, 320 to 1200 px, a "View full photo" link to the original), and `patioSliderPhoto` can also back a home tile or page hero without becoming a work photo (2026-10-11, `docs/GALLERY-PHOTOS-2026-10-11.md`).
+
+Small phone originals (600 to 1200 px wide) are upscaled to 3072x4096 before they are committed. **Look at the result at full size, window glass first:** an upscale can turn a blurred shape behind glass into a face (it did, twice, on 2026-10-11), and the "View full photo" link serves the file as committed. Strip EXIF/GPS (`npm run test:image-delivery` fails if a gallery photo has any).
+
 ## Checking it in a browser
 
-`npm run test:image-delivery` (in CI, after the build) guards the rules above: cover maths, frames, preset shapes, the Proxy trap, no orphaned originals, alt text on every image, srcset and sizes on every tile, landscape frames where they belong, large candidates for hard crops, the hero's 2560 px candidate, lead photos and guide graphics past 1600 px. The cover maths, the Proxy guard, the orphan check and the lead-photo check were each mutation-tested: the rule was deliberately broken and the test confirmed to fail.
+`npm run test:image-delivery` (in CI, after the build) guards the rules above: cover maths, frames, preset shapes, the Proxy trap, no orphaned originals, alt text on every image, srcset and sizes on every tile, landscape frames where they belong, large candidates for hard crops, the hero's 2560 px candidate, lead photos and guide graphics past 1600 px, and the gallery additions (visual-only alt and captions, no install claims, no EXIF, 3072x4096 originals, the patio slider kept out of `workPhotos` and used on the home tile and doors hero). The cover maths, the Proxy guard, the orphan check and the lead-photo check were each mutation-tested: the rule was deliberately broken and the test confirmed to fail.
 
 `scripts/audit-image-delivery.mjs` is the tool that found the problems. It needs a browser, which this repo does not install, so it is **not in CI**:
 
