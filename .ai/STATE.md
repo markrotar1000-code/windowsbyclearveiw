@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
+
+Keith said "Keep going". #203 and #204 are merged and live. New fixes, each with a mutation-tested test: the Ask page showed "Something went wrong." when the model failed, instead of the server's "call or text us at (564) 208-0801" answer (`fallbackAnswer`); phone numbers broke across two lines in 19 of 918 places measured, mostly the area pages (`keepPhoneTogether`, `test:text-gaps`). `test:all` is still 58 steps. The public lead and signing endpoints were read line by line and are sound. Open for Keith (details in HANDOFF): first-touch attribution never refreshes, so door-hanger scans by returning visitors are not recorded on the lead; the `company` honeypot could in theory be autofilled.
+
 ## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
 
 Keith asked to keep finding and fixing bugs. Found and fixed with a regression test each: CI never ran `test:pagination`; the estimate form and quote-signing page showed the browser's "Failed to fetch" to customers (`visitorMessage`); the Copilot summary compared ISO timestamps to SQLite's clock format (`copilotSnapshot`); bond and insurance detail unreachable by screen readers, a logo link whose name did not contain its visible text, 12 gallery link labels, six unlabelled-group divs; the two-column `.split` section shared a rule with `.btn` (flush left on wide screens, small text), its phone grid and the estimate form grew to their widest child, and the Turnstile widget (300 px) made `/estimate` scroll sideways at 360 px and below; public text under 12 px failed Lighthouse's legible-font audit on `/gallery` (21.89% legible, now 99.78%); and sentences ran into their links (`wall.Plan your project first`) because Astro drops a line break before an inline element.

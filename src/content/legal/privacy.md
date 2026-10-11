@@ -283,7 +283,7 @@ Whatever state you live in, you can ask us to:
 - stop contacting you.
 
 Email [owner@windowsbyclearveiw.com](mailto:owner@windowsbyclearveiw.com) or call
-(564) 208-0801. We will not charge you, and we will not treat you differently
+(564)&nbsp;208-0801. We will not charge you, and we will not treat you differently
 for asking. There is nothing to opt out of regarding sale or targeted
 advertising, because we do neither.
 
@@ -308,4 +308,4 @@ Material changes will be reflected here before they take effect.
 
 - Clearview Windows & Trim LLC, Vancouver, Washington
 - [owner@windowsbyclearveiw.com](mailto:owner@windowsbyclearveiw.com)
-- (564) 208-0801
+- (564)&nbsp;208-0801

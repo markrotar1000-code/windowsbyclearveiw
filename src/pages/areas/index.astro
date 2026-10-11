@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import { getHeroBg } from '../../lib/hero-bg';
+import { keepPhoneTogether } from '../../lib/phone';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CtaBar from '../../components/CtaBar.astro';
 import { site } from '../../data/site';
@@ -44,7 +45,7 @@ const heroBg = await getHeroBg(heroPhoto.image);
             <a href={`/areas/${city.id}`}>
               <span class="area-region">{city.data.region}</span>
               <strong>{city.data.name}</strong>
-              <span class="area-blurb">{city.data.description}</span>
+              <span class="area-blurb">{keepPhoneTogether(city.data.description)}</span>
             </a>
           </li>
         ))}

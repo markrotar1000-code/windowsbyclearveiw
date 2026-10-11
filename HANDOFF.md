@@ -1,5 +1,17 @@
 # Project context — Clearview Windows
 
+## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
+
+Keith said "Keep going". Details: `.ai/CHANGELOG.md` (2026-10-11).
+
+What the next agent must know:
+- **A failed Ask reply can still carry `answer`.** `/ask/api/chat` answers 503 with the fallback answer (phone number and estimate link). The page must show it (`fallbackAnswer` in `src/lib/visitor-errors.ts`); throwing on every non-OK response hides it. `test:visitor-errors` checks the page and that every 503 in `chat.js` keeps `answer: UNAVAILABLE_ANSWER`.
+- **Phone numbers in prose use a non-breaking space.** In a template: `keepPhoneTogether(text)` (`src/lib/phone.ts`); in Markdown: `(564)&nbsp;208-0801`; never in front matter that is also a meta description (use the helper at render time). A `tel:` link is exempt. `test:text-gaps` fails on a plain-space number in the built public pages. A script-written message can still break at the hyphen.
+- **Decision for Keith (revenue measurement): first-touch attribution never refreshes.** `BaseLayout.astro` writes `clearview:first_touch` to `localStorage` once and the lead record uses it, and the saved journey keeps no query strings. A returning visitor who scans a door-hanger QR (`/neighbors`, UTM tags) is recorded as arriving the way they first did. GA4 still sees the UTM on that session. If the door-hanger pilot is judged from the leads view, repeat visitors will undercount it; a "last touch" field would fix that (not built: it is a measurement design choice).
+- **Risk, not observed: the honeypot is named `company`** (`EstimateForm.astro`, `ask-callback.ts`, checked in `estimate.js`). A browser autofill that fills it would make the server answer "ok" and save nothing. Renaming it to a name browsers never autofill is a small change; it would alter spam filtering, so it was left for a decision.
+- Minor, not changed: `/estimate/sent` pushes `generate_lead` on every load (reload double-counts; only the no-JS path reaches it, and it is `noindex`); if the receipt or lead mail fails after the lead is saved, the visitor is told it failed and a retry saves a second lead.
+- Open from before: no real-device or screen-reader test; the Command Center shows the service worker's readable offline message rather than "Failed to fetch"; `astro check` has 201 strict-mode errors (none a real bug, not adopted).
+
 ## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
 
 Keith asked to keep finding and fixing bugs. Details and the method: `.ai/CHANGELOG.md` (2026-10-10, bug sweep); accessibility: `docs/ACCESSIBILITY.md`.

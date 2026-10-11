@@ -16,6 +16,12 @@
 //   2. one of those elements closing immediately before a letter or digit (`</a>text`).
 // Decorative <span> and <i> swatches, dots and step numbers sit next to their label with a CSS gap and are not
 // checked; `)<a` and `</a>.` are fine. Scripts, styles, SVG and <head> are skipped.
+//
+// Also found 2026-10-11: a phone number with an ordinary space breaks across two lines ("(564)" / "208-0801").
+// 19 of 918 numbers measured did, mostly the area pages' summaries. So a third pattern:
+//   3. a phone number written "(360) 555-0123" with a plain space in prose (anywhere except a `tel:` link, whose
+//      text is short and kept on one line with CSS). Use keepPhoneTogether() from src/lib/phone.ts in a template,
+//      or &nbsp; in a Markdown file. Meta tags, structured data and attributes are not prose and are skipped.
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -55,16 +61,55 @@ assert.equal(glued('<p>Marked-up plans welcome. <a href="/x">Email us</a>.</p>')
 assert.equal(glued('<p>(see <a href="/x">the guide</a>)</p><p><span class="dot"></span>Label</p>').length, 0, 'must accept parentheses and decorative spans');
 assert.equal(glued('<script>a.b<a href="x">1</a>c</script><svg><text>x.<b>y</b></text></svg>').length, 0, 'must skip scripts and SVG');
 
+
+const PHONE = /\(\d{3}\) \d{3}-\d{4}/;
+const VOID = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+const NOT_PROSE = new Set(['head', 'script', 'style', 'svg', 'noscript', 'template', 'title']);
+/** Phone numbers in prose that still have a plain space. A `tel:` link is allowed to (CSS keeps it on one line). */
+function breakablePhones(html) {
+  const found = [];
+  const stack = [];
+  for (const [token] of html.matchAll(/<[^>]*>|[^<]+/g)) {
+    if (token.startsWith('<')) {
+      const tag = token.match(/^<(\/)?([a-zA-Z][\w:-]*)/);
+      if (!tag) continue; // comment or doctype
+      const name = tag[2].toLowerCase();
+      if (tag[1]) {
+        const at = stack.map((entry) => entry.name).lastIndexOf(name);
+        if (at >= 0) stack.length = at;
+      } else if (!VOID.has(name) && !token.endsWith('/>')) {
+        stack.push({ name, tel: name === 'a' && /\shref="tel:/i.test(token) });
+      }
+    } else if (PHONE.test(token) && !stack.some((entry) => NOT_PROSE.has(entry.name) || entry.tel)) {
+      found.push(token.trim().slice(0, 90));
+    }
+  }
+  return found;
+}
+assert.equal(breakablePhones('<p>Call (564) 208-0801 today</p>').length, 1, 'must catch a plain-space number in prose');
+assert.equal(breakablePhones('<p>Call (564) 208-0801 today</p>').length, 0, 'must accept a non-breaking space');
+assert.equal(breakablePhones('<p>Call <a href="tel:+15642080801">(564) 208-0801</a></p>').length, 0, 'must accept a tel: link');
+assert.equal(breakablePhones('<a href="/areas/x"><span>(564) 208-0801</span></a>').length, 1, 'must catch a number inside an ordinary link');
+assert.equal(breakablePhones('<head><title>(564) 208-0801</title></head><script>var n = "(564) 208-0801";</script><p>ok</p>').length, 0, 'must skip head and scripts');
+
+// Messages the estimate form writes by script ("... call (564) 208-0801 instead") are not in the built HTML.
+assert.match(readFileSync(join(root, 'src/components/EstimateForm.astro'), 'utf8'), /const phoneDisplay = keepPhoneTogether\(site\.phoneDisplay\)/, 'the estimate form must keep the phone number in its script-written messages on one line');
+
 const found = [];
+const phones = [];
 let pages = 0;
 for (const file of walk(dist)) {
   const html = readFileSync(file, 'utf8');
   pages += 1;
   const path = '/' + relative(dist, file).replaceAll('\\', '/').replace(/(\/?index)?\.html$/, '');
   for (const match of glued(html)) found.push(`${path}  ...${context(html, match)}...`);
+  // The Command Center (Mark's own tool, and the quote and invoice print views) is left out of the phone rule.
+  if (!path.startsWith('/internal')) for (const text of breakablePhones(body(html))) phones.push(`${path}  "${text}"`);
 }
 
 assert.ok(pages > 20, `expected a full site in dist/, found ${pages} pages`);
 assert.deepEqual(found, [], `text runs into an inline element with no space (Astro drops a line break before one; end the text with {' '}):\n  ${found.join('\n  ')}`);
+
+assert.deepEqual(phones, [], `a phone number in prose has a plain space and can break across two lines (use keepPhoneTogether() or &nbsp;):\n  ${phones.join('\n  ')}`);
 
 console.log(`PASS  text gaps (${pages} pages)`);

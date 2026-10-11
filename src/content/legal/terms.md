@@ -146,4 +146,4 @@ and the version published here is the one that applies.
 
 - Clearview Windows & Trim LLC, Vancouver, Washington
 - [owner@windowsbyclearveiw.com](mailto:owner@windowsbyclearveiw.com)
-- (564) 208-0801
+- (564)&nbsp;208-0801
