@@ -62,13 +62,15 @@ AI upscaling can turn a blurred shape behind glass into a face. Every candidate 
 - The source photos are 599–1200 px wide, so the 4K files are **generatively upscaled**: they look sharp but detail is inferred, not captured. Texture on siding and trim is plausible, not exact. This matches how the 2026-10-07 batch was handled; keep it disclosed internally. Ask Mark for original-resolution files (the phone's full-size share, not the compressed forward) before using any of these as a hero on a printed piece or in a claim about a product detail.
 - Responsive widths (`widths={[…1600]}`) come from the existing pipeline; see `docs/IMAGE-DELIVERY.md`.
 
-## Provenance: VERIFY with Mark
+## Provenance: confirmed (Keith, 2026-10-11)
 
-The batch includes paperwork from another contractor, so these photos may **not all be Clearview jobs**. The gallery page copy says "Every photo here is from one of our jobs." Because of that:
+When the batch arrived it included another contractor's paperwork, so these photos might not all have been Clearview jobs, and everything was built to make no claim about them. Later on 2026-10-11 Keith confirmed that the 2026-10-11 photos are Clearview jobs. What changed:
 
-- The door lives in `patioSliderPhoto` (in `src/data/gallery-additions.ts`), **not** in `workPhotos`. It therefore does not appear in "Real installs", "Finished result" groups, the replacement page, or the doors-page OG image. A test enforces this.
-- All new alt text and captions describe only what is visible. None says "installed", "finished", or names a job type. A test enforces this.
-- Once Mark confirms which photos are Clearview jobs, promote the door into `workPhotos` (kind `after`, like the two existing door photos) and the `doorWork` list in `sliding-glass-doors.astro`, which feeds the "Real installs" grid and the OG image, and refine the captions. Photos he says are not his: delete the files and the entries.
+- The door is now the **first card of the "Finished patio door installs" grid** on `/sliding-glass-doors` (kind label "Finished result"), ahead of the two 2026-09-27 door photos. The OG image on that page is unchanged.
+- It is **still not in `workPhotos`**, on purpose: `workPhotos` feeds the gallery's "From the street" group (the door is already near the top of "More photos", and a second copy would show it twice), the replacement page and the featured lists. A test enforces that it appears once on `/gallery`.
+- **Captions and alt text still describe only what is visible.** The batch is confirmed as ours; the scope of each job (replacement, new construction, a door) is not known, so no caption says "installed", "finished" or a job type. The "Finished result" label on the door card and the grid's own heading rest on Keith's word that the photo is a Clearview job. If Mark says that door was not Clearview's work, delete the first entry of `doorWork` in `sliding-glass-doors.astro` (the home tile and hero can stay).
+- The "Every photo here is from one of our jobs" line is not on the gallery page and was not added back. It is allowed now if Keith wants it; the test that forbade it was removed.
+- The paperwork photo (`..._155241.jpg`) is another contractor's document with a customer's details. It is still excluded and should still be deleted from the shared Drive folder.
 
 ## Where it lives
 
@@ -78,5 +80,5 @@ The batch includes paperwork from another contractor, so these photos may **not 
 | `src/data/gallery-additions.ts` | `patioSliderPhoto` plus 9 entries, all 22 ordered by strength |
 | `src/components/GalleryAddition.astro`, `src/pages/gallery.astro` | `eager` first row, tighter top spacing |
 | `src/pages/index.astro` | `slidingDoorsTile = patioSliderPhoto` |
-| `src/pages/sliding-glass-doors.astro` | `getHeroBg(patioSliderPhoto.image)` |
+| `src/pages/sliding-glass-doors.astro` | `getHeroBg(patioSliderPhoto.image)`; first card of the installs grid (`doorWork`) |
 | `scripts/test-image-delivery.mjs` | 4 new groups (tile/hero wiring, not a workPhoto, alt/caption/no-claims/EXIF/size, gallery render) |

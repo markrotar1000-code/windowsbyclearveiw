@@ -68,7 +68,7 @@ Other deliberate choices:
 
 ### Photos whose job is not confirmed, and upscaled phone photos
 
-`src/data/gallery-additions.ts` is the path for photos that should be on the site but whose job Mark has not confirmed (`workPhotos` feeds "Real installs", "Finished result" groups and the "from one of our jobs" copy). Entries carry visual-only alt text and captions, render through `GalleryAddition` (webp, 320 to 1200 px, a "View full photo" link to the original), and `patioSliderPhoto` can also back a home tile or page hero without becoming a work photo (2026-10-11, `docs/GALLERY-PHOTOS-2026-10-11.md`).
+`src/data/gallery-additions.ts` is the path for photos that should be on the site without a stated scope of work (`workPhotos` feeds the gallery's work groups, the replacement page, the featured lists and the kind labels such as "Finished result"). Entries carry visual-only alt text and captions, render through `GalleryAddition` (webp, 320 to 1200 px, a "View full photo" link to the original), and `patioSliderPhoto` can also back a home tile, a page hero and the first card of the doors page's installs grid without becoming a work photo, so it is not shown twice on `/gallery` (2026-10-11, `docs/GALLERY-PHOTOS-2026-10-11.md`; Keith confirmed that batch is Clearview jobs).
 
 The additions are ordered by strength, best exteriors first, and the first row (three tiles) loads eagerly because that row sits at the fold; the "From the street" group below it no longer does.
 

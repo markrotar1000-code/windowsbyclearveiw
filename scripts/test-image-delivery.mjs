@@ -278,15 +278,29 @@ ok('the home sliding-glass-doors tile and the doors-page hero use the patio slid
   const doors = pages.get('sliding-glass-doors');
   const hero = /<section class="page-hero page-hero-photo"[^>]*style="([^"]*)"/.exec(doors)?.[1] ?? '';
   assert.ok(hero.includes(PATIO), 'the /sliding-glass-doors hero background must be the patio slider photo');
-  // It is a hero wash background only: not an <img> in the page body, and not the OG image.
-  assert.ok(!images(doors).some((tag) => (attr(tag, 'src') ?? '').includes(PATIO)), 'the patio photo should be the hero background, not a body <img>');
-  assert.ok(!/property="og:image"[^>]*tan-siding-patio-slider/.test(doors) && !/tan-siding-patio-slider[^>]*property="og:image"/.test(doors), 'the doors-page OG image must stay a confirmed job photo');
+  // The hero uses it as a wash background (not an <img>); its one <img> is the first card of the installs grid.
+  assert.equal(images(doors).filter((tag) => (attr(tag, 'src') ?? '').includes(PATIO)).length, 1, 'the patio photo should be the hero background plus one <img>, the first installs-grid card');
+  assert.ok(!/property="og:image"[^>]*tan-siding-patio-slider/.test(doors) && !/tan-siding-patio-slider[^>]*property="og:image"/.test(doors), 'the doors-page OG image stays the 2026-09-27 door photo (the patio door is a portrait crop that was not checked as a 1200x630 card)');
 });
 
-ok('the patio slider photo is not a workPhoto (provenance not confirmed)', () => {
-  assert.ok(!workSource.includes(PATIO) && !/gallery-additions/.test(workSource), 'the patio photo must not be in work.ts: workPhotos feeds "Real installs" and the "our job" claims');
+ok('the patio slider photo leads the doors-page installs grid and is shown once on the gallery', () => {
+  // Keith confirmed on 2026-10-11 that the batch is Clearview jobs, so the door is in the "Finished
+  // patio door installs" grid. It is still not a workPhoto: that would add a second copy to the
+  // gallery's "From the street" group (it is already near the top of "More photos"), the replacement
+  // page and the featured lists.
+  assert.ok(!workSource.includes(PATIO) && !/gallery-additions/.test(workSource), 'the patio photo must not be in work.ts: it would appear twice on /gallery');
   assert.equal(importPaths.get(patioSliderPhoto.image), `../assets/work/${PATIO}.jpg`, 'patioSliderPhoto should import the patio slider file');
   assert.ok(patioSliderPhoto.alt && patioSliderPhoto.caption);
+  const doors = pages.get('sliding-glass-doors');
+  const grid = /<div class="work-grid"[^>]*>([\s\S]*?)<\/div>\s*<p class="section-link"/.exec(doors)?.[1] ?? '';
+  const gridImages = images(grid);
+  assert.equal(gridImages.length, 3, 'the "Finished patio door installs" grid shows three door photos');
+  assert.ok((attr(gridImages[0], 'src') ?? '').includes(PATIO), 'the patio slider photo leads the installs grid');
+  assert.equal(attr(gridImages[0], 'alt'), patioSliderPhoto.alt, 'the grid card uses the photo\'s own alt text');
+  assert.ok(/Finished result/.test(grid), 'the installs grid labels its cards');
+  // Once on /gallery: in "More photos", not also in a work group.
+  const galleryCopies = images(pages.get('gallery')).filter((tag) => (attr(tag, 'src') ?? '').includes(PATIO) || (attr(tag, 'alt') ?? '') === patioSliderPhoto.alt);
+  assert.equal(galleryCopies.length, 1, 'the patio slider photo must appear exactly once on /gallery');
 });
 
 ok('gallery additions: every photo has a visual alt and caption, none claims a job', () => {
@@ -297,7 +311,7 @@ ok('gallery additions: every photo has a visual alt and caption, none claims a j
     assert.ok(entry.caption.trim().length >= 8, `caption too short: "${entry.caption}"`);
     assert.ok(!seen.has(entry.image), `${entry.caption}: a photo is listed twice`);
     seen.add(entry.image);
-    assert.ok(!claims.test(entry.alt) && !claims.test(entry.caption), `"${entry.caption}": describes the picture only. No install/finish/job claims until the source is confirmed.`);
+    assert.ok(!claims.test(entry.alt) && !claims.test(entry.caption), `"${entry.caption}": describes the picture only. The batch is confirmed as Clearview jobs (Keith, 2026-10-11) but the scope of each job is not known, so no install/finish/job-type claims in a caption.`);
     const meta = originals.get(entry.image);
     assert.ok(meta, `${entry.caption}: image "${entry.image}" is not imported from src/assets/work`);
     assert.ok(meta.width === 3072 && meta.height === 4096, `${entry.caption}: expected a 3072x4096 original, got ${meta.width}x${meta.height}`);
