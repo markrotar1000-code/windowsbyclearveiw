@@ -20,9 +20,13 @@ What the public site is checked for, what was wrong on 2026-10-10, and how to ke
 
 ## The rules
 
+The first three are in `test:a11y-names`; four and five are in `test:text-gaps` and `test:layout-guards`.
+
 1. **Never put `aria-label` or `aria-labelledby` on a `<span>`, `<div>`, `<p>`, `<strong>`, `<em>`, `<b>`, `<i>`, `<small>` or `<code>` without a `role`.** If the words are for screen readers, put them in `<span class="visually-hidden">` (defined in `global.css`).
 2. **A link or button with an `aria-label` must have a name that contains what it shows.** Compared on letters and digits, ignoring case, punctuation and spacing. Text marked `aria-hidden` is still on screen, so it counts. Symbol-only buttons (the calculator's `-` and `+`) are exempt.
 3. **A space between lines that sit in separate flex or grid items.** Nothing renders it, but the text is read without it.
+4. **End text with `{' '}` when a link or `<strong>` follows on the next source line.** Astro's HTML compression drops that line break and leaves no space, so the sentence runs into the link ("wall.Plan your project first" on the home page, `/new-construction` and `/window-features`; read aloud as "wall.Plan"). `npm run test:text-gaps` checks the built HTML.
+5. **Public text is 12 px (0.75rem) or larger.** `--step--2` is a fixed `0.75rem`. Lighthouse failed `/gallery` at 21.89% legible text with 11 px captions; it passes at 99.78%. `test:layout-guards` fails on a smaller `font-size` in public CSS. Exceptions: the logo's "Vancouver, WA" sub-label and the SVG text in `FrameMaterials` (viewBox units); the Command Center is exempt.
 
 `npm run test:a11y-names` (in CI, after the build) checks rules 1 and 2 on every built page, including `/internal` (rule 3 is covered wherever the control has an `aria-label`, because the check reads text the way axe does), and that the home page carries the bond and insurance detail as text. It is a pattern check over static HTML: it cannot see text added by script and it does not compute contrast. It was mutation-tested: the old logo label, the missing wordmark space and an `aria-label` put back on the bond tag each fail it.
 

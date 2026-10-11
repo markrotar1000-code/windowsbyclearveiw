@@ -100,7 +100,10 @@
 
   /* Fluid type ramp. The old scale collapsed in the middle — h3 1.15 / lede
      1.05 / body 1.0 meant everything below the h2 read as body copy. */
-  --step--2: clamp(0.69rem, 0.67rem + 0.11vw, 0.75rem);
+  /* The smallest tier is 12px at every width. It used to ease from 11.1px on a phone up to 12px, and
+     Lighthouse's legible-text audit failed /gallery (about 78% of its text, mostly photo captions, was
+     under 12px). Desktop is unchanged: it already reached 12px. */
+  --step--2: 0.75rem;
   --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.92rem);
   --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.13rem);
   --step-1: clamp(1.2rem, 1.14rem + 0.31vw, 1.38rem);
