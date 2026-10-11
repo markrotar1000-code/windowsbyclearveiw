@@ -175,7 +175,10 @@
    the first question) before this rule existed. */
 [hidden] { display: none !important; }
 
-html { scroll-behavior: smooth; }
+/* The header is sticky and 63-75px tall (measured at 320-1920px), so a jump link used to scroll its
+   target under it: a guide's section heading landed hidden, the gallery's eyebrow clipped. 5.25rem
+   (84px) clears the tallest header with a little air. */
+html { scroll-behavior: smooth; scroll-padding-top: 5.25rem; }
 
 /* A default blue selection on an otherwise tokenised page is the fastest tell
    that nobody looked at the last 1%. Tint it with the accent instead — text

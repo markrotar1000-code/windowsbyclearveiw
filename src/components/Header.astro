@@ -359,6 +359,14 @@ const links = [
       min-width: 240px;
       justify-content: initial;
       white-space: normal;
+      /* The header is sticky, so this panel never scrolls with the page. Thirteen links are ~620px
+         tall: on a landscape phone (390px), a 568px phone or a short laptop window the lower links,
+         "Request an estimate" among them, were off the screen with no way to reach them. Cap the
+         panel at the room under the header and let it scroll. 64px is the header row (min-height). */
+      max-height: calc(100vh - 64px - 1.6rem);
+      max-height: calc(100dvh - 64px - 1.6rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .nav.is-open { display: flex; }
