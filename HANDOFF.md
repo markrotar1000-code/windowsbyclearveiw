@@ -1,5 +1,19 @@
 # Project context — Clearview Windows
 
+## 2026-10-11 - Bug sweep, fourth round (branch `claude/bug-sweep-4-2026-10-11`)
+
+Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).
+
+What the next agent must know:
+- **The phone menu is capped and scrolls** (`Header.astro`, 1400px block: `max-height: calc(100dvh - 64px - 1.6rem)`, `overflow-y: auto`). The header is sticky, so anything absolutely positioned inside it does not scroll with the page; a panel taller than the screen cannot be reached. If the header's row height (`min-height: 64px`) changes, change the 64px in that `max-height` too. `test:layout-guards` guard 7.
+- **Public text fields must be 16 px on touch screens.** iOS Safari zooms the page in on focus below 16 px. A smaller desktop size is allowed only with a `@media (pointer: coarse)` rule that restores `1rem` (the Ask message box does this). `test:layout-guards` guards 8 and 9 scan every public `input`, `textarea` and `select` rule.
+- **`html` has `scroll-padding-top: 5.25rem`** so jump links clear the sticky header (63 to 75 px tall, 320 to 1920 px wide). Do not remove it, and do not add a per-target `scroll-margin-top` on top of it without measuring. `test:layout-guards` guard 9 needs at least 4.75rem.
+- **How these were found:** real interaction, not reading. Open the menu at 844x390 and 375x667; click every `a[href^="#"]` and measure the target's `getBoundingClientRect().top` against the header's bottom; read `getComputedStyle(field).fontSize` for every field at 390 px wide. All three are quick to rerun after a header, form or layout change.
+- **Local checks that look like bugs but are not:** `/api/google-reviews` 404 under `astro preview`; the Turnstile and WebGPU console warnings in a headless browser; axe reporting forced-colours contrast on the logo, and 4.07 to 4.45:1 on two guide captions while they fade in (`--ink-faint` on `--paper-sunk` is 4.52:1).
+- **Open, for Keith:** no `Content-Security-Policy` header (trial it report-only first); the home page's 1.5 MB logo video downloads on phones and under reduced motion (`VideoHero.astro`); the site tagline "Great prices." (2026-10-04, owner's call).
+- **Could not verify:** the La Center permit link in `window-replacement-permit-washington.md` (`ci.lacenter.wa.us` returns 403 to this environment, home page included).
+
+
 ## 2026-10-11 - Bug sweep, third round (branch `claude/bug-sweep-3-2026-10-11`)
 
 Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).

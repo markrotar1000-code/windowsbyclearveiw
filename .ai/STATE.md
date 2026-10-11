@@ -1,5 +1,10 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-11 - Bug sweep, fourth round (branch `claude/bug-sweep-4-2026-10-11`)
+
+Keith asked to keep fixing public-facing bugs. Round 3 (#209) is merged and live. This round tested behaviour, not just pages, and found three real bugs, each fixed with a mutation-checked guard in `test:layout-guards`: the open phone menu could not scroll, so on a phone held sideways, a 568 px phone or a short laptop window its lower links (down to "Request an estimate") were unreachable (`Header.astro`); the Ask message box was 14 px, which makes iOS zoom the page on tap (`ask.css`); and jump links (guide tables of contents, gallery) scrolled their target under the sticky header (`html { scroll-padding-top: 5.25rem }`). Clean: keyboard and focus on 12 pages, axe in dark mode, 320 px, reduced motion and forced colours on all 34 pages, outside links, structured data, layout shift, the planner. `test:all` is still 58 steps. Open: no `Content-Security-Policy` header; the 1.5 MB home video loads on phones; the La Center permit link could not be checked from here (403 to this network).
+
+
 ## 2026-10-11 - Bug sweep, third round (branch `claude/bug-sweep-3-2026-10-11`)
 
 Keith asked to keep fixing public-facing bugs. One real bug found by a real-browser crawl of the built site (80 page loads, phone and desktop): the "NEW CONSTRUCTION" tag on `WorkCard` photo cards was clipped on phones (home, gallery). Fixed in `WorkCard.astro` (`.work-kind` may shrink and wrap) with `test:layout-guards` guard 6. Everything else checked was clean: live site status, redirects, sitemap and og:image for all 34 URLs; build-level emails, phones, domains, links and anchors; axe-core 0 violations on 10 pages. `test:all` is still 58 steps. Open: no `Content-Security-Policy` header site-wide (hardening; needs a report-only trial). The 2026-10-11 gallery photos are still unconfirmed as Clearview jobs (VERIFY with Mark).

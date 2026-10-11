@@ -1,5 +1,5 @@
-// Guards for five layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, and a
-// fifth found 2026-10-11 by the round 3 crawl (360 and 390 px).
+// Guards for six layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, a
+// fifth found 2026-10-11 by the round 3 crawl (360 and 390 px), and and three by the round 4 sweep (short screens, text-field size on phones, jump links under the sticky header).
 //
 //   1. `.split` (the two-column section on 11 pages) shared a rule with `.btn`: `.split, .btn { display:
 //      inline-flex; padding; border; font-size; ... }`. An inline-level box ignores `margin-inline: auto`,
@@ -20,6 +20,17 @@
 //   5. Photo cards (WorkCard) set their tag ("NEW CONSTRUCTION") in tracked capitals with `flex: none`. A phone's
 //      two-column tile is about 150 px wide; the tag is wider, so its tail ran past the card edge and was clipped
 //      on the home page and the gallery. The tag may now shrink and wrap inside the card.
+//   6. The open phone menu is an absolutely positioned panel inside a sticky header, so it never scrolls with
+//      the page, and it had no height limit. Its thirteen links are about 620 px tall: on a phone held sideways
+//      (390 px of height), a 568 px phone or a laptop window under ~720 px, the lower links were off the screen
+//      with no way to reach them. On a 667 px phone "Request an estimate" was cut off; at 390 px seven links
+//      (Tools through "Request an estimate") were. The panel is now capped to the room under the header and scrolls.
+//   7. The Ask page's message box was 14 px (0.88rem on a phone). iOS Safari zooms the page in when a text field
+//      under 16 px takes focus and does not zoom back out by itself, on a page built as a fixed-height app. Every
+//      other field on the site was already 16 px or more. Touch screens now get 16 px there.
+//   8. Jump links scrolled their target under the sticky header (63-75 px tall). On a guide the section heading was
+//      hidden behind it after tapping the table of contents (102 of 104 jump links on the guides and the gallery
+//      landed at or above the header's bottom edge). `html` now has `scroll-padding-top`.
 //
 // Source check, no build or browser needed. The browser measurements that found them are in the 2026-10-10
 // "bug sweep" entry of .ai/CHANGELOG.md.
@@ -101,4 +112,47 @@ assert.match(kindRule[1], /overflow-wrap:\s*(?:anywhere|break-word)/, 'WorkCard 
 const captionRule = workCard.match(/\.work-card figcaption\s*\{([^}]*)\}/);
 assert.ok(captionRule && /flex-wrap:\s*wrap/.test(captionRule[1]), 'WorkCard figcaption must wrap so the tag can drop under the caption');
 
-console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap)`);
+// 7. The phone menu panel is capped to the screen and scrolls (see 6).
+const header = readFileSync(`${root}src/components/Header.astro`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const menuMedia = header.match(/@media \(max-width:\s*1400px\)\s*\{([\s\S]*?)\n  \}\n/);
+assert.ok(menuMedia, 'Header.astro must have the @media (max-width: 1400px) menu block');
+const panel = menuMedia[1].match(/\.nav\s*\{([^}]*position:\s*absolute[^}]*)\}/);
+assert.ok(panel, 'the phone menu panel (.nav, position: absolute) must be in the 1400px block');
+assert.match(panel[1], /max-height:\s*calc\(100d?vh\s*-/, 'the phone menu panel needs a max-height tied to the screen height, or its lower links are unreachable on a short screen');
+assert.match(panel[1], /max-height:\s*calc\(100dvh\s*-/, 'use dvh as well, so the mobile browser bar does not hide the bottom of the panel');
+assert.match(panel[1], /overflow-y:\s*auto/, 'the phone menu panel must scroll (`overflow-y: auto`)');
+
+// 8. No public text field is under 16 px on a touch screen (iOS zooms the page on focus below 16 px, see 7).
+//    A smaller desktop size is allowed only where a `@media (pointer: coarse)` rule sets it back to 1rem.
+const fieldSelector = /(?:^|[\s>+~,])(?:input|textarea|select)(?:\[[^\]]*\]|:[a-z-]+)*$/;
+const smallFields = [];
+let fieldRules = 0;
+for (const file of sources(`${root}src`)) {
+  const rel = file.slice(root.length).replaceAll('\\', '/');
+  const text = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const coarse = [...text.matchAll(/@media\s*\(\s*pointer:\s*coarse\s*\)\s*\{([\s\S]*?\}\s*)\}/g)].map((m) => m[1]).join('\n');
+  for (const [, selectors, body] of text.matchAll(/([^{}@;]+)\{([^{}]*)\}/g)) {
+    const declared = body.match(/(?:^|;)\s*font-size:\s*([^;}]+)/);
+    if (!declared) continue;
+    const size = declared[1].trim().match(/^([0-9.]+)(rem|px)$/); // var(--step-0), max(16px, 1em) and the like are not under 16 px
+    for (const selector of selectors.trim().split(/\s*,\s*/)) {
+      if (!fieldSelector.test(selector)) continue;
+      fieldRules += 1;
+      if (!size || parseFloat(size[1]) * (size[2] === 'rem' ? 16 : 1) >= 16) continue;
+      const restored = new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\{[^}]*font-size:\\s*1rem`).test(coarse);
+      if (!restored) smallFields.push(`${rel}: ${selector} { font-size: ${size[1]}${size[2]} }`);
+    }
+  }
+}
+assert.ok(fieldRules >= 6, `expected to read the site's text-field rules, read ${fieldRules}; the scan is broken`);
+assert.deepEqual(smallFields, [], `public text fields must be 16 px or more on touch screens:\n  ${smallFields.join('\n  ')}`);
+const askCss = readFileSync(`${root}src/styles/ask.css`, 'utf8');
+assert.ok(!/\.ask-composer textarea\{font-size:\.88rem\}/.test(askCss), 'the Ask message box must not be 0.88rem on a phone');
+assert.match(askCss, /@media\(pointer:coarse\)\{\.ask-composer textarea\{font-size:1rem\}\}/, 'the Ask message box must be 1rem on touch screens');
+
+// 9. `html` keeps room for the sticky header when a jump link or focus scrolls an element into view.
+const scrollPad = css.match(/(?:^|\})\s*html\s*\{[^}]*scroll-padding-top:\s*([0-9.]+)rem/);
+assert.ok(scrollPad, '`html` needs `scroll-padding-top` so jump links do not land under the sticky header');
+assert.ok(parseFloat(scrollPad[1]) * 16 >= 76, `scroll-padding-top must clear the sticky header (up to 75 px tall), found ${scrollPad[1]}rem`);
+
+console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header)`);
