@@ -1,5 +1,24 @@
 # ICM Changelog
 
+## 2026-10-11 - 2026-10-11 photos confirmed as Clearview jobs (branch `claude/photos-confirmed-2026-10-11`)
+
+Keith: "the 2026-10-11 photos are Clearview jobs." That was the open VERIFY on the 2026-10-11 gallery batch, which had kept the new patio door out of the installs grid and made every caption claim-free.
+
+Changed:
+1. **The patio door now leads the "Finished patio door installs" grid on `/sliding-glass-doors`** (`doorWork` in the page: the door, then the two 2026-09-27 door photos), labelled "Finished result" like them. The home card and the doors hero already used it (#206).
+2. **It is still not in `workPhotos`.** That would show it a second time on `/gallery` (it is #2 of "More photos"; a work photo of kind `after` also lands in "From the street"), and add it to the replacement page and the featured lists. `test:image-delivery` now checks it is the first installs-grid card and appears exactly once on `/gallery`.
+3. **The doors-page social card is unchanged** (still the 2026-09-27 door photo). The new door is a 3:4 portrait; the 1200x630 centred crop is a mid-height band of the door and shows the privacy retouch on the left glass, so it would make a poor link preview. The old assertion that the card must not be the patio door now says why.
+4. **Removed the guard against "every photo here is from one of our jobs"** (`test:public-terminology`): its only reason was the unconfirmed batch. The line is not on the page and was not added back; it is allowed now if Keith wants it.
+5. **Captions and alt text still describe only what is visible** (`test:image-delivery`). The batch is confirmed as ours, but the scope of each job (replacement, new construction, a door) is not known.
+6. Docs: `docs/GALLERY-PHOTOS-2026-10-11.md` (provenance section), `docs/IMAGE-DELIVERY.md`, `.ai/references/public-copy-positioning.md`, HANDOFF, STATE.
+
+Rests on Keith's word, to revisit if Mark disagrees: that the patio door was Clearview's own work (the grid and its heading say "installs"). To undo: delete the first entry of `doorWork`.
+
+Not changed: the paperwork photo (another contractor's document, a customer's details) is still excluded and should still be deleted from the shared Drive folder. The doors hero sentence says "install the door level and flashed", a trade word like the ones Keith had removed from the gallery; not touched, for his call.
+
+Validation: `npm run test:all` (58 steps), `npm run build`; the grid checked in a browser at 390 and 1440 px.
+
+
 ## 2026-10-11 - Bug sweep, fourth round (branch `claude/bug-sweep-4-2026-10-11`)
 
 Keith: "Keep working on fixing public facing bugs". PR #209 (round 3: the clipped "NEW CONSTRUCTION" tag) is merged and live (production CSS checked). Rounds 1 to 3 read pages; this round used the pages: opened the phone menu on short screens, tabbed through 12 pages, tapped every jump link, measured every text field, and drove the planner.

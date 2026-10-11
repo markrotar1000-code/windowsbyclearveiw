@@ -36,7 +36,7 @@ Keith pointed at "What the street sees once the job is done" and said that kind 
 - Say "house" or "side of the house", not "elevation" (architect's word). Not "flashed", "next trade", "double-hungs" or "sliders" in the gallery's own wording.
 - Write what the picture shows, in a sentence a homeowner would say. No poetic lines.
 - **No photo or job counts on the gallery** (no "72", no "22 photos"): a number next to a gallery reads as the number of jobs Clearview has done. Enforced by `test:image-delivery`.
-- Do not write "every photo here is from one of our jobs" while any photo's source is unconfirmed (the 2026-10-11 batch; see `docs/GALLERY-PHOTOS-2026-10-11.md`).
+- The 2026-10-11 batch is confirmed as Clearview jobs (Keith, 2026-10-11), so a plain "from our jobs" line is allowed on the gallery if Keith wants one. Do not describe a photo's scope (replacement, new construction, "installed") from the picture alone; the doors page's installs grid is the one place that labels a 2026-10-11 photo "Finished result", on Keith's word that it is ours. See `docs/GALLERY-PHOTOS-2026-10-11.md`.
 - Still to do: "elevation" remains in six guide sentences (an FAQ answer, two hero image credits, three body lines) and builder-facing copy on `/new-construction`, where it is the normal word. Guide edits need the owner's say-so for FAQs and a rebuild of the Ask index (`npm run build:guides-index`, needs `GEMINI_API_KEY`).
 
 ## Siding (owner direction, 2026-10-04)

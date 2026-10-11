@@ -23,7 +23,7 @@ What the next agent must know:
 - **`/api/google-reviews` 404s under `astro preview`.** It is a Cloudflare Pages Function (`functions/api/google-reviews.js`), so a local browser crawl always logs one failed request per page. Production returns 200 JSON. Not a bug; do not "fix" it.
 - **Headless-sandbox console noise is not a site bug:** the Turnstile error on `/estimate` and the WebGPU warning. Check `/estimate` on a real phone if the security check matters to a change.
 - **Open, for Keith:** no `Content-Security-Policy` header anywhere. Adding one is hardening; it must allow GA4, GTM, Meta, Turnstile and the review feed, so trial it as `Content-Security-Policy-Report-Only` first.
-- **Open, for Mark:** are the 2026-10-11 gallery photos Clearview jobs? (`docs/GALLERY-PHOTOS-2026-10-11.md`.) Until yes, no "every photo is from one of our jobs" claim, and the door stays out of `workPhotos`.
+- **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
 ## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
@@ -59,7 +59,7 @@ What the next agent must know:
 Details: `docs/GALLERY-PHOTOS-2026-10-11.md`, `.ai/CHANGELOG.md` (2026-10-11).
 
 What the next agent must know:
-- **Provenance is unconfirmed.** The batch contains another contractor's paperwork. The door is `patioSliderPhoto` in `src/data/gallery-additions.ts`, deliberately **not** in `workPhotos` (that feeds "Real installs", "Finished result" and the "every photo is from one of our jobs" copy). `test:image-delivery` fails if it is added to `work.ts` or if a gallery caption says install / finished / job. Once Mark confirms, promote it and rewrite the captions.
+- **The 2026-10-11 batch is Clearview jobs (Keith, 2026-10-11).** The door is `patioSliderPhoto` in `src/data/gallery-additions.ts`. It leads the `/sliding-glass-doors` installs grid (labelled "Finished result") and is still deliberately **not** in `workPhotos`: that would show it a second time in `/gallery`'s "From the street" group and add it to the replacement page and featured lists. `test:image-delivery` fails if it is added to `work.ts`, if it is not the first installs-grid card, or if it appears other than once on `/gallery`. Gallery captions still say nothing about install, finish or job type (`test:image-delivery`): the batch is confirmed as ours, the scope of each job is not. The paperwork photo in the same Drive folder is another contractor's and should still be deleted from it.
 - **Look at upscaled photos at full size before committing them, glass first.** The 4K upscale made a face legible in the door glass and showed a person inside another house. "View full photo" serves the committed file.
 - **Hero = the doors page** (`getHeroBg(patioSliderPhoto.image)`); the home hero (`heroPhoto` in `index.astro`, a windows photo in the video reveal) is unchanged. Say so if Keith meant the home hero.
 - Higgsfield: upload is `media_upload`, then `curl -X PUT` with headers `Content-Type: image/jpeg` and `If-None-Match: *`, then `media_confirm`, then `upscale_image` (2 credits, 4 concurrent jobs at most on the starter plan). Source photos are 600 to 1200 px: the result is generated detail.

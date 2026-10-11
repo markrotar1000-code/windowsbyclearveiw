@@ -25,10 +25,12 @@ import tanSidingDoubleHungPair from '../assets/work/gallery-tan-siding-double-hu
  * The sliding glass door shown on the home page's "Sliding glass doors" tile and as the
  * /sliding-glass-doors hero background (2026-10-11 batch, docs/GALLERY-PHOTOS-2026-10-11.md).
  *
- * It lives here, not in workPhotos, on purpose: workPhotos feeds the "Finished result" groups,
- * the replacement page and the "Real installs" grid, and each of those says the job was ours.
- * This batch's provenance is not confirmed yet (VERIFY with Mark), so the photo carries only a
- * visual description. A person visible through the glass was retouched out (see the doc).
+ * Keith confirmed on 2026-10-11 that this batch is Clearview jobs. The door is also the first photo in
+ * the /sliding-glass-doors "Finished patio door installs" grid. It still lives here, not in workPhotos,
+ * on purpose: workPhotos feeds the gallery's "From the street" group (it is already shown, near the
+ * top, in "More photos"), the replacement page and the featured lists, and a second copy would show it
+ * twice on /gallery. Captions and alt text describe what is visible; the job's scope is not known.
+ * A person visible through the glass was retouched out (see the doc).
  */
 export const patioSliderPhoto = {
   image: patioSlider,

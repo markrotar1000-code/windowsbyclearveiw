@@ -66,8 +66,7 @@ for (const f of ['src/pages/areas/index.astro', 'src/pages/areas/[slug].astro'])
 }
 
 // The gallery page speaks plainly (Keith, 2026-10-11: "What the street sees once the job is done" was
-// weird, and jargon-heavy copy had been flagged before). No trade or architect terms in its words, and no
-// claim that every photo is Clearview's own job while the source of some photos is unconfirmed.
+// weird, and jargon-heavy copy had been flagged before). No trade or architect terms in its words.
 {
   const gallery = readFileSync(join(root, 'src/pages/gallery.astro'), 'utf8').split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
   const markup = gallery.slice(gallery.indexOf('---', 3)); // the template and styles, not the frontmatter's imports
@@ -75,7 +74,6 @@ for (const f of ['src/pages/areas/index.astro', 'src/pages/areas/[slug].astro'])
   const words = `${frontCopy} ${markup.replace(/<style[\s\S]*$/, '').replace(/<[^>]+>/g, ' ')}`;
   const jargon = [/\belevations?\b/i, /\bflash(?:ed|ing)\b/i, /\bnext trade\b/i, /\bdouble-hungs?\b/i, /\bsliders\b/i, /once the job is done/i];
   for (const re of jargon) assert.ok(!re.test(words), `gallery page uses jargon or the odd phrasing ${re}`);
-  assert.ok(!/every photo here is from one of our jobs/i.test(words), 'the gallery must not claim every photo is from one of our jobs until the 2026-10-11 photos are confirmed as Clearview jobs');
 }
 
 // Photo captions and alt text say "house" or "side of the house", not "elevation" (architect's word; same
