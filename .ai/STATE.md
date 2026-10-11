@@ -1,5 +1,10 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-11 - Bug sweep, third round (branch `claude/bug-sweep-3-2026-10-11`)
+
+Keith asked to keep fixing public-facing bugs. One real bug found by a real-browser crawl of the built site (80 page loads, phone and desktop): the "NEW CONSTRUCTION" tag on `WorkCard` photo cards was clipped on phones (home, gallery). Fixed in `WorkCard.astro` (`.work-kind` may shrink and wrap) with `test:layout-guards` guard 6. Everything else checked was clean: live site status, redirects, sitemap and og:image for all 34 URLs; build-level emails, phones, domains, links and anchors; axe-core 0 violations on 10 pages. `test:all` is still 58 steps. Open: no `Content-Security-Policy` header site-wide (hardening; needs a report-only trial). The 2026-10-11 gallery photos are still unconfirmed as Clearview jobs (VERIFY with Mark).
+
+
 ## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
 
 Keith said "Keep going". #203 and #204 are merged and live. New fixes, each with a mutation-tested test: the Ask page showed "Something went wrong." when the model failed, instead of the server's "call or text us at (564) 208-0801" answer (`fallbackAnswer`); phone numbers broke across two lines in 19 of 918 places measured, mostly the area pages (`keepPhoneTogether`, `test:text-gaps`). `test:all` is still 58 steps. The public lead and signing endpoints were read line by line and are sound. Open for Keith (details in HANDOFF): first-touch attribution never refreshes, so door-hanger scans by returning visitors are not recorded on the lead; the `company` honeypot could in theory be autofilled.

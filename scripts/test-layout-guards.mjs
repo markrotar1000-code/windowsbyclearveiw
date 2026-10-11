@@ -1,4 +1,5 @@
-// Guards for four layout bugs found 2026-10-10 by loading every public page at 320, 390 and 1920 px.
+// Guards for five layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, and a
+// fifth found 2026-10-11 by the round 3 crawl (360 and 390 px).
 //
 //   1. `.split` (the two-column section on 11 pages) shared a rule with `.btn`: `.split, .btn { display:
 //      inline-flex; padding; border; font-size; ... }`. An inline-level box ignores `margin-inline: auto`,
@@ -16,6 +17,9 @@
 //      smallest type tier (`--step--2`, used for captions, labels and tags on most pages) bottomed out at
 //      11.0 px on a phone, and the /ask chat page set a dozen sizes between 9.6 and 11.5 px. Google's
 //      mobile-friendly check wants 12 px. Public pages now keep every text size at 12 px (0.75rem) or more.
+//   5. Photo cards (WorkCard) set their tag ("NEW CONSTRUCTION") in tracked capitals with `flex: none`. A phone's
+//      two-column tile is about 150 px wide; the tag is wider, so its tail ran past the card edge and was clipped
+//      on the home page and the gallery. The tag may now shrink and wrap inside the card.
 //
 // Source check, no build or browser needed. The browser measurements that found them are in the 2026-10-10
 // "bug sweep" entry of .ai/CHANGELOG.md.
@@ -85,4 +89,16 @@ assert.deepEqual(tooSmall, [], `public text must be at least ${TEXT_FLOOR_PX} px
 const step2 = css.match(/--step--2:\s*([0-9.]+)rem\s*;/);
 assert.ok(step2 && parseFloat(step2[1]) * 16 >= TEXT_FLOOR_PX, `--step--2 must be a fixed size of at least ${TEXT_FLOOR_PX} px, found ${step2 ? step2[0] : 'a fluid or missing value'}`);
 
-console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px)`);
+// 6. Photo-card tags may shrink and wrap. A tag that cannot shrink (`flex: none`) is clipped by the card's
+//    `overflow: hidden` when it is wider than a two-column phone tile (150 px at 360 px).
+const workCard = readFileSync(`${root}src/components/WorkCard.astro`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const kindRule = workCard.match(/\.work-kind\s*\{([^}]*)\}/);
+assert.ok(kindRule, 'WorkCard must style .work-kind');
+assert.ok(!/flex:\s*none\b/.test(kindRule[1]), 'WorkCard .work-kind must not be `flex: none`; a long tag is clipped on a phone tile');
+assert.match(kindRule[1], /flex:\s*0\s+1\s+auto/, 'WorkCard .work-kind must be allowed to shrink (`flex: 0 1 auto`)');
+assert.match(kindRule[1], /min-width:\s*0/, 'WorkCard .work-kind needs `min-width: 0` so it can shrink below its text');
+assert.match(kindRule[1], /overflow-wrap:\s*(?:anywhere|break-word)/, 'WorkCard .work-kind must wrap an over-long word instead of running past the card');
+const captionRule = workCard.match(/\.work-card figcaption\s*\{([^}]*)\}/);
+assert.ok(captionRule && /flex-wrap:\s*wrap/.test(captionRule[1]), 'WorkCard figcaption must wrap so the tag can drop under the caption');
+
+console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap)`);

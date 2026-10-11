@@ -1,5 +1,24 @@
 # ICM Changelog
 
+## 2026-10-11 - Bug sweep, third round (branch `claude/bug-sweep-3-2026-10-11`)
+
+Keith: "Keep working on fixing public facing bugs". PRs #206, #207 and #208 (photos, gallery order, no counts, plain wording) are merged and main CI was green after each. This round re-checked the live site and the build, then crawled the built site in a real browser.
+
+Fixed:
+1. **The "NEW CONSTRUCTION" tag on photo cards was clipped on phones.** `WorkCard` set the tag in tracked capitals with `flex: none`. A two-column phone tile is about 150 px wide, the tag is wider, so its tail ran past the card edge and `overflow: hidden` cut it off ("NEW CONSTRUCTIO"). Seen on the home page and in the gallery at 360 and 390 px. The earlier same-day fix (`flex-wrap: wrap` on the caption) moved the tag to its own line but did not make it narrower. `.work-kind` is now `flex: 0 1 auto; min-width: 0; overflow-wrap: anywhere`, so it wraps to "NEW / CONSTRUCTION" inside the card. `test:layout-guards` gained guard 6 (mutation-checked: with `flex: none` restored it fails).
+
+Checked and clean (no change):
+- **Live site** (`windowsbyclearview.com`): status codes and redirects; all 34 sitemap URLs (canonical, title, description, one h1, robots, og:image, JSON-LD, no duplicates); the 34 og:image files are real 1200x630 PNGs; `/api/google-reviews` returns 200 JSON.
+- **Build:** emails, phones and domains are consistent (public web `windowsbyclearview.com`, mail on the legacy `windowsbyclearveiw.com`); no broken internal links, anchors or assets.
+- **Browser crawl** (40 pages x phone and desktop, 80 loads): no page error, no horizontal overflow, no broken image or anchor, no missing alt, no duplicate id, one h1 and a canonical on every public page. The only console noise is local-only: `/api/google-reviews` is a Pages Function and 404s under `astro preview` (200 on production), the Turnstile and WebGPU warnings come from the headless sandbox, and `/internal` has one hidden install-banner link with no text (hidden, not public).
+- **Cards:** caption and tag clipping measured on 15 pages at 360, 390, 768 and 1440 px: none after the fix.
+- **axe-core** (wcag2a, wcag2aa, wcag21a, wcag21aa, best-practice) on 10 pages at 390 and 1440 px: 0 violations.
+
+Not changed, for Keith to decide: no `Content-Security-Policy` header on any page (hardening, not a visible bug; a policy has to allow GA4, GTM, Meta, Turnstile and the Google review feed, so it needs a report-only trial first).
+
+Validation: `npm run test:all` (58 steps, no new step; `test:layout-guards` extended), `npm run build`.
+
+
 ## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
 
 Keith: "Keep going" on the bug sweep. PRs #203 and #204 (2026-10-10) are merged and live (checked on production: the hero sentence has its space; `windowsbyclearveiw.com`, `www.` and `http://` all 301 to `https://windowsbyclearview.com/`). This round read the public server paths line by line (`/api/estimate`, abuse guard, lead alert, quote signing, Google reviews, the Ask middleware, chat and handoff), ran an HTML validator over every built page, and measured every phone number on the public pages at seven widths.

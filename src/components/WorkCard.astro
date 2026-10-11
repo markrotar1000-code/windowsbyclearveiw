@@ -133,7 +133,11 @@ const widths = tileWidths(scale);
   }
 
   .work-kind {
-    flex: none;
+    /* May shrink and wrap: "NEW CONSTRUCTION" in tracked capitals is wider than a ~150 px
+       phone tile, and with `flex: none` its tail ran past the card edge and was clipped. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
     text-transform: uppercase;
     letter-spacing: var(--tracking-label);
     font-size: var(--step--2);
