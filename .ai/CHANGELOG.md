@@ -1,6 +1,6 @@
 # ICM Changelog
 
-## 2026-10-10 - Bug sweep (branch `claude/bug-sweep`)
+## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
 
 Keith: "Keep working on finding bugs and repairing." Method: a real-browser crawl of every public page (phone and desktop, light and dark; console and network errors, overflow, links), interaction tests with the APIs mocked and with the connection cut mid-submit, an axe-core scan (38 public pages, 152 page-views), a width sweep (39 pages at nine widths from 320 to 1920 px, 351 page-views), and reads of the SEO and structured data, secrets and personal data, and date handling. Each bug below got a regression test that was mutation-tested (put the bug back and it fails).
 

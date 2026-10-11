@@ -1,6 +1,6 @@
 # ICM State â€” 2026-10-01
 
-## 2026-10-10 - Bug sweep (branch `claude/bug-sweep`)
+## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
 
 Keith asked to keep finding and fixing bugs. Found and fixed with a regression test each: CI never ran `test:pagination`; the estimate form and quote-signing page showed the browser's "Failed to fetch" to customers (`visitorMessage`); the Copilot summary compared ISO timestamps to SQLite's clock format (`copilotSnapshot`); bond and insurance detail unreachable by screen readers, a logo link whose name did not contain its visible text, 12 gallery link labels, six unlabelled-group divs; the two-column `.split` section shared a rule with `.btn` (flush left on wide screens, small text), its phone grid and the estimate form grew to their widest child, and the Turnstile widget (300 px) made `/estimate` scroll sideways at 360 px and below.
 

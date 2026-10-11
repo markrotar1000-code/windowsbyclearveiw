@@ -1,6 +1,6 @@
 # Project context — Clearview Windows
 
-## 2026-10-10 - Bug sweep (branch `claude/bug-sweep`)
+## 2026-10-10 - Bug sweep (branch `claude/bug-sweep-2026-10-10`)
 
 Keith asked to keep finding and fixing bugs. Details and the method: `.ai/CHANGELOG.md` (2026-10-10, bug sweep); accessibility: `docs/ACCESSIBILITY.md`.
 
