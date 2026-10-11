@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import { getHeroBg } from '../../lib/hero-bg';
+import { keepPhoneTogether } from '../../lib/phone';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CtaBar from '../../components/CtaBar.astro';
 import WorkCard from '../../components/WorkCard.astro';
@@ -109,7 +110,7 @@ const heroBg = await getHeroBg(heroPhoto.image);
     <div class="wrap">
       <p class="kicker">{city.data.region}</p>
       <h1>{city.data.title}</h1>
-      <p class="lede">{city.data.description}</p>
+      <p class="lede">{keepPhoneTogether(city.data.description)}</p>
     </div>
     <p class="hero-photo-credit">Clearview job photo — not specific to {city.data.name}</p>
   </section>

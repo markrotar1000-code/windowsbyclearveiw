@@ -10,7 +10,7 @@ import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const { visitorMessage } = await import(pathToFileURL(`${root}src/lib/visitor-errors.ts`).href);
+const { visitorMessage, fallbackAnswer } = await import(pathToFileURL(`${root}src/lib/visitor-errors.ts`).href);
 
 // Our server's own text is shown; the browser's network text and anything else is replaced.
 assert.equal(visitorMessage(new Error('Fix the highlighted fields.'), 'fallback'), 'Fix the highlighted fields.');
@@ -51,4 +51,21 @@ assert.ok(scanned >= 4, `expected the estimate form, signing page, Ask page and 
 for (const path of ['src/components/EstimateForm.astro', 'src/pages/sign.astro', 'src/scripts/ask-callback.ts']) {
   assert.match(readFileSync(join(root, path), 'utf8'), /visitorMessage\(error,/, `${path} should pass its catch error through visitorMessage`);
 }
+
+// Found 2026-10-11: when the model behind /ask answers 503, the body carries the fallback answer (the phone
+// number and the estimate link). The page threw on every non-OK response and showed "Something went wrong."
+// instead, so the one moment the assistant is down was the moment a visitor was not told how to reach us.
+assert.equal(fallbackAnswer({ answer: 'Call us at (564) 208-0801.' }), 'Call us at (564) 208-0801.');
+for (const none of [{ error: 'Too many' }, { answer: '' }, { answer: '   ' }, { answer: 42 }, {}, null, undefined, 'text']) {
+  assert.equal(fallbackAnswer(none), null, `${JSON.stringify(none)} carries no fallback answer`);
+}
+const askPage = readFileSync(join(root, 'src/pages/ask.astro'), 'utf8');
+assert.match(askPage, /import \{ fallbackAnswer \} from '\.\.\/lib\/visitor-errors'/, 'the Ask page must import fallbackAnswer');
+assert.ok(askPage.includes("if(!r.ok&&!fallbackAnswer(result))throw new Error(result.error||'Something went wrong.')"), 'the Ask page must show a failed reply\'s fallback answer instead of throwing on it');
+// The server side of that contract: every 503 from the chat endpoint carries the fallback answer.
+const chat = readFileSync(join(root, 'functions/ask/api/chat.js'), 'utf8');
+const failures = [...chat.matchAll(/json\(\{([^}]*)\},503\)/g)];
+assert.ok(failures.length >= 3, `expected the chat endpoint's 503 responses, found ${failures.length}`);
+for (const [, body] of failures) assert.ok(/answer:UNAVAILABLE_ANSWER/.test(body), `a 503 from /ask/api/chat must carry answer: UNAVAILABLE_ANSWER, found {${body.slice(0, 60)}}`);
+
 console.log(`PASS  visitor errors (${scanned} public files scanned)`);

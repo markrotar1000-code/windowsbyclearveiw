@@ -21,7 +21,9 @@ import '../styles/estimate-form.css';
 import { site } from "../data/site";
 import { readIntent, trackIntent } from "../scripts/intent-tracking";
 import { visitorMessage } from "../lib/visitor-errors";
-const phoneDisplay = site.phoneDisplay;
+import { keepPhoneTogether } from "../lib/phone";
+// These messages are written by script, so the build-time check cannot see them: keep the number on one line here.
+const phoneDisplay = keepPhoneTogether(site.phoneDisplay);
 function bindEstimate() {
   const form = document.getElementById('estimate-form');
   const status = document.querySelector('[data-status]');
