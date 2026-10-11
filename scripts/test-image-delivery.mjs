@@ -307,15 +307,23 @@ ok('gallery additions: every photo has a visual alt and caption, none claims a j
   assert.equal(galleryAdditions.length, 22, '12 first-batch + 10 from 2026-10-11');
 });
 
-ok('the gallery renders every addition once, with the 2026-10-11 photos last', () => {
+ok('the gallery renders every addition once, best photos first, and loads the first row now', () => {
   const html = pages.get('gallery');
   const cards = [...html.matchAll(/<figure class="gallery-addition[^"]*"[^>]*>[\s\S]*?<\/figure>/g)].map((m) => m[0]);
   assert.equal(cards.length, galleryAdditions.length, 'gallery additions rendered != gallery additions declared');
-  for (const card of cards) {
+  cards.forEach((card, index) => {
     const [tag] = images(card);
     assert.ok(tag && attr(tag, 'srcset') && attr(tag, 'sizes') && (attr(tag, 'alt') ?? '').length > 0, 'a gallery addition without srcset, sizes and alt text');
+    // The first row (3 across on a desktop) is at the fold; everything else waits to be scrolled to.
+    assert.equal(attr(tag, 'loading'), index < 3 ? 'eager' : 'lazy', `gallery addition ${index + 1}: ${index < 3 ? 'the first row must load eagerly' : 'only the first row is eager'}`);
+  });
+  // The additions section is the first thing under the hero, so the old "first three of the first group
+  // are eager" rule now points at photos far below the fold: those must be lazy.
+  for (const figure of html.matchAll(/<figure class="work-card[^"]*"[^>]*>[\s\S]*?<\/figure>/g)) {
+    assert.equal(attr(images(figure[0])[0], 'loading'), 'lazy', 'a work-card below the additions section loads eagerly and competes with the first row');
   }
-  assert.ok(cards.slice(12).some((card) => card.includes(PATIO)), 'the patio slider should be in the 2026-10-11 gallery additions');
+  const doorIndex = cards.findIndex((card) => card.includes(PATIO));
+  assert.ok(doorIndex >= 0 && doorIndex < 6, `the sliding glass door is the site's only clear door photo: keep it in the first six, found at ${doorIndex + 1}`);
   for (const [page, markup] of pages) assert.ok(!/IMG_20\d{6}/.test(markup), `${page}: a camera filename leaked into the markup`);
 });
 

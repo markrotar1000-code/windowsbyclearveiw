@@ -40,6 +40,7 @@ What the next agent must know:
 - Tests read `gallery-additions.ts` and `work.ts` as text (plain Node cannot import `.jpg`) and the built `dist/`.
 - Open: Mark confirms the jobs; delete the paperwork photo (it shows a customer's details) from the shared Drive; ask for original-resolution files; the old `gray-siding-white-slider-deck` photo has a cluttered interior.
 
+- **Gallery order is by strength, not batch** (`galleryAdditions` in `src/data/gallery-additions.ts`, re-ranked 2026-10-11 after Keith asked for the best images higher). New photos go where they rank, with the best exteriors in the first six (what a visitor sees first); the door must stay in the first six (`test:image-delivery`). Only the first three additions load eagerly; keep it that way when the section order changes.
 
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 

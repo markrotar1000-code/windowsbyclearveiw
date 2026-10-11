@@ -50,6 +50,12 @@ Validation: `npm run test:all` (58 steps) and `npm run build` pass. Real-browser
 
 Not done / open: VERIFY with Mark which photos are his jobs, then promote the door into `workPhotos` and `doorWork`; delete the paperwork photo from the shared Drive; ask for original-resolution files; the old gray-slider photo (still in "Real installs") has a cluttered interior; no real phone check.
 
+Follow-up, same day (branch `claude/best-photos-first-2026-10-11`). Keith: "Make sure the best images are displayed higher as well."
+1. **Order.** `galleryAdditions` is re-ranked across both batches from a contact sheet of all 22: strongest and most varied exteriors first (blue transoms, the door, landscaped triple, garden chimney, dark-house slider, garden grids), then other exteriors and details, then interiors, with the counter-clutter kitchens and the plain empty corner last. A comment in the data file says so.
+2. **Position.** Measured the first photo row: y=774 at 1440x900 (126 px visible), 764 at 1280x720 and 813 on a 390x844 phone (not visible). Less padding on the gallery hero and the additions section (page-scoped CSS, other `.page-hero` pages untouched): now 667 / 661 / 758.
+3. **Loading.** `eager` on the first three additions (`GalleryAddition` prop). The old rule made the first three "Finished elevations" tiles eager, which became a below-the-fold waste once the additions section was added above them; removed.
+4. **Test.** `test:image-delivery` gallery group: the door within the first six, only the first three additions eager, no eager work-card; mutation-tested both ways.
+Not done: the first row is still at or below the fold on a short laptop and on a phone (hero text and jump links fill the first screen); the existing gallery groups were not re-ranked.
 
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 

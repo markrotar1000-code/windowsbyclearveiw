@@ -113,7 +113,7 @@ const total = allWork.length + galleryAdditions.length;
     </div>
   </section>
 
-  <section class="section" id="more-projects">
+  <section class="section gallery-lead" id="more-projects">
     <div class="wrap is-wide" data-reveal>
       <div class="group-head">
         <div>
@@ -123,7 +123,7 @@ const total = allWork.length + galleryAdditions.length;
         <p class="group-count">{galleryAdditions.length} photos</p>
       </div>
       <div class="work-grid is-large">
-        {galleryAdditions.map((photo) => <GalleryAddition {...photo} />)}
+        {galleryAdditions.map((photo, index) => <GalleryAddition {...photo} eager={index < 3} />)}
       </div>
     </div>
   </section>
@@ -147,7 +147,6 @@ const total = allWork.length + galleryAdditions.length;
               alt={photo.alt}
               caption={photo.caption}
               kind={workKindLabel(photo.kind)}
-              eager={groupIndex === 0 && index < 3}
               sizes={group.sizes}
               frame={group.frame}
             />
@@ -168,6 +167,22 @@ const total = allWork.length + galleryAdditions.length;
     position: relative;
     background-size: cover;
     background-position: center;
+  }
+
+  /* The photos are the point of this page, and at 1440x900 the first row started
+     at y=774 (126 px visible), at 1280x720 and on a 390x844 phone not at all.
+     Less air above them so the best photos show without scrolling. */
+  .page-hero-photo {
+    padding-top: var(--space-xl);
+    padding-bottom: var(--space-l);
+  }
+
+  .gallery-lead {
+    padding-top: var(--space-xl);
+  }
+
+  .gallery-lead .group-head {
+    margin-bottom: var(--space-m);
   }
 
   /* A jump index in the hero: 26 tiles down one page is a long scroll for a
