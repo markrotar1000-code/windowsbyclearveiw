@@ -79,6 +79,10 @@ When the batch arrived it included another contractor's paperwork, so these phot
 | `src/assets/work/` | 10 new JPEGs |
 | `src/data/gallery-additions.ts` | `patioSliderPhoto` plus 9 entries, all 22 ordered by strength |
 | `src/components/GalleryAddition.astro`, `src/pages/gallery.astro` | `eager` first row, tighter top spacing |
-| `src/pages/index.astro` | `slidingDoorsTile = patioSliderPhoto` |
+| `src/pages/index.astro` | `slidingDoorsTile = patioSliderPhoto`; the "Recent work" grid is `recentWorkPhotos` (see below) |
 | `src/pages/sliding-glass-doors.astro` | `getHeroBg(patioSliderPhoto.image)`; first card of the installs grid (`doorWork`) |
 | `scripts/test-image-delivery.mjs` | 4 new groups (tile/hero wiring, not a workPhoto, alt/caption/no-claims/EXIF/size, gallery render) |
+
+## Home "Recent work" (Keith, 2026-10-11 13:59 PT)
+
+Keith asked that the home page's "Recent work" show the newer images. It used to show the owner's older `featured` workPhotos (seven tiles with kind labels). It now shows `recentWorkPhotos`: the first six photos of `galleryAdditions` (best first) without the door, which the page already shows on its "Sliding glass doors" tile. Six fills a 3-across desktop and a 2-across phone with no lone tile. Tiles show the caption only, no "Finished result" label, because the scope of each job is not known. Four of the six are from the 2026-10-07 batch, whose provenance Keith has not confirmed in the repo (only this batch is confirmed as Clearview jobs); swap a photo out of `galleryAdditions` if it is not ours. Guard: `test:image-delivery`, group "the home Recent work grid shows the newest photos".

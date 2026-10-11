@@ -7,9 +7,9 @@ import WorkCard from '../components/WorkCard.astro';
 import FacebookIcon from '../components/icons/FacebookIcon.astro';
 import { Image } from 'astro:assets';
 import { site } from '../data/site';
-import { featuredWork, findWork, workKindLabel } from '../data/work';
+import { findWork } from '../data/work';
 import { coverScale, scaleSizes } from '../lib/image-sizes';
-import { patioSliderPhoto } from '../data/gallery-additions';
+import { patioSliderPhoto, recentWorkPhotos } from '../data/gallery-additions';
 
 const replacementTile = findWork('gray-lap-siding-triple-hung')!;
 const newBuildTile = findWork('new-build-tan-corner')!;
@@ -203,12 +203,11 @@ const signs = [
       <h2>Recent work</h2>
       <p class="lede">Photos from our own jobs on Washington homes.</p>
       <div class="work-grid work-grid-home">
-        {featuredWork.map((photo) => (
+        {recentWorkPhotos.map((photo) => (
           <WorkCard
             image={photo.image}
             alt={photo.alt}
             caption={photo.caption}
-            kind={workKindLabel(photo.kind)}
           />
         ))}
       </div>

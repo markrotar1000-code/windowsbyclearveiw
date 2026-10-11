@@ -535,6 +535,9 @@ export const workPhotos: WorkPhoto[] = [
 
 const byOrder = (a: WorkPhoto, b: WorkPhoto) => a.order - b.order;
 
+// The owner's pick of the older photos. The home "Recent work" grid no longer uses it (2026-10-11: it shows
+// the newest photos, `recentWorkPhotos`); nothing else reads it yet, so keep the
+// `featured` flags as the shortlist if a page needs older work again.
 export const featuredWork = workPhotos.filter((photo) => photo.featured).sort(byOrder);
 
 export const sidingWork = workPhotos.filter((photo) => photo.kind === 'siding').sort(byOrder);
