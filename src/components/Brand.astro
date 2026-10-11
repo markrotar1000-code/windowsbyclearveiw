@@ -1,4 +1,12 @@
 ---
+// The link's accessible name must contain its visible text ("Clearview" and,
+// above 380 px, "Vancouver, WA") or a voice-control user who says what they
+// see ("click Clearview Vancouver") cannot activate it (WCAG 2.5.3, axe:
+// label-content-name-mismatch). The old label said "Clearview Windows home",
+// which dropped "Vancouver, WA". The explicit space between the two lines of
+// the wordmark matters: they are separate flex items, so nothing renders it,
+// but assistive-tech and axe read the text as "ClearviewVancouver, WA" without
+// it. scripts/test-a11y-names.mjs guards this.
 interface Props {
   compact?: boolean;
 }
@@ -7,7 +15,7 @@ const { compact = false } = Astro.props;
 <a
   class:list={['brand', compact && 'is-compact']}
   href="/"
-  aria-label="Clearview Windows home"
+  aria-label="Clearview Vancouver, WA home"
 >
   <img
     class="brand-mark"
@@ -19,7 +27,7 @@ const { compact = false } = Astro.props;
     decoding="async"
   />
   <span class="brand-type">
-    <strong>Clearview</strong>
+    <strong>Clearview</strong>{' '}
     <span class="brand-sub">Vancouver, WA</span>
   </span>
 </a>

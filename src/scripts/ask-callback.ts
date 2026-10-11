@@ -9,6 +9,7 @@
  * place (role "Ask assistant" marks where the lead came from).
  */
 import { readIntent, trackIntent } from './intent-tracking';
+import { visitorMessage } from '../lib/visitor-errors';
 import {
   buildLeadNotes,
   isHandoffKind,
@@ -175,10 +176,7 @@ function bindDialog(dialog: HTMLDialogElement): void {
     } catch (error) {
       trackIntent('callback_form_error', false);
       // A TypeError is the browser reporting a network failure; its text is not for visitors.
-      status.textContent =
-        error instanceof Error && !(error instanceof TypeError)
-          ? error.message
-          : 'Could not send. Please call us instead.';
+      status.textContent = visitorMessage(error, 'Could not send. Please call us instead.');
       submit.disabled = false;
       submit.textContent = idleLabel;
     }

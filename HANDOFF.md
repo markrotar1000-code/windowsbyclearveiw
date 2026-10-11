@@ -1,5 +1,19 @@
 # Project context — Clearview Windows
 
+## 2026-10-10 - Bug sweep (branch `claude/bug-sweep`)
+
+Keith asked to keep finding and fixing bugs. Details and the method: `.ai/CHANGELOG.md` (2026-10-10, bug sweep); accessibility: `docs/ACCESSIBILITY.md`.
+
+What the next agent must know:
+- **A visible change for Keith and Mark to look at.** The `.split` two-column sections (about, home, replacement, new-construction, sliding-glass-doors, calculator, 404, estimate result pages) were not centred on wide screens and used small bold text because `.split` shared a rule with `.btn`. They now match the rest of the page: centred, normal body text. Check `/about` and `/` on a desktop and a phone in the Cloudflare preview before merging.
+- **The Turnstile widget is `compact` (150 px) at 375 px and below** and normal at 390 px and up (`EstimateForm.astro`). A bare `display: grid` sizes its column to the widest child; use `grid-template-columns: minmax(0, 1fr)` (`test:layout-guards` checks the form and `.split`).
+- **Never put `aria-label` on a `<span>`/`<div>` without a role**; put the words in `<span class="visually-hidden">`. A link's `aria-label` must contain the text it shows. `test:a11y-names` fails otherwise.
+- **Public error text goes through `visitorMessage`** (`src/lib/visitor-errors.ts`); never print `error.message` from a failed `fetch`.
+- **Compare times as ISO strings built in code**, never against `datetime('now')`: `test:copilot-snapshot` bans it in `functions/`.
+- Bond and insurance amounts appear as screen-reader text; the no-pricing tests exempt exactly those two sentences (`scripts/_lib/credential-detail.mjs`). Any other hidden dollar figure still fails.
+- `scripts/audit-a11y.mjs` needs `npm i --no-save playwright axe-core` (not in CI). `npm i --no-save` can remove the repo's `node_modules/playwright` link.
+- Open: no real-device, screen-reader or live Turnstile test; Command Center pages still show raw "Failed to fetch"; `astro check` has 201 strict-mode errors (none a real bug, not adopted).
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith asked for the website's images and their display to be improved. Done by measurement: a real-browser audit of every photo, then fixes to which file the browser downloads and to how photos are framed. Numbers, rules and the add-a-photo checklist: `docs/IMAGE-DELIVERY.md`; summary: `.ai/CHANGELOG.md` (2026-10-10, photo delivery).

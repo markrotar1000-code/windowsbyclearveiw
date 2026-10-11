@@ -14,6 +14,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stripTypeScriptTypes } from 'node:module';
+import { withoutCredentialDetail } from './_lib/credential-detail.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const dist = join(root, 'dist');
@@ -21,7 +22,7 @@ assert.ok(existsSync(dist), 'dist/ not found. Run `npm run build` before `npm ru
 
 const read = (rel) => readFileSync(join(dist, rel), 'utf8');
 const visible = (html) =>
-  html
+  withoutCredentialDetail(html)
     .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&')

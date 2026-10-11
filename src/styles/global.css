@@ -254,7 +254,7 @@ p, li { text-wrap: pretty; }
 .wrap.is-narrow { width: min(52rem, calc(100% - var(--space-m) * 2)); }
 .wrap.is-wide { width: min(90rem, calc(100% - var(--space-m) * 2)); }
 
-.split, .btn {
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -461,7 +461,11 @@ h4 { font-size: var(--step-1); margin: 0 0 var(--space-3xs); }
   color: var(--accent-bright);
 }
 
+/* Two-column section. It is a plain flex row, not a button: sharing the .btn rule once made it
+   inline-level (so `margin-inline: auto` stopped centring it and its content sat flush left on wide
+   screens), added button padding and a border, and shrank and bolded its text. */
 .split {
+  display: flex;
   gap: var(--space-xl);
   align-items: start;
 }
@@ -717,7 +721,9 @@ input:focus, textarea:focus, select:focus {
 }
 
 @media (max-width: 800px) {
-  .split { display: grid; }
+  /* One column that may shrink: a bare `display: grid` sizes its single track to the widest child's
+     min-content, and the estimate form's is 350px, so /estimate/problem scrolled sideways on a 320 px phone. */
+  .split { display: grid; grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 640px) {

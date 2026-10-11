@@ -78,6 +78,8 @@ import { contractTerms } from '../data/contractTerms';
 </BaseLayout>
 
 <script>
+  import { visitorMessage } from '../lib/visitor-errors';
+
   const PAD_W = 600;
   const PAD_H = 180;
   const money = (cents: number) => (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -224,7 +226,8 @@ import { contractTerms } from '../data/contractTerms';
         showSigned(name, data.signedAt || new Date().toISOString());
         q('[data-sg-done]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (error) {
-        show(error instanceof Error ? error.message : 'Could not sign. Please try again.');
+        // A dropped connection throws a TypeError ("Failed to fetch"); say what to do instead of showing that.
+        show(visitorMessage(error, 'We could not confirm that your signature went through. Check your connection, then try again or call Clearview.'));
         submit.disabled = false;
         submit.textContent = 'Sign quote';
       }

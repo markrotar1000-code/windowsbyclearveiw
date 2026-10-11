@@ -2,12 +2,18 @@
 // A factual disclosure tag for the WA L&I contractor surety bond, not a
 // trust seal — same reasoning as LicenseTag.astro and InsuranceTag.astro.
 // The visible text is deliberately short ("WA Bonded"); the real surety,
-// bond number, and amount live in title/aria-label so a hover or
-// long-press (and every screen reader) still gets the specific number
-// that makes this defensible, rather than the vague "bonded" claim
+// bond number, and amount live in the title (hover or long-press) and in
+// visually-hidden text (screen readers) so everyone still gets the specific
+// number that makes this defensible, rather than the vague "bonded" claim
 // Washington treats as misleading advertising when paired with "insured"
 // (see HANDOFF.md's 2026-09-22 entry). Renders nothing when site.bond is
 // unset.
+//
+// Not aria-label: a bare <span> has no role, and ARIA forbids naming a
+// role-less element (axe: aria-prohibited-attr), so screen readers may skip it
+// and the bond number would never reach them. Visible text stays aria-hidden
+// so the reader announces the detail once, not "WA Bonded" and then the detail.
+// scripts/test-a11y-names.mjs guards this.
 import { site } from '../data/site';
 
 interface Props {
@@ -21,7 +27,7 @@ const detail = bond
   : '';
 ---
 {bond && (
-  <span class:list={['credential-tag', { 'is-on-dark': onDark }]} title={detail} aria-label={detail}>
+  <span class:list={['credential-tag', { 'is-on-dark': onDark }]} title={detail}>
     <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
       <rect x="2.5" y="4.5" width="15" height="11" rx="1" />
       <line x1="5.5" y1="8" x2="14.5" y2="8" />
@@ -29,6 +35,7 @@ const detail = bond
       <line x1="5.5" y1="13" x2="9.5" y2="13" />
     </svg>
     <span aria-hidden="true">WA Bonded</span>
+    <span class="visually-hidden">{detail}</span>
   </span>
 )}
 
