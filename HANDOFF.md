@@ -1,5 +1,14 @@
 # Project context — Clearview Windows
 
+## 2026-10-11 - Home "Recent work" shows the newer photos (branch `claude/recent-work-newer-photos-2026-10-11`)
+
+Keith: "We should be displaying the newer images on 'our recent work'". Details: `.ai/CHANGELOG.md` (2026-10-11).
+
+- The home "Recent work" grid is `recentWorkPhotos` in `src/data/gallery-additions.ts`: the first six gallery additions without the door. **Add a new best photo at the top of `galleryAdditions` and it appears on the home page too**; if that is not wanted for a photo, put it lower. The door is excluded because the home "Sliding glass doors" tile already shows it.
+- The tiles carry a caption only, never a kind label, and the count stays a multiple of six (3 across on a desktop, 2 across on a phone). `test:image-delivery` enforces all of it.
+- The older owner-picked set (`featured: true` in `work.ts`, `featuredWork`) is unused now but kept.
+- VERIFY: four of the six are from the 2026-10-07 batch, whose provenance is not recorded here (Keith confirmed only the 2026-10-11 batch).
+
 ## 2026-10-11 - Bug sweep, fifth round: large text (branch `claude/bug-sweep-5-2026-10-11`)
 
 Keith said "Keep working on fixing public facing bugs". Details: `.ai/CHANGELOG.md` (2026-10-11).

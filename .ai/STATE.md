@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-11 - Home "Recent work" shows the newer photos (branch `claude/recent-work-newer-photos-2026-10-11`)
+
+Keith asked that "our recent work" show the newer images. The home grid is now six photos taken from the top of the gallery additions (`recentWorkPhotos`, the 2026-10-07 and 2026-10-11 batches, door excluded, no kind labels) instead of the older `featured` workPhotos. `test:all` gains one `test:image-delivery` group (still 58 steps). Open: Keith's reply on the door photo; the 2026-10-07 photos' provenance (four of the six) is not recorded in the repo, only the 2026-10-11 batch is confirmed as ours.
+
 ## 2026-10-11 - Bug sweep, fifth round: large text (branch `claude/bug-sweep-5-2026-10-11`)
 
 Keith asked to keep fixing public-facing bugs; #211 (patio door leads the doors grid) is merged, main CI green. This round raised the phone's text size to 150 and 200% and found that nearly every page scrolled sideways (the nowrap licence, insurance and bond tags and the footer's email and credit pill), the header's Menu button left the screen, 40 bare `1fr` grid tracks would not shrink (`/estimate`, `/new-construction`, `/siding`...), the bottom "Request an estimate" band, the home claim strip and the service tiles were clipped, and long words ran off the screen. All fixed in CSS with guards 10 to 14 in `test:layout-guards` (mutation-checked). Verified: scrollWidth equals clientWidth on all 34 pages at 125 to 200% text (390 and 360 px; 412 px at 200%; 320 px to 150%); screenshots of all 34 pages at four widths are pixel-identical before and after (apart from lazy-image paint timing) except the planner rows at 390 px, which now put the +/- buttons under a readable label. `test:all` is 58 steps and passes. Open: which door photo for the home card and doors hero (Keith); 320 px at 200% text still has a few pixels of overflow in the planner and the 3D viewer.

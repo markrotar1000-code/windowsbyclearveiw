@@ -93,5 +93,5 @@ It prints, per screen, photos audited, how many are soft (<0.9x) and very soft (
 
 - **Enlarge on click.** Gallery tiles cannot be opened bigger; the older 50 photos have no lightbox.
 - **Hero photo choice.** The home hero is a portrait photo cropped into a wide banner. A landscape-native photo would fit better.
-- **Home "featured work" grid** mixes landscape photos into portrait frames (heavily cropped, though sharp).
+- **Home "Recent work" grid** (since 2026-10-11 the six newest gallery additions, all 3:4 portrait photos in portrait frames, so nothing is cropped hard) used to mix landscape photos into portrait frames; the older `featured` set that did is unused now.
 - **Phone video-hero reveal** crops the logo wordmark on a phone (existing deliberate crop in `global.css`).

@@ -1,5 +1,20 @@
 # ICM Changelog
 
+## 2026-10-11 - Home "Recent work" shows the newer photos (branch `claude/recent-work-newer-photos-2026-10-11`)
+
+Keith, 13:59 PT: "We should be displaying the newer images on 'our recent work'." The home page's "Recent work" grid was still the owner's older `featured` workPhotos (seven tiles, with kind labels such as "Finished result"), so none of the 2026-10-07 or 2026-10-11 photos were in it; they were only in the gallery's "More photos".
+
+Changed:
+1. **`recentWorkPhotos`** (new, `src/data/gallery-additions.ts`) is the first six of `galleryAdditions` without the door, so it follows the gallery's best-first order and picks up new additions on its own. Today: tall windows with transoms, three-panel window above the garden, garden window beside the chimney, sliding window on a dark house, gridded window and garden view, dark-framed slider above the deck (four from 2026-10-07, two from 2026-10-11).
+2. **Six, not seven.** The old grid had seven tiles, which left one alone on its last row at 3 across and at 2 across. Six fill both. `RECENT_WORK_COUNT` is guarded to stay a multiple of six.
+3. **The door is not in it.** The home page already shows the patio door on its "Sliding glass doors" tile, so it would appear twice on one page.
+4. **No kind label** ("Finished result", "Interior") on these tiles, only the caption: the scope of each job is not known (see `docs/GALLERY-PHOTOS-2026-10-11.md`).
+5. `featuredWork` and the `featured` flags in `work.ts` stay as the owner's older shortlist, but nothing reads them now (comment added). The lede "Photos from our own jobs on Washington homes." is unchanged.
+
+Guard: `test:image-delivery` group "the home Recent work grid shows the newest photos…" (six tiles, each equal to the same place in the gallery's order, no door, no kind label, 1200 px candidate, measured `sizes`, lazy, no duplicates, the door once on the page). Mutation-checked: putting `featuredWork` back fails it (7 tiles). Viewed at 390 and 1440 px.
+
+VERIFY (Keith): the 2026-10-07 photos (four of the six) were in the same shared Drive folder as the 2026-10-11 ones; Keith confirmed on 2026-10-11 that the 2026-10-11 photos are Clearview jobs, and nothing in the repo records the same for 2026-10-07. If any of those four is not Clearview's, swap it out of `galleryAdditions`.
+
 ## 2026-10-11 - Bug sweep, fifth round: large text (branch `claude/bug-sweep-5-2026-10-11`)
 
 Keith: "Keep working on fixing public facing bugs" (again, 12:38 PT). PR #211 (photos confirmed as Clearview jobs, the patio door leading the doors grid) is merged and main CI is green on fa2d5ea. Rounds 1 to 4 tested widths (320 to 1920 px), browser zoom, short screens and the keyboard. This round tested **text size**: a phone with its text raised to 125, 150, 175 and 200% (Android "Font size" or a browser's default size), by setting `html { font-size: 150% }` and `200%` at 390, 360, 320 and 412 px on all 34 public pages and measuring `scrollWidth` against `clientWidth`, containers that clip (`overflow: hidden`) their content, and any text drawn past the screen edge. Browser zoom was already clean; text-only scaling is different because rem-based padding, tags and tiles grow while the screen does not. At 125% everything was already fine; at 150% nearly every page scrolled sideways.

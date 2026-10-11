@@ -341,6 +341,34 @@ ok('the gallery renders every addition once, best photos first, and loads the fi
   for (const [page, markup] of pages) assert.ok(!/IMG_20\d{6}/.test(markup), `${page}: a camera filename leaked into the markup`);
 });
 
+ok('the home "Recent work" grid shows the newest photos, best first, without a door or a job label', () => {
+  // Keith, 2026-10-11: "we should be displaying the newer images on 'our recent work'". The grid used to
+  // be the owner's older `featured` workPhotos; it now takes the top of the gallery additions (the two
+  // newest batches), minus the door the page already shows on its "Sliding glass doors" tile.
+  const html = pages.get('index');
+  const section = /<section[^>]*\bid="work"[^>]*>([\s\S]*?)<\/section>/.exec(html)?.[1] ?? '';
+  const cards = [...section.matchAll(/<figure class="work-card[^"]*"[^>]*>[\s\S]*?<\/figure>/g)].map((m) => m[0]);
+  const expected = galleryAdditions.filter((entry) => entry.image !== patioSliderPhoto.image).slice(0, 6);
+  assert.match(additionsSource, /export const RECENT_WORK_COUNT = 6;/, 'six tiles fill a 3-across desktop and a 2-across phone with no orphan; change the count only to another multiple of six');
+  assert.equal(cards.length, expected.length, 'the home Recent work grid should show six tiles');
+  assert.equal(cards.length % 6, 0, 'a count that is not a multiple of 6 leaves a lone tile on a desktop row or a phone row');
+  cards.forEach((card, index) => {
+    const [tag] = images(card);
+    assert.equal(attr(tag, 'alt'), expected[index].alt, `Recent work tile ${index + 1}: expected "${expected[index].caption}", the photo at that place in the gallery's best-first order`);
+    assert.ok(widestCandidate(tag) >= 1200, `Recent work tile ${index + 1} tops out below 1200 px`);
+    assert.equal(attr(tag, 'sizes'), scaleSizes(SLOT_SIZES.threeAcross, 1), `Recent work tile ${index + 1}: sizes drifted from the measured home-grid slot`);
+    assert.equal(attr(tag, 'loading'), 'lazy', `Recent work tile ${index + 1}: the grid is far below the fold`);
+    assert.ok(card.includes(expected[index].caption), `Recent work tile ${index + 1}: caption missing`);
+    assert.ok(!/class="work-kind"/.test(card), `Recent work tile ${index + 1}: a kind label such as "Finished result" would claim a job scope that is not known`);
+  });
+  assert.ok(!cards.some((card) => card.includes(PATIO) || card.includes(patioSliderPhoto.alt)), 'the door is already the home "Sliding glass doors" tile; keep it out of Recent work');
+  assert.equal(new Set(cards.map((card) => attr(images(card)[0], 'alt'))).size, cards.length, 'a photo appears twice in Recent work');
+  assert.equal(images(html).filter((tag) => (attr(tag, 'src') ?? '').includes(PATIO)).length, 1, 'the door should be on the home page once (the service tile)');
+  // "Newer" is the point: every tile must come from the two newest batches.
+  const newest = new Set(galleryAdditions.map((entry) => entry.alt));
+  for (const card of cards) assert.ok(newest.has(attr(images(card)[0], 'alt')), 'a Recent work tile is not one of the gallery additions (the newest batches)');
+});
+
 ok('the gallery shows no photo count (a number there reads as the jobs Clearview has done)', () => {
   const html = pages.get('gallery');
   const text = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ');

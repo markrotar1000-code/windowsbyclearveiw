@@ -70,3 +70,18 @@ export const galleryAdditions = [
   { image: kitchenPair, alt: 'White-trimmed tall window beside a wider window in a light-colored kitchen', caption: 'Kitchen windows from inside' },
   { image: emptyCorner, alt: 'Two white-trimmed windows meeting at the corner of a room with a wood floor', caption: 'Corner windows and natural light' },
 ];
+
+/**
+ * The home page's "Recent work" grid (Keith, 2026-10-11: show the newer images there).
+ *
+ * It takes the strongest photos from the two newest batches (2026-10-07 and 2026-10-11) straight from
+ * the top of `galleryAdditions`, so it follows the gallery's best-first order and picks up new
+ * additions on its own. Six fill a 3-across desktop and a 2-across phone with no orphan tile. The door
+ * is left out: the home page already shows it on the "Sliding glass doors" tile. Photos here carry a
+ * caption only, no kind label ("Finished result" and the like), because the scope of each job is not
+ * known; see the note above `patioSliderPhoto`.
+ */
+export const RECENT_WORK_COUNT = 6;
+export const recentWorkPhotos = galleryAdditions
+  .filter((photo) => photo !== patioSliderPhoto)
+  .slice(0, RECENT_WORK_COUNT);
