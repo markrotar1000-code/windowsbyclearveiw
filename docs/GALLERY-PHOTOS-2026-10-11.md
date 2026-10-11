@@ -28,6 +28,16 @@ Result: **1 door photo** on the home "Sliding glass doors" tile and the `/slidin
 
 Order follows the first batch: clear exteriors, then details, then bright interiors. `155203 (1)` is **not** a bigger copy of the door (`155203`); it is a different photo of a window pair.
 
+## Gallery order (re-ranked the same day)
+
+Keith asked that the best images be displayed higher, so the 22 additions are ordered by strength across both batches rather than first batch then second. The rank in the table above is only within this batch. Judged from a contact sheet of all 22: clear subject, daylight or sky, one window as the subject, no counter or floor clutter, and no two neighbours that look alike.
+
+1. blue transoms, 2. **the door**, 3. landscaped triple, 4. garden chimney, 5. dark-house slider (blue sky), 6. garden grids, 7. dark-frame slider, 8. wood window, 9. green-trim entry, 10. wood side, 11. dark-house square slider, 12. tall windows (black frames), 13. tall window at the corner, 14. window pair on tan siding (flat gray sky, the weakest exterior), 15. bright sunroom, 16. teal wall garden slider, 17. corner room, 18. deck view, 19. kitchen slider (sink clutter), 20. kitchen corner, 21. kitchen pair, 22. empty corner (dim, bare).
+
+That is a judgement call, not a measurement. Reorder freely; `test:image-delivery` only requires the door in the first six and only the first three tiles eager.
+
+**Position on the page.** The first photo row started 774 px down at 1440x900 (126 px visible), 764 px at 1280x720 and 813 px on a 390x844 phone (not visible). The gallery hero and the padding above the grid were tightened (page-scoped CSS): now 667 / 661 / 758 px. On a short laptop and on a phone the first row is still at or below the fold, because the hero text and jump links fill the first screen; shrinking those is a design call. The existing sections below (Finished elevations, From inside the room, and so on) were not re-ranked.
+
 ## Excluded, and why
 
 - **`..._155241.jpg` (certificate / paperwork photo).** Shows another company's document and a customer's personal details. Not used, deleted from the working copy. **Recommend Mark delete it from the shared Drive folder.**
@@ -65,7 +75,8 @@ The batch includes paperwork from another contractor, so these photos may **not 
 | File | Change |
 | --- | --- |
 | `src/assets/work/` | 10 new JPEGs |
-| `src/data/gallery-additions.ts` | `patioSliderPhoto` plus 9 entries after the first 12 |
+| `src/data/gallery-additions.ts` | `patioSliderPhoto` plus 9 entries, all 22 ordered by strength |
+| `src/components/GalleryAddition.astro`, `src/pages/gallery.astro` | `eager` first row, tighter top spacing |
 | `src/pages/index.astro` | `slidingDoorsTile = patioSliderPhoto` |
 | `src/pages/sliding-glass-doors.astro` | `getHeroBg(patioSliderPhoto.image)` |
 | `scripts/test-image-delivery.mjs` | 4 new groups (tile/hero wiring, not a workPhoto, alt/caption/no-claims/EXIF/size, gallery render) |

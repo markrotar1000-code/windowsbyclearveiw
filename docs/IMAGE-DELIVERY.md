@@ -70,6 +70,8 @@ Other deliberate choices:
 
 `src/data/gallery-additions.ts` is the path for photos that should be on the site but whose job Mark has not confirmed (`workPhotos` feeds "Real installs", "Finished result" groups and the "from one of our jobs" copy). Entries carry visual-only alt text and captions, render through `GalleryAddition` (webp, 320 to 1200 px, a "View full photo" link to the original), and `patioSliderPhoto` can also back a home tile or page hero without becoming a work photo (2026-10-11, `docs/GALLERY-PHOTOS-2026-10-11.md`).
 
+The additions are ordered by strength, best exteriors first, and the first row (three tiles) loads eagerly because that row sits at the fold; the "Finished elevations" group below it no longer does.
+
 Small phone originals (600 to 1200 px wide) are upscaled to 3072x4096 before they are committed. **Look at the result at full size, window glass first:** an upscale can turn a blurred shape behind glass into a face (it did, twice, on 2026-10-11), and the "View full photo" link serves the file as committed. Strip EXIF/GPS (`npm run test:image-delivery` fails if a gallery photo has any).
 
 ## Checking it in a browser

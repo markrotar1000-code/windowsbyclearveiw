@@ -38,29 +38,33 @@ export const patioSliderPhoto = {
 
 // Gallery-only additions: existing workPhotos, service-page selections and hero stay intact.
 // Captions describe what is in the picture; none of them claim a scope of work or a job type.
+// Ordered by strength, not by batch (re-ranked 2026-10-11 so the best photos lead the gallery; the
+// 12 from 2026-10-07 and the 10 from 2026-10-11 are mixed). Keep the best exteriors first on a
+// phone and a 3-across desktop: the first six are what a visitor sees without scrolling.
 export const galleryAdditions = [
+  // Strongest exteriors first, varied so no two neighbours look alike. The door is the site's only clear sliding glass door.
+  { image: blueTransoms, alt: 'Tall white-trimmed windows with rectangular transoms on a blue-sided home', caption: 'Tall windows with transoms' },
+  patioSliderPhoto,
   { image: landscapedTriple, alt: 'White three-panel window on a light-sided home above a landscaped garden', caption: 'Three-panel window above the garden' },
   { image: gardenChimney, alt: 'White-trimmed window beside a brick chimney, green siding and blue hydrangeas', caption: 'Garden window beside the chimney' },
-  { image: gardenGrids, alt: 'Gridded white window on a light-sided home surrounded by green shrubs under a blue sky', caption: 'Gridded window and garden view' },
-  { image: blueTransoms, alt: 'Tall white-trimmed windows with rectangular transoms on a blue-sided home', caption: 'Tall windows with transoms' },
-  { image: woodSide, alt: 'White-trimmed windows along a wood-sided home beside a green garden', caption: 'Windows on a wood-sided home' },
-  { image: woodWindow, alt: 'Wide white three-panel window beneath an exposed timber roof on a wood-sided home', caption: 'Three-panel window beneath timber beams' },
-  { image: brightSunroom, alt: 'Bright sitting room with a large window between two narrow windows and a vaulted ceiling', caption: 'Light-filled sitting room' },
-  { image: cornerRoom, alt: 'White-trimmed windows around the corner of an empty room with a gray carpet', caption: 'Windows around the room' },
-  { image: emptyCorner, alt: 'Two white-trimmed windows meeting at the corner of a room with a wood floor', caption: 'Corner windows and natural light' },
-  { image: kitchenPair, alt: 'White-trimmed tall window beside a wider window in a light-colored kitchen', caption: 'Kitchen windows from inside' },
-  { image: kitchenCorner, alt: 'White corner windows above a kitchen sink and dark wood cabinets', caption: 'Corner windows above the kitchen sink' },
-  { image: deckView, alt: 'White-trimmed window seen from inside a room overlooking a covered deck and green trees', caption: 'Looking out onto the deck' },
-  // 2026-10-11 batch (IMG_20261010_*): 4K upscales of the originals, ordered like the first batch,
-  // clear exteriors first, then details, then bright interiors.
-  patioSliderPhoto,
   { image: darkHouseSliderBlueSky, alt: 'White-framed sliding window on a dark-painted house under a clear blue sky, beside a tall evergreen shrub', caption: 'Sliding window on a dark house' },
+  { image: gardenGrids, alt: 'Gridded white window on a light-sided home surrounded by green shrubs under a blue sky', caption: 'Gridded window and garden view' },
+  // Then the remaining exteriors and details.
   { image: darkFrameSliderTanDeck, alt: 'Dark bronze-framed sliding window on tan lap siding beside a downspout, above a painted deck', caption: 'Dark-framed slider above the deck' },
-  { image: tallWindowsBlackFrames, alt: 'Looking up at black-framed windows on a tall tan lap-siding wall, a two-part window above a large picture window, under a blue sky', caption: 'Black-framed windows on a tall wall' },
+  { image: woodWindow, alt: 'Wide white three-panel window beneath an exposed timber roof on a wood-sided home', caption: 'Three-panel window beneath timber beams' },
   { image: greenTrimEntrySkylight, alt: 'Front entry of a cream lap-siding house with green trim, a white-framed window beside the door, a skylight on the roof and trimmed shrubs under a blue sky', caption: 'Window beside the front entry' },
+  { image: woodSide, alt: 'White-trimmed windows along a wood-sided home beside a green garden', caption: 'Windows on a wood-sided home' },
   { image: darkHouseSquareSlider, alt: 'White-trimmed square sliding window centered on a dark-painted wall beneath a roof overhang, with a tall evergreen behind', caption: 'Square slider on a dark wall' },
+  { image: tallWindowsBlackFrames, alt: 'Looking up at black-framed windows on a tall tan lap-siding wall, a two-part window above a large picture window, under a blue sky', caption: 'Black-framed windows on a tall wall' },
   { image: tallWindowSidingCorner, alt: 'Tall narrow dark-framed window at the corner of a tan lap-siding house, beside a wider sliding window and a white deck', caption: 'Tall window at the siding corner' },
   { image: tanSidingDoubleHungPair, alt: 'Pair of white two-sash windows with wide trim on tan lap siding under a gray sky', caption: 'Window pair on tan siding' },
+  // Bright, tidy interiors last; the ones with clutter at the bottom.
+  { image: brightSunroom, alt: 'Bright sitting room with a large window between two narrow windows and a vaulted ceiling', caption: 'Light-filled sitting room' },
   { image: tealWallGardenSlider, alt: 'White-framed sliding window with wide trim on a deep teal interior wall, looking out at a rose shrub and a neighboring wall', caption: 'Slider from inside, garden view' },
+  { image: cornerRoom, alt: 'White-trimmed windows around the corner of an empty room with a gray carpet', caption: 'Windows around the room' },
+  { image: deckView, alt: 'White-trimmed window seen from inside a room overlooking a covered deck and green trees', caption: 'Looking out onto the deck' },
   { image: kitchenSliderPergola, alt: 'White-framed sliding window above a kitchen sink on a yellow wall, looking out to a green lawn and a wood pergola', caption: 'Kitchen slider with a backyard view' },
+  { image: kitchenCorner, alt: 'White corner windows above a kitchen sink and dark wood cabinets', caption: 'Corner windows above the kitchen sink' },
+  { image: kitchenPair, alt: 'White-trimmed tall window beside a wider window in a light-colored kitchen', caption: 'Kitchen windows from inside' },
+  { image: emptyCorner, alt: 'Two white-trimmed windows meeting at the corner of a room with a wood floor', caption: 'Corner windows and natural light' },
 ];

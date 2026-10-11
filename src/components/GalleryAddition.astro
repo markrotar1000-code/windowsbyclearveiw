@@ -6,15 +6,17 @@ interface Props {
   image: ImageMetadata;
   alt: string;
   caption: string;
+  /** The first row of the gallery sits at the fold: load it now, not when the lazy-loader gets to it. */
+  eager?: boolean;
 }
 
-const { image, alt, caption } = Astro.props;
+const { image, alt, caption, eager = false } = Astro.props;
 ---
 <figure class="gallery-addition">
   <a href={image.src} target="_blank" rel="noopener noreferrer" aria-label={`View full photo: ${caption} (opens in a new tab)`}>
     <Image src={image} alt={alt} widths={[320, 480, 720, 960, 1200]} width={1200}
       sizes="(max-width: 560px) 45vw, (max-width: 900px) 46vw, 450px"
-      format="webp" quality={82} loading="lazy" decoding="async" />
+      format="webp" quality={82} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} decoding="async" />
     <span class="photo-detail" aria-hidden="true">View full photo ↗</span>
   </a>
   <figcaption>{caption}</figcaption>
