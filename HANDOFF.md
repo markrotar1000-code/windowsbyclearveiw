@@ -42,6 +42,8 @@ What the next agent must know:
 
 - **Gallery order is by strength, not batch** (`galleryAdditions` in `src/data/gallery-additions.ts`, re-ranked 2026-10-11 after Keith asked for the best images higher). New photos go where they rank, with the best exteriors in the first six (what a visitor sees first); the door must stay in the first six (`test:image-delivery`). Only the first three additions load eagerly; keep it that way when the section order changes.
 
+- **Gallery wording is plain and has no counts** (Keith, 2026-10-11). No photo or job counts on `/gallery` (`test:image-delivery`); no "elevation", "flashed", "next trade", "double-hungs" or "sliders" in the gallery's own words and no "elevation" in `work.ts` captions or alt text (`test:public-terminology`); do not restore "Every photo here is from one of our jobs" until Mark confirms the 2026-10-11 photos. Rules: `.ai/references/public-copy-positioning.md`. "Elevation" is still in six guide sentences (FAQ needs the owner; edits need `npm run build:guides-index`).
+
 ## 2026-10-10 - Photo delivery and framing (branch `claude/image-display`)
 
 Keith asked for the website's images and their display to be improved. Done by measurement: a real-browser audit of every photo, then fixes to which file the browser downloads and to how photos are framed. Numbers, rules and the add-a-photo checklist: `docs/IMAGE-DELIVERY.md`; summary: `.ai/CHANGELOG.md` (2026-10-10, photo delivery).

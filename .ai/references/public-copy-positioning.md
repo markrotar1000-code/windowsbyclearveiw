@@ -29,6 +29,16 @@ Owner direction, 2026-09-30. Business facts here come from the owner; do not ext
   or "leave the room usable" (owner direction, 2026-09-30: timing depends on the specifics of each job).
   Saying we haul away debris is fine. Lead times are fine when tied to the manufacturer.
 
+## Plain words on the gallery and photo captions (Keith, 2026-10-11)
+
+Keith pointed at "What the street sees once the job is done" and said that kind of wording is weird and had already been ruled out. It follows the earlier complaint about jargon and clipped, clever phrasing. Enforced for the gallery page and `work.ts` captions by `npm run test:public-terminology`.
+
+- Say "house" or "side of the house", not "elevation" (architect's word). Not "flashed", "next trade", "double-hungs" or "sliders" in the gallery's own wording.
+- Write what the picture shows, in a sentence a homeowner would say. No poetic lines.
+- **No photo or job counts on the gallery** (no "72", no "22 photos"): a number next to a gallery reads as the number of jobs Clearview has done. Enforced by `test:image-delivery`.
+- Do not write "every photo here is from one of our jobs" while any photo's source is unconfirmed (the 2026-10-11 batch; see `docs/GALLERY-PHOTOS-2026-10-11.md`).
+- Still to do: "elevation" remains in six guide sentences (an FAQ answer, two hero image credits, three body lines) and builder-facing copy on `/new-construction`, where it is the normal word. Guide edits need the owner's say-so for FAQs and a rebuild of the Ask index (`npm run build:guides-index`, needs `GEMINI_API_KEY`).
+
 ## Siding (owner direction, 2026-10-04)
 
 Source of truth for `/siding` and anything else that mentions siding; do not extend by guessing.

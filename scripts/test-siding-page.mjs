@@ -103,7 +103,7 @@ for (const alt of ['Two-story house with large tan wall panels', 'Single-story b
   assert.ok(html.includes(alt), `siding page renders the photo "${alt}"`);
 }
 const gallery = visible(read('gallery.html'));
-assert.ok(/Siding jobs, some photographed mid-job/.test(gallery), 'gallery has a siding group');
+assert.ok(/Siding work, some of it photographed before it was finished/.test(gallery), 'gallery has a siding group');
 for (const id of sidingPhotos) {
   const file = join(root, `src/assets/work/${id}.jpg`);
   assert.ok(existsSync(file), `${id}.jpg exists`);

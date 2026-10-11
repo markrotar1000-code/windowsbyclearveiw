@@ -65,4 +65,27 @@ for (const f of ['src/pages/areas/index.astro', 'src/pages/areas/[slug].astro'])
   assert.ok(!/\(564\) 208-0801/.test(readFileSync(join(root, f), 'utf8')), `${f} must use site.phone, not a hardcoded number`);
 }
 
+// The gallery page speaks plainly (Keith, 2026-10-11: "What the street sees once the job is done" was
+// weird, and jargon-heavy copy had been flagged before). No trade or architect terms in its words, and no
+// claim that every photo is Clearview's own job while the source of some photos is unconfirmed.
+{
+  const gallery = readFileSync(join(root, 'src/pages/gallery.astro'), 'utf8').split('\n').filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line)).join('\n');
+  const markup = gallery.slice(gallery.indexOf('---', 3)); // the template and styles, not the frontmatter's imports
+  const frontCopy = [...gallery.matchAll(/(?:label|blurb): '([^']*)'/g)].map((m) => m[1]).join(' | ');
+  const words = `${frontCopy} ${markup.replace(/<style[\s\S]*$/, '').replace(/<[^>]+>/g, ' ')}`;
+  const jargon = [/\belevations?\b/i, /\bflash(?:ed|ing)\b/i, /\bnext trade\b/i, /\bdouble-hungs?\b/i, /\bsliders\b/i, /once the job is done/i];
+  for (const re of jargon) assert.ok(!re.test(words), `gallery page uses jargon or the odd phrasing ${re}`);
+  assert.ok(!/every photo here is from one of our jobs/i.test(words), 'the gallery must not claim every photo is from one of our jobs until the 2026-10-11 photos are confirmed as Clearview jobs');
+}
+
+// Photo captions and alt text say "house" or "side of the house", not "elevation" (architect's word; same
+// complaint, 2026-10-11). The guides still use it in a few sentences: see .ai/WORKING.md.
+{
+  const work = readFileSync(join(root, 'src/data/work.ts'), 'utf8');
+  const strings = [...work.matchAll(/^\s*(?:caption|alt): '((?:[^'\\]|\\.)*)'/gm)].map((m) => m[1]);
+  assert.ok(strings.length >= 80, 'expected to read the captions and alt text in work.ts');
+  assert.deepEqual(strings.filter((text) => /\belevations?\b/i.test(text)), [], 'a photo caption or alt text says "elevation"');
+  assert.ok(!/elevation/i.test(readFileSync(join(root, 'src/pages/replacement.astro'), 'utf8').replace(/^\s*\/\/.*$/gm, '')), 'replacement.astro says "elevation" in customer copy');
+}
+
 console.log('public terminology: ok');
