@@ -1,6 +1,6 @@
 // Guards for layout bugs: four found 2026-10-10 by loading every public page at 320, 390 and 1920 px, a
 // fifth found 2026-10-11 by the round 3 crawl (360 and 390 px), three by the round 4 sweep (short screens, text-field size on phones,
-// jump links under the sticky header), and a group by the round 5 sweep (text enlarged to 150% and 200% at 390 px, 9-14 below).
+// jump links under the sticky header), and a group by the round 5 sweep (text enlarged to 150% and 200% at 390 px, 9-14 below), and 15 by the round 7 sweep (JavaScript off).
 //
 //   1. `.split` (the two-column section on 11 pages) shared a rule with `.btn`: `.split, .btn { display:
 //      inline-flex; padding; border; font-size; ... }`. An inline-level box ignores `margin-inline: auto`,
@@ -225,5 +225,24 @@ assert.match(videoHero, /@container \(max-width:\s*16rem\)\s*\{[^}]*\.trust-stri
 const globalCss = read('src/styles/global.css');
 assert.match(globalCss, /\.areas-inline\s*\{\s*container-type:\s*inline-size/, 'the city-page link paragraph needs its container');
 assert.match(globalCss, /@container \(max-width:\s*14rem\)\s*\{\s*\.areas-inline a\.is-phrase\s*\{\s*white-space:\s*normal/, 'the long "fiber cement and wood siding" link must be able to wrap at large text');
+
+// 15. Without JavaScript the primary navigation must still be reachable. The header collapses its nav into a
+//     Menu panel at 1400px and below and only JavaScript opens it, so with scripts off (a privacy setting, a
+//     blocked script, a crawler) every phone, tablet and most laptops showed a dead Menu button and no links.
+//     BaseLayout's <noscript> style shows the nav as a plain wrapped row and hides the button; it must use the
+//     same breakpoint as the header's collapse so there is never a width with neither.
+const baseLayout = read('src/layouts/BaseLayout.astro');
+const collapse = hdr.match(/@media \(max-width:\s*(\d+)px\)\s*\{[^@]*?\.nav\s*\{\s*display:\s*none/);
+assert.ok(collapse, 'could not find the header\'s collapse breakpoint (the media query that sets `.nav { display: none }`)');
+const noscript = baseLayout.match(/<noscript>\s*<style is:inline>([\s\S]*?)<\/style>\s*<\/noscript>/);
+assert.ok(noscript, 'BaseLayout must carry a <noscript><style is:inline> navigation fallback');
+assert.ok(!/\{`|`\}/.test(noscript[1]), 'the <noscript> CSS must be plain text: an `is:inline` style is not an expression, so a template-literal wrapper is printed literally and the rules never apply');
+assert.match(noscript[1], new RegExp(`@media \\(max-width:\\s*${collapse[1]}px\\)`), `the noscript fallback must use the header's ${collapse[1]}px collapse breakpoint`);
+assert.match(noscript[1], /\.nav-toggle\s*\{\s*display:\s*none\s*!important/, 'the dead Menu button must be hidden without JavaScript');
+assert.match(noscript[1], /\.nav\s*\{[^}]*display:\s*flex\s*!important[^}]*position:\s*static\s*!important/, 'the navigation must be shown in flow without JavaScript');
+assert.match(noscript[1], /\.site-header\s*\{\s*position:\s*static\s*!important/, 'the wrapped nav must not make the sticky header cover the page');
+// The project planner is all JavaScript: without it the page showed nine dead +/- buttons and no word why.
+const planner = read('src/pages/tools/window-replacement-cost-calculator.astro');
+assert.match(planner, /<noscript>[\s\S]*?needs JavaScript[\s\S]*?href="\/estimate"[\s\S]*?telHref\(\)[\s\S]*?\.estimator\s*\{\s*display:\s*none\s*!important/, 'the planner must say it needs JavaScript, point to /estimate and the phone, and hide its dead controls');
 
 console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header, round 5: credential tags wrap, no bare 1fr tracks (${bareFr.length}), header keeps Menu at large text)`);

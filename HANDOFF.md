@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, seventh round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, seventh round).
+
+What the next agent must know:
+- **Decision for Keith: `/ask/api/health` and `/ask/api/models` never worked.** They are `GET` handlers (`functions/ask/api/`), but `_middleware.js` allows only `POST` and `OPTIONS`, so the live site answers 405 for both (checked 2026-10-12). Their comments say to check them first when Ask starts answering "unavailable". Nothing references or tests them. Safe by accident: `models` makes outbound calls with the server's AI keys and would be spendable by anyone if the middleware let `GET` through. Options: move them under `/internal/api` (behind the login), or delete them. Not changed.
+- **JavaScript-off is now a tested case** for the header navigation (`test:layout-guards` guard 15). An `is:inline` style takes plain CSS; wrapping it in a `{`...`}` template prints the braces literally and the rules never apply.
+- "Window installation" copy and the city-page `metaTitle` field: see the 2026-10-12 entry in `.ai/STATE.md` (#215).
+
 ## 2026-10-11 - Bug sweep, second round (branch `claude/bug-sweep-2026-10-11`)
 
 Keith said "Keep going". Details: `.ai/CHANGELOG.md` (2026-10-11).
