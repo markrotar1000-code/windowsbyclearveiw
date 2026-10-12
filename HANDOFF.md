@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, eighth round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, eighth round).
+
+What the next agent must know:
+- **Decision for Keith/Mark: the Ask assistant may now name Milgard.** `COMPETITOR` in `functions/ask/api/chat.js` had `milgard`, which made the assistant rewrite and then refuse any answer that named a window line Clearview installs. Removed. If Mark wants Ask to avoid brand names altogether, that is a separate rule to write on purpose (and then the Cascade vs Milgard guide it retrieves from contradicts it).
+- **Nothing executes `chat.js` in CI** (it imports JSON, which plain Node cannot load; `test-ask-security.mjs` reads its source). To run it: `node_modules/.bin/esbuild functions/ask/api/chat.js --bundle --format=esm --platform=node --outfile=<tmp>.mjs --loader:.json=json`, then import the bundle with a stubbed `fetch`. A real behavioural test would need that bundle step in the test.
+- Public JSON fields must be type-checked, not `String()`-coerced: `String({toString: 1})` throws. The authenticated Command Center helpers (`clean()` in `quotes.mjs`, `job-evidence.js`) still coerce; only Mark can reach them.
+
 ## 2026-10-12 - Bug sweep, seventh round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, seventh round).

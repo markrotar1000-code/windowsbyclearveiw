@@ -289,4 +289,19 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   pass('editing a draft revokes unsigned signing links');
 }
 
+// A JSON object with its own `toString` makes String() throw ("Cannot convert object to primitive value"):
+// with a valid link, a crafted name used to escape as an unhandled exception (HTTP 500) instead of a 400.
+{
+  const env = freshEnv();
+  const id = await approvedQuote(env);
+  const t = tokenOf((await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: id } })).body.url);
+  for (const name of [{ toString: 1 }, { a: 1 }, ['x', 'y'], 12345, true, null]) {
+    const r = await submit(env, { t, name, strokes, consent: true });
+    assert.equal(r.status, 400, `a non-text name ${JSON.stringify(name)} is a 400, not a crash`);
+    assert.equal(r.body.field, 'name');
+  }
+  assert.equal(env.QUOTES_DB.raw.prepare(`SELECT status FROM quotes WHERE id = ?`).get(id).status, 'draft', 'nothing was signed');
+  pass('a signing name that is not text is refused cleanly');
+}
+
 console.log('Quote signing checks passed.');
