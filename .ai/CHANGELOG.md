@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-12 - Double-pane and flashing graphics replaced (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "Two new updated graphics to replace the old" (double-pane glass, window flashing).
+
+Changed:
+1. **`src/assets/guides/double-pane-glass-how-it-works.png`** and **`window-flashing-water-way-out.png`** (new): the owner's graphics, flattened to RGB, metadata stripped, otherwise as supplied.
+2. **`guides/[slug].astro`:** `double-pane-glass` renders the one new graphic (full alt text, owner's footnote as caption); the flashing-order copy and the photo-based list no longer describe a photo.
+3. **`FlashingOrder.astro`:** renders the flashing graphic through `CanvaGuideEmbed` (the `builder` prop is gone); used by `/new-construction` and the `what-your-openings-need` guide.
+4. **`PhotoGuide.astro`:** the `flashing` type (stock photo plus numbered notes) is removed.
+5. **Deleted** the old `double-pane-glass-desktop.png` and `-mobile.png`.
+6. **`test-image-delivery.mjs`:** `SOURCE_LIMITED_GRAPHICS` lists the three pages that carry a 1536 px graphic; the photo-guide count expectation drops from 4 to 3.
+
 ## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "Here's a revised version to replace it with" (the guide page's drawn diagram, after the first graphic went onto `/window-features` and `/replacement`).

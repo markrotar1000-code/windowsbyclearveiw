@@ -1,9 +1,9 @@
 ---
 import { Image } from 'astro:assets';
-import { findWork, newBuildWork } from '../../data/work';
+import { findWork } from '../../data/work';
 import { LEAD_PHOTO_WIDTHS, SLOT_SIZES } from '../../lib/image-sizes';
 
-interface Props { type: 'installation' | 'flashing' | 'symptoms' | 'cost'; heading?: string | null; concise?: boolean; }
+interface Props { type: 'installation' | 'symptoms' | 'cost'; heading?: string | null; concise?: boolean; }
 const { type, heading = null, concise = false } = Astro.props;
 
 const photo = {
@@ -18,19 +18,6 @@ const photo = {
       ['01', 'THE OPENING', 'We check what is already there: sill, sides, head, and how square it is.'],
       ['02', 'THE APPROACH', 'The right approach for each opening goes in the written estimate.'],
       ['03', 'WHAT CHANGES', 'Trim, siding, flashing, and interior finish can become part of the scope, depending on the opening.'],
-    ],
-  },
-  flashing: {
-    intro: concise ? 'Sill, side, and head flashing tie the window into the WRB.' : 'Flashing is easiest to understand from actual installation work: the opening is prepared first, then the layers overlap so water has a path out.',
-    source: 'Pexels',
-    sourceUrl: 'https://www.pexels.com/photo/crop-worker-applying-sealant-on-seam-of-window-in-house-6124242/',
-    image: 'https://images.pexels.com/photos/6124242/pexels-photo-6124242.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: 'Clearview installation showing a newly installed window in a sheathed opening.',
-    title: concise ? 'Lap each layer to shed water.' : 'Water needs a way out.',
-    points: [
-      ['01', 'SILL', concise ? 'Sill pan first; maintain drainage to the exterior.' : 'The bottom of the opening is protected first, so water has a path back outside.'],
-      ['02', 'SIDES', concise ? 'Tie side flashing into the window and WRB.' : 'Side flashing connects the window to the prepared opening.'],
-      ['03', 'TOP', concise ? 'Lap head flashing over the WRB.' : 'Head flashing overlaps the wall weather barrier and directs water outward.'],
     ],
   },
   symptoms: {
@@ -63,9 +50,7 @@ const photo = {
   },
 }[type];
 
-const clearviewPhoto = type === 'flashing'
-  ? newBuildWork[0]
-  : type === 'installation'
+const clearviewPhoto = type === 'installation'
     ? findWork('blue-ladder')
     : type === 'symptoms'
       ? findWork('bedroom-view')
