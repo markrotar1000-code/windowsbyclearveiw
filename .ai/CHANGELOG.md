@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-12 - README brought up to date (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "Update read me please." The README still described the pre-October platform. Corrected against the repo: no public pricing (`publicPricing = false`; the pricing Worker was deleted), durable rate limits and Turnstile (the "no durable rate limiter" gap is closed), CI works again, `test:all` is 59 steps, the Command Center's current tool list, optional Access / R2 / ops-cron, the owner-supplied guide graphics (new "Adding or replacing a guide graphic" steps, including why AI upscaling is not used), the real project layout, and a short ICM pointer. Docs only; no code or test changes.
+
 ## 2026-10-12 - Double-pane and flashing graphics replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "Two new updated graphics to replace the old" (double-pane glass, window flashing).
