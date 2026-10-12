@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-12 - Window trouble graphic replaces the signs photo guide
+
+Keith supplied "Window Trouble: Know the Signs" (4096 px, `src/assets/guides/window-trouble-know-the-signs.png`) for `/guides/signs-you-need-new-windows`; it replaces the stock-photo checklist (`SignsChecklist`, `PhotoGuide` `symptoms`, both deleted). The export had a "!lock" glyph defect, retouched. Open: none specific to this graphic; the 1536 px graphics from earlier today remain source-limited (a Higgsfield 4K upscale was tried and rejected because it altered lettering).
+
 ## 2026-10-12 - Double-pane and flashing graphics replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith supplied two new owner graphics. "Double-Pane Glass: How It Works" (`src/assets/guides/double-pane-glass-how-it-works.png`) replaces the Canva desktop and mobile pair on `/guides/fogged-windows`; "Window Flashing: Give Water a Way Out" (`src/assets/guides/window-flashing-water-way-out.png`) replaces the stock-photo flashing guide, so `FlashingOrder.astro` now renders it through `CanvaGuideEmbed` on `/new-construction` and as the secondary diagram on `/guides/what-your-openings-need`. Both are 1536 x 1024 RGB with metadata stripped, shown with full alt text and the graphic's own footnote as the visible caption. The old desktop/mobile pair is deleted (the double-pane graphic is one image at every width, so phone text is small). The `flashing` type is removed from `PhotoGuide.astro`. A third graphic, "Window Energy Ratings, Explained" (`window-energy-ratings-explained.png`), replaces the coded U-factor/SHGC gauge on `/window-features`; the gauge's unsourced "0.27 typical Clearview install" and rebate-range numbers are gone. Open: the supplied double-pane graphic has a washed-out subtitle ("Two panes. A sealed insulating space. Layers that work together."), so a clean re-export is wanted; the flashing graphic's "Overlapping layers..." line starts with a clipped "O".

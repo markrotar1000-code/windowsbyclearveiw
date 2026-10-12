@@ -239,7 +239,7 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
   for (const [page, html] of pages) {
     for (const wrap of html.matchAll(/<div class="photo-wrap[^"]*"[^>]*>[\s\S]*?<\/div>/g)) {
       const [tag] = images(wrap[0]);
-      // (The flashing guide became a graphic on 2026-10-12, so three pages carry a job-photo lead now.)
+      // (The flashing and signs guides became graphics on 2026-10-12, so two pages carry a job-photo lead now.)
       // The stock-photo guides use a plain <img> with no srcset; only the job photos are responsive.
       if (!tag || !attr(tag, 'srcset')) continue;
       leads++;
@@ -253,7 +253,7 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
       assert.equal(attr(tag, 'sizes'), SLOT_SIZES.guideGraphic, `${page}: guide graphic sizes drifted from SLOT_SIZES.guideGraphic`);
     }
   }
-  assert.ok(leads >= 3, `expected the photo guide on at least 3 pages, found ${leads}`);
+  assert.ok(leads >= 2, `expected the photo guide on at least 2 pages, found ${leads}`);
   assert.ok(graphics >= 1, 'the double-pane glass guide graphic was not found');
 });
 

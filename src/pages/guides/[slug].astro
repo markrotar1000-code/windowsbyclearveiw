@@ -7,8 +7,8 @@ import OpeningScope from '../../components/diagrams/OpeningScope.astro';
 import FlashingOrder from '../../components/diagrams/FlashingOrder.astro';
 import CanvaGuideEmbed from '../../components/CanvaGuideEmbed.astro';
 import doublePaneGlassGraphic from '../../assets/guides/double-pane-glass-how-it-works.png';
+import windowTroubleGraphic from '../../assets/guides/window-trouble-know-the-signs.png';
 import frameSightlinesGraphic from '../../assets/guides/vinyl-fiberglass-sightlines.png';
-import SignsChecklist from '../../components/diagrams/SignsChecklist.astro';
 import EstimateBuildUp from '../../components/diagrams/EstimateBuildUp.astro';
 import FaqAccordion from '../../components/FaqAccordion.astro';
 import HeroAurora from '../../components/HeroAurora.astro';
@@ -54,9 +54,9 @@ const diagramNotes = {
     answer: 'Vinyl uses a chambered profile, often a little broader. Fiberglass is a stronger, more rigid material that can allow a slimmer sightline. The right choice depends on the opening, the product\'s rated size and the finish.',
   },
   'signs-checklist': {
-    eyebrow: 'Photo guide',
+    eyebrow: 'Symptom guide',
     title: 'Inspect the opening before you decide what the symptom means.',
-    body: 'Use the numbered checks to inspect the opening, then compare multiple signs at the same window.',
+    body: 'Match what you notice to the four common signs, then compare more than one sign at the same window.',
     answer: 'A symptom is a clue, not a diagnosis. Location, repetition, and the condition of the opening matter more than one isolated nuisance.',
   },
 };
@@ -97,9 +97,9 @@ const currentDiagramNote = guide.data.diagram ? diagramNotes[guide.data.diagram]
 
 // These diagram types already wrap a full photo (see PhotoGuide.astro), so
 // showing the guide's own heroImage right after them would duplicate the
-// section. The illustration-style diagrams below (double-pane-glass, vinyl-vs-fiberglass, flashing-order) are
+// section. The illustration-style diagrams below (double-pane-glass, vinyl-vs-fiberglass, flashing-order, signs-checklist) are
 // graphics, not photos, so pairing them with a real job photo is intentional.
-const photoBasedDiagrams = ['opening-scope', 'signs-checklist'];
+const photoBasedDiagrams = ['opening-scope'];
 const diagramIsPhotoBased = guide.data.diagram ? photoBasedDiagrams.includes(guide.data.diagram) : false;
 
 const slugifyHeading = (value) => value
@@ -189,7 +189,14 @@ const pageHeadings = [...guide.body.matchAll(/^##\s+(.+)$/gm)]
               description="Illustrative comparison. Frame widths, reinforcement and maximum sizes vary by manufacturer and series."
             />
           )}
-          {guide.data.diagram === 'signs-checklist' && <SignsChecklist />}
+          {guide.data.diagram === 'signs-checklist' && (
+            <CanvaGuideEmbed
+              desktopSrc={windowTroubleGraphic}
+              alt="Window Trouble: Know the Signs. Identify the symptom before deciding what needs repair or replacement. Four common signs, each with what you notice and what it may mean: 1 drafts around the window, air movement near the sash, lock or frame, which may mean worn weatherstripping, alignment issues or gaps around the installation; 2 fog between the panes, haze that remains after accessible glass surfaces are cleaned, which may mean the insulated glass seal has failed, while surface condensation alone is different; 3 stains or soft wood, recurring stains, peeling paint or deteriorated wood, which means a moisture source needs investigation and repairs may extend beyond the window; 4 hard to open or lock, sticking, dropping sashes or locks that will not engage, which may mean hardware, balance, alignment or frame problems. A symptom is a starting point, not a diagnosis: inspect the cause before choosing the scope."
+              title="Window trouble: know the signs"
+              description="Some issues can be repaired. Glass, hardware, frame and surrounding wall conditions should be assessed together."
+            />
+          )}
         </div>
       </div>
     </section>
