@@ -135,6 +135,19 @@ const breadcrumbSchema =
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Without JavaScript nothing can open the collapsed menu (it opens by adding `is-open`), so at 1400px
+        and below the primary navigation was unreachable. This shows it as a plain wrapped row instead and
+        hides the dead Menu button. `!important` beats the header's scoped rules. Guard 15, test:layout-guards. */}
+    <noscript>
+      <style is:inline>@media (max-width: 1400px) {
+  .site-header { position: static !important; }
+  .site-header .nav-toggle { display: none !important; }
+  .site-header .header-inner { flex-wrap: wrap !important; row-gap: 0.4rem; padding-block: 0.5rem; }
+  .site-header .nav { display: flex !important; position: static !important; order: 3; flex: 0 0 100% !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: flex-start !important; gap: 0 1.1rem !important; min-width: 0 !important; max-height: none !important; overflow: visible !important; padding: 0 0 0.4rem !important; background: none !important; border: 0 !important; box-shadow: none !important; white-space: normal !important; }
+  .site-header .nav a { padding: 0.4rem 0 !important; font-size: var(--step--1) !important; }
+  .site-header .nav .nav-estimate { margin: 0 !important; padding: 0.4rem 0 !important; border: 0 !important; }
+}</style>
+    </noscript>
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, follow" />}

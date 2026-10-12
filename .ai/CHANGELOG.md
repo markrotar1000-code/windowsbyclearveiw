@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, seventh round: navigation and planner without JavaScript (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "continue fixing bugs across the platform." Method: Playwright with `javaScriptEnabled: false` over all 37 public pages at 390 and 1280 px, counting visible header links, invisible text and dead controls.
+
+Changed:
+1. **`BaseLayout.astro`:** `<noscript><style is:inline>` for `max-width: 1400px` (the header's collapse point): `.nav` shown in flow as a wrapped row, `.nav-toggle` hidden, `.site-header` static. The CSS is plain text: a `{`...`}` template wrapper is printed literally inside an `is:inline` style (found the hard way).
+2. **`tools/window-replacement-cost-calculator.astro`:** `<noscript>` notice (needs JavaScript, `/estimate`, phone) and `.estimator { display: none !important }`.
+3. **`test:layout-guards` guard 15** (fallback exists, plain text, same breakpoint as the header, hides the button, shows the nav, un-sticks the header; planner notice). Mutation-checked both ways.
+
+Not bugs: the home hero is at opacity 0 for its first seconds (CSS animation, completes without JS); `/ask` hides the footer links on purpose.
+
+Left for Keith (HANDOFF): `/ask/api/health` and `/ask/api/models`. No code change this round touched the server.
+
 ## 2026-10-12 - "Window installation" on the public pages (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith, relaying Mark: "he does 'window installation' on the site and it does have search intent so lets work that into the areas it fits."
