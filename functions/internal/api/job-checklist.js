@@ -5,7 +5,9 @@ function json(data, status = 200) {
   });
 }
 
-async function ensureSchema(db) {
+// Creates the checklist and per-opening evidence tables. Exported because the closeout reads both and a
+// database where no job has been through Field yet does not have them.
+export async function ensureSchema(db) {
   await db.batch([
     db.prepare(`CREATE TABLE IF NOT EXISTS job_checklist_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

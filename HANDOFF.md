@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, thirteenth round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, thirteenth round).
+
+What the next agent must know:
+- **Run `scripts/audit-command-center.mjs` after any Command Center UI or API change.** It needs Playwright and a Chromium (`npm i --no-save playwright`, `CHROMIUM_PATH`), builds nothing itself (`npm run build` first), and exits 1 if any page throws, calls an API that errors, or scrolls sideways. It is the only thing that executes these pages against the real handlers.
+- **Long-text rule:** do not add `overflow-wrap: anywhere` to a flex or grid container of controls; it lowers their minimum width and they collapse. The layout already applies it to the content area and resets controls. A new control class that is not `button`, `select`, `th`, a tab, or named `*btn*`, `*filter*`, `*pill*`, `*chip*` or `*tab*` needs adding to the reset list in `InternalLayout.astro` (and to the guard in `test-internal-mobile.mjs`).
+- Tables that every endpoint needs must be created by whatever reads them, not only by the endpoint that happens to write them first (`job-closeout.js` was the one that did not).
+
 ## 2026-10-12 - Bug sweep, twelfth round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, twelfth round).

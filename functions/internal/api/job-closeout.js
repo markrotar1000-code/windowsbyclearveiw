@@ -1,3 +1,4 @@
+import { ensureSchema as ensureChecklistSchema } from './job-checklist.js';
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store'}});}
 async function ensureSchema(db){await db.prepare(`CREATE TABLE IF NOT EXISTS job_closeouts (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,6 +14,7 @@ async function ensureSchema(db){await db.prepare(`CREATE TABLE IF NOT EXISTS job
 )`).run();}
 async function load(db,jobId){return db.prepare(`SELECT * FROM job_closeouts WHERE job_id = ?`).bind(jobId).first();}
 async function readiness(db,jobId){
+ await ensureChecklistSchema(db);
  const job=await db.prepare(`SELECT id,status,build_plan_json,work_type FROM jobs WHERE id=?`).bind(jobId).first();
  if(!job)return {error:'Job not found.',status:404};
  if(job.work_type==='siding')return {error:'Siding jobs have no window closeout. Finish them from the job page.',status:409};

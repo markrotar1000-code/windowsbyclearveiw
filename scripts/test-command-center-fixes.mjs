@@ -21,6 +21,7 @@ import * as share from '../functions/internal/api/quote-share.js';
 import * as tasksApi from '../functions/internal/api/tasks.js';
 import * as dashboardApi from '../functions/internal/api/dashboard.js';
 import * as checklistApi from '../functions/internal/api/job-checklist.js';
+import * as closeoutApi from '../functions/internal/api/job-closeout.js';
 import * as jobsApi from '../functions/internal/api/jobs.js';
 import * as paymentsApi from '../functions/internal/api/payments.js';
 
@@ -109,6 +110,28 @@ async function approvedQuote(env, body) {
   assert.match(saved.body.error, /roughly 100 openings/i, 'the message gives the limit');
   assert.match(saved.body.error, /more than one quote/i, 'and says what to do about it');
   pass('a Build Plan that is too large to save says the limit and to split the work into more than one quote');
+}
+
+// ── Closeout on a database that has never opened Field ─────────────────────
+// job-closeout.js read job_checklist_items and job_opening_evidence without creating them; only the Field
+// and evidence endpoints do. Opening a job's closeout first, on a database where no job had been through
+// Field, was a 500 ("no such table") and the page said "Could not load closeout."
+{
+  const env = freshEnv();
+  const id = await approvedQuote(env, { items: [{ label: 'Slider', quantity: 3, unitPriceCents: 50000 }] });
+  await env.QUOTES_DB.prepare(`UPDATE quotes SET status='finalized', signed_at='x', signature_name='x' WHERE id = ?`).bind(id).run();
+  const job = await call(jobsApi.onRequestPost, env, { method: 'POST', body: { quoteId: id } });
+  assert.equal(job.status, 201);
+  const tables = () => env.QUOTES_DB.raw.prepare("SELECT name FROM sqlite_master WHERE name IN ('job_checklist_items','job_opening_evidence')").all().length;
+  assert.equal(tables(), 0, 'precondition: Field has not created the checklist tables');
+  const read = await call(closeoutApi.onRequestGet, env, { path: `/c?jobId=${job.body.id}` });
+  assert.equal(read.status, 200, 'the closeout page loads');
+  assert.equal(read.body.readyForFinalize, false, 'nothing is complete yet');
+  assert.ok(read.body.openingCount >= 2 && read.body.openings.every((o) => o.complete === false), 'every opening shows as incomplete');
+  const patch = await call(closeoutApi.onRequestPatch, env, { method: 'PATCH', path: `/c?jobId=${job.body.id}`, body: { finalize: true } });
+  assert.equal(patch.status, 409, 'finalizing is refused as not ready, not a crash');
+  assert.equal(patch.body.code, 'CLOSEOUT_NOT_READY');
+  pass('the closeout page loads and refuses to finalize before any checklist exists');
 }
 
 // ── Dashboard cities ───────────────────────────────────────────────────────
