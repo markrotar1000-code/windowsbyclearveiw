@@ -1,8 +1,9 @@
 ---
 name: La Center
 region: Clark County
-title: Window Replacement in La Center, WA
-description: Window replacement in La Center, WA for homes and acreage. Free in-home measure, then a written estimate before anything is ordered. (564) 208-0801
+title: Window Replacement & Installation in La Center, WA
+metaTitle: La Center, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in La Center, WA for homes and acreage. Free in-home measure, then a written estimate first. (564) 208-0801
 published: true
 faq:
   - question: Do I need a permit to replace windows in La Center?
@@ -31,6 +32,6 @@ La Center lists window replacement among the projects that need a building permi
 
 ## What we do here
 
-We measure, order, and install from Vancouver. The approach depends on what each opening needs, and we put it in the written estimate. New construction? We set windows once the openings are ready; see [new construction](/new-construction) for what we ask a builder to have ready first.
+We measure, order, and handle the window installation from Vancouver. The approach depends on what each opening needs, and we put it in the written estimate. New construction? We set windows once the openings are ready; see [new construction](/new-construction) for what we ask a builder to have ready first.
 
 Nearby: [Ridgefield](/areas/ridgefield) and [Vancouver](/areas/vancouver).

@@ -97,7 +97,8 @@ const heroPhoto = findWork('tan-two-story')!;
 const heroBg = await getHeroBg(heroPhoto.image);
 ---
 <BaseLayout
-  title={city.data.title}
+  title={city.data.metaTitle ?? city.data.title}
+  exactTitle={Boolean(city.data.metaTitle)}
   description={city.data.description}
   path={`/areas/${city.id}`}
   crumbs={[

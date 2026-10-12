@@ -1,8 +1,9 @@
 ---
 name: Vancouver
 region: Clark County
-title: Vancouver, WA Window Replacement
-description: Window replacement in Vancouver, WA, from Hazel Dell to Felida. Free in-home measure, then a written estimate before anything is ordered. (564) 208-0801
+title: Vancouver, WA Window Replacement & Installation
+metaTitle: Vancouver, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in Vancouver, WA, from Hazel Dell to Felida. Free in-home measure, then a written estimate first. (564) 208-0801
 published: true
 faq:
   - question: Which Vancouver neighborhoods do you actually cover?
@@ -25,6 +26,6 @@ In the older postwar neighborhoods, we see aluminum sliders and first-generation
 
 ## What we do here
 
-We replace windows in existing houses and set windows on new construction in the growing parts of the city. We measure the actual opening, not a guess from the neighborhood's build year, and write the estimate before anything is ordered. Choosing a material? See [vinyl vs. fiberglass](/guides/vinyl-vs-fiberglass-pacific-northwest). Pricing the job first? See [what a Washington replacement actually costs](/guides/window-replacement-cost-washington).
+We do window installation both ways: replacing windows in existing houses and setting windows on new construction in the growing parts of the city. We measure the actual opening, not a guess from the neighborhood's build year, and write the estimate before anything is ordered. Choosing a material? See [vinyl vs. fiberglass](/guides/vinyl-vs-fiberglass-pacific-northwest). Pricing the job first? See [what a Washington replacement actually costs](/guides/window-replacement-cost-washington).
 
 Nearby: [Camas](/areas/camas), [Washougal](/areas/washougal), [Battle Ground](/areas/battle-ground), [Ridgefield](/areas/ridgefield), [La Center](/areas/la-center), and [Woodland](/areas/woodland). We install to the same standard in every one of them.

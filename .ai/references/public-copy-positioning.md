@@ -39,6 +39,15 @@ Keith pointed at "What the street sees once the job is done" and said that kind 
 - The 2026-10-11 batch is confirmed as Clearview jobs (Keith, 2026-10-11), so a plain "from our jobs" line is allowed on the gallery if Keith wants one. Do not describe a photo's scope (replacement, new construction, "installed") from the picture alone; the doors page's installs grid is the one place that labels a 2026-10-11 photo "Finished result", on Keith's word that it is ours. See `docs/GALLERY-PHOTOS-2026-10-11.md`.
 - Still to do: "elevation" remains in six guide sentences (an FAQ answer, two hero image credits, three body lines) and builder-facing copy on `/new-construction`, where it is the normal word. Guide edits need the owner's say-so for FAQs and a rebuild of the Ask index (`npm run build:guides-index`, needs `GEMINI_API_KEY`).
 
+## Window installation (Mark, 2026-10-12)
+
+Mark does window installation and wants it said on the site, because it is a search phrase of its own ("window installation Vancouver WA"), not just "replacement".
+
+- Say it where it fits, in plain words: the titles, H1s and descriptions of the eight city pages, `/areas`, `/replacement` and the home page, the home hero line and the footer blurb. `/process`, `/new-construction`, `/siding`, `/sliding-glass-doors` and `/about` already carried it.
+- City pages: H1 "Window Replacement & Installation in {City}, WA"; `<title>` is the city page's `metaTitle` (exact, brand dropped to " | Clearview" or removed where 60 characters leave no room). Enforced by `test:seo`; the home, `/replacement` and `/areas` must say "installation" in title, H1 or description.
+- It is a service name, not an install method: all the rules above still apply (no method names, no timing, no room-state promises, no crew or certification claims).
+- Left alone on purpose: the gallery (a photo's scope is not described from the picture, see the gallery section), the guides and FAQs (guide edits need an Ask index rebuild and the owner's say-so), `/window-features`, `/reviews`.
+
 ## Siding (owner direction, 2026-10-04)
 
 Source of truth for `/siding` and anything else that mentions siding; do not extend by guessing.

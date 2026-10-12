@@ -76,13 +76,22 @@ for (const p of targeted) {
   if (p.title.length < 50 || p.title.length > 60) problems.push(`${p.path}: title is ${p.title.length} chars (want 50-60): ${p.title}`);
   if (p.description.length < 130 || p.description.length > 155) problems.push(`${p.path}: description is ${p.description.length} chars (want 130-155)`);
   if (/^\/areas\/.+/.test(p.path)) {
-    // Vancouver is the one exception to the "in {City}" pattern: the home page already
-    // owns "Window Replacement in Vancouver, WA", and two pages must not compete for it.
-    const city = p.title.match(/^Window Replacement in (.+?), WA \| Clearview Windows$/) || (p.path === '/areas/vancouver' && p.title.match(/^(Vancouver), WA Window Replacement \| Clearview Windows$/));
-    if (!city) problems.push(`${p.path}: title does not follow "Window Replacement in {City}, WA | Clearview Windows": ${p.title}`);
+    // "{City}, WA Window Replacement & Installation", with " | Clearview" when it fits in 60 characters
+    // (Battle Ground and Brush Prairie do not have room for it). Window installation is what many
+    // people search for, so it sits in the title (Mark, 2026-10-12). The home page owns the
+    // "Window Replacement & Installation, Vancouver WA" wording; /areas/vancouver is worded differently
+    // so the two do not compete for it.
+    const city = p.title.match(/^(.+?), WA Window Replacement & Installation(?: \| Clearview)?$/);
+    if (!city) problems.push(`${p.path}: title does not follow "{City}, WA Window Replacement & Installation[ | Clearview]": ${p.title}`);
     else if (!p.h1.toLowerCase().includes(city[1].toLowerCase()) || !/window replacement/i.test(p.h1)) problems.push(`${p.path}: H1 "${p.h1}" does not carry the title's city and "window replacement"`);
     if (!/free in-home measure/i.test(p.description) || !/written estimate/i.test(p.description)) problems.push(`${p.path}: description should mention a free in-home measure and a written estimate`);
   }
+}
+// "Window installation" is a search phrase of its own (Mark, 2026-10-12). The pages that rank for the
+// service must say it in the title, the H1 or the description, not only in structured data.
+for (const path of ['/', '/replacement', '/areas']) {
+  const page = pages.find((p) => p.path === path);
+  if (!page || !/installation/i.test(`${page.title} ${page.h1} ${page.description}`)) problems.push(`${path}: must say "installation" in its title, H1 or description`);
 }
 for (const p of pages) {
   if (targeted.includes(p) || KNOWN_OVER.has(p.path)) continue;

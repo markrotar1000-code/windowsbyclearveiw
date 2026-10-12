@@ -21,7 +21,7 @@ export const site = {
    * list — the part that actually earns the click — was being cut off.
    */
   metaDescription:
-    'Replacement and new-construction windows in Vancouver, WA and Clark County — Camas, Washougal, Battle Ground and nearby. Free measure, written estimate.',
+    'Window installation and replacement in Vancouver, WA and Clark County, plus new construction. Camas, Washougal, Battle Ground and nearby. Free measure.',
   owner: 'Mark',
   state: 'Washington',
   /**

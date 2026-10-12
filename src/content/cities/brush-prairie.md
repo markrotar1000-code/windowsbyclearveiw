@@ -1,8 +1,9 @@
 ---
 name: Brush Prairie
 region: Clark County
-title: Window Replacement in Brush Prairie, WA
-description: Window replacement in Brush Prairie, WA, from acreage homes to new builds. Free in-home measure and a written estimate. Call (564) 208-0801.
+title: Window Replacement & Installation in Brush Prairie, WA
+metaTitle: Brush Prairie, WA Window Replacement & Installation
+description: Window replacement and installation in Brush Prairie, WA, from acreage homes to new builds. Free in-home measure and a written estimate. (564) 208-0801
 published: true
 faq:
   - question: Do I need a permit to replace windows in Brush Prairie?
@@ -31,6 +32,6 @@ Brush Prairie is unincorporated, so Clark County's rule applies: a roofing, sidi
 
 ## What we do here
 
-We measure each opening, put the right approach in the written estimate, set the window level, and seal it for weather that comes in sideways. New construction is common out here too. For framing off 117th, 182nd, or toward Hockinson, we set windows on a scheduled date so your siding crew is not waiting on us.
+Window installation here starts with measuring each opening. We put the right approach in the written estimate, set the window level, and seal it for weather that comes in sideways. New construction is common out here too. For framing off 117th, 182nd, or toward Hockinson, we set windows on a scheduled date so your siding crew is not waiting on us.
 
 Nearby: [Battle Ground](/areas/battle-ground), [Vancouver](/areas/vancouver), and [Camas](/areas/camas).
