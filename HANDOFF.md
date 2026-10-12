@@ -51,6 +51,14 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, twelfth round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, twelfth round).
+
+What the next agent must know:
+- **A quote with more than about 100 openings cannot get a saved Build Plan**, so it cannot be approved, signed through the link or become a job. Limit: 100,000 characters in `build-plan.js` (about 1 KB per opening). A builder bid for several houses has to be split into one quote per house. Raising it means raising it in `build-plan.js` and checking the 2 MB D1 row limit and the 150,000 `slice` in `jobs.js` (see the CHANGELOG).
+- Decision for Keith: is "split the quote" acceptable for a multi-house builder bid, or should the limit rise? Nothing today needs more than 100 openings.
+
 ## 2026-10-12 - Bug sweep, eleventh round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, eleventh round).

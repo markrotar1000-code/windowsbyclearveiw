@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, twelfth round: the plan-too-large refusal says what to do (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "keep sweeping for more bugs." Method: read the job, closeout and import code; measured Build Plan size against the real handlers (about 1 KB per opening; one quote line is capped at 50 openings, a quote has no cap on lines); bundled every server file with esbuild; fuzzed nothing new.
+
+Changed:
+1. **`functions/internal/api/build-plan.js`:** the 413 text is now "This Build Plan is too large to save (the limit is roughly 100 openings). Split the work into more than one quote." (was "Build plan is too large to save.").
+2. **`test-command-center-fixes.mjs`:** a 150-opening quote is refused with a message that gives the limit and says to split (failed against the old wording).
+
+Investigated, not a bug: the `slice(0, 150000)` on the job's plan snapshot in `jobs.js`. The save limit (100,000 characters) sits below it and the job adds a few hundred, so it cannot truncate. Do not "fix" it without raising the save limit first.
+
+Checked, no change: esbuild bundle of all 84 server files, CSV escaping in both exports, `ageBand` / `priceBand` / `segmentFor` edges, `job-closeout.js`.
+
 ## 2026-10-12 - Bug sweep, eleventh round: login throttle (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "keep sweeping for more bugs." Method: probe production over HTTP (read-only): host and path variants, headers, the `pages.dev` address, then read what stands in front of `/internal` on each.

@@ -96,6 +96,21 @@ async function approvedQuote(env, body) {
   pass('payment limit message shows the exact total');
 }
 
+// ── A plan too big to save says what to do ─────────────────────────────────
+// A Build Plan is refused above 100,000 characters (about 1 KB per opening, so roughly 100 openings), which
+// stops a big builder bid before it can be approved or become a job. The refusal used to say only "too large".
+{
+  const env = freshEnv();
+  const items = Array.from({ length: 30 }, (_, i) => ({ label: `Slider ${i}`, quantity: 5, unitPriceCents: 50000 }));
+  const created = await call(quotesIndex.onRequestPost, env, { method: 'POST', body: { customer, signatureMethod: 'digital', items } });
+  const gen = await call(buildPlan.onRequestGet, env, { path: `/p?quoteId=${created.body.id}` });
+  const saved = await call(buildPlan.onRequestPost, env, { method: 'POST', body: { quoteId: created.body.id, plan: gen.body.plan } });
+  assert.equal(saved.status, 413, 'a 150-opening plan is refused');
+  assert.match(saved.body.error, /roughly 100 openings/i, 'the message gives the limit');
+  assert.match(saved.body.error, /more than one quote/i, 'and says what to do about it');
+  pass('a Build Plan that is too large to save says the limit and to split the work into more than one quote');
+}
+
 // ── Dashboard cities ───────────────────────────────────────────────────────
 {
   const env = freshEnv();
