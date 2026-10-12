@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, tenth round: facts that are duplicated by hand are now tested (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "keep sweeping for more bugs." Method: look for places where the code says the same thing twice and nothing makes the copies agree. `functions/` and `workers/` never import from `src/`, so contract terms, the phone number and the site address each exist in both.
+
+Changed:
+1. **`scripts/test-duplicated-facts.mjs`** (new; `npm run test:duplicated-facts`; step in `.github/workflows/build.yml`, so `test:all` is 59 steps): terms version parity plus a pinned hash of the terms wording (`PINNED` in the test; bump `TERMS_VERSION` in both files and add the new hash to change the wording); all phone numbers in server files equal `site.phone`; every site address in server files is the canonical one and no address is on `@windowsbyclearview.com`.
+2. No production code changed.
+
+Verified by mutation: wording edited without a bump, one version bumped alone, a phone digit changed in `chat.js`, the legacy spelling as a web address, and the canonical domain as a mail address each fail with a message that says what to do.
+
+Checked, no change: digest vs `pacificDayRange` over 30,613 instants, quote rounding client vs server, secrets and personal data in `dist/` and tracked files, cron times.
+
 ## 2026-10-12 - Bug sweep, ninth round: Pacific weeks and real sources on the lead numbers (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "keep sweeping for more bugs." Method: read the aggregations behind the Command Center numbers, then run them on awkward dates (daylight-saving days, Sunday evening, midnight edges) and with messy stored values.

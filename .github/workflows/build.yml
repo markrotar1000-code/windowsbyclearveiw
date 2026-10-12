@@ -50,6 +50,7 @@ jobs:
       - run: npm run test:review-request
       - run: npm run test:visitor-errors
       - run: npm run test:layout-guards
+      - run: npm run test:duplicated-facts
       - run: npm run eval:build-plan
       - run: npm run build
       - run: npm run test:window-studio

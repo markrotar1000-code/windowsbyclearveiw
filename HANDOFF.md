@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, tenth round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, tenth round).
+
+What the next agent must know:
+- **To change the contract wording** (`src/data/contractTerms.ts`, from `WARRANTY_YEARS` down): bump `TERMS_VERSION` in `src/data/contractTerms.ts` AND `functions/internal/_lib/quotes.mjs`, then add the new version and the hash the failing `test:duplicated-facts` prints to `PINNED`. The wording has not been reviewed by an attorney (see the file's header).
+- **To change the phone number or site address**, change `src/data/site.ts` and every server copy `test:duplicated-facts` lists; it names the file. Mail stays on `@windowsbyclearveiw.com`.
+- Not changed: the quote builder lets a custom line be added at $0.00 (the price field defaults to 0). It may be deliberate ("included"); if not, a confirm on $0 lines would stop a forgotten price reaching a contract.
+
 ## 2026-10-12 - Bug sweep, ninth round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, ninth round).
