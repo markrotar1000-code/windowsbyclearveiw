@@ -5,30 +5,36 @@ Marketing site and internal quoting platform for **Clearview Windows**, operated
 
 - **Production:** https://windowsbyclearview.com
 - **Stack:** Astro 7, static build, Cloudflare Pages
-- **Server-side:** Cloudflare Pages Functions + D1
-- **Internal app:** `/internal/*`
+- **Server-side:** Cloudflare Pages Functions + D1 (R2 for job-photo and backup storage)
+- **Internal app (Command Center):** `/internal/*`, phone-first and installable
 - **Customer assistant:** `/ask`
-- **Pricing worker:** Cloudflare Worker + KV
+- **Companion Worker:** `workers/ops-cron/` (nightly D1 backup, weekday follow-up push)
 - **Repository:** `ksksrbiz-arch/windowsbyclearveiw`
+- **AI/agent context:** `CLAUDE.md` → `.ai/` (see [AI context (ICM)](#ai-context-icm))
 
 > The repository/domain spelling contains the historical `clearveiw` typo. The customer-facing brand and production domain use **ClearView/Clearview** correctly. Existing operational email addresses should not be changed without an actual mailbox/domain migration.
 
 ## Platform status
 
-The platform has been through a substantial hardening pass covering the public marketing site, estimate intake, `/ask`, internal quoting, field photography, invoices, SEO, accessibility, and regression testing.
+The platform has been through repeated hardening and bug-sweep passes covering the public marketing site, estimate intake, `/ask`, internal quoting, field photography, invoices, SEO, accessibility, and regression testing. `.ai/STATE.md` is the dated, current snapshot; `.ai/CHANGELOG.md` is the history; `HANDOFF.md` is what the next person needs.
 
 ### Production checklist
 
-- [x] **Washington L&I contractor registration number** — `lniNumber` in `src/data/site.ts` is set to the real registration (`CLEARVW74601`) as of 2026-09-22.
-- [ ] Set `REQUIRE_LNI=1` in the production Pages environment now that the number is set, so a future accidental removal fails the build instead of just warning.
+Items below need the owner's dashboards (Cloudflare, Resend, Google), so a checked box here only means the code and docs are done. When in doubt, confirm on the live site.
+
+- [x] **Washington L&I contractor registration number** — `lniNumber` in `src/data/site.ts` holds the real registration. Never invent a placeholder for `lniNumber`, `insurance` or `bond`.
+- [ ] Set `REQUIRE_LNI=1` in the production Pages environment so a future accidental removal fails the build instead of just warning.
 - [ ] **`RESEND_API_KEY` on Pages** — required for live estimate delivery.
-- [ ] **Reviews** — `/reviews` intentionally remains empty until real customer quotes are approved for publication.
-- [ ] **Google reviews feed** — code is built and tested (`npm run test:google-reviews`); set `GOOGLE_PLACES_API_KEY` and `GOOGLE_PLACE_ID` in Cloudflare Pages to turn it on (see `internal/README.md`). Until then `/reviews` shows owner-supplied review cards, including Hali Kimball's five-star review.
-- [ ] **Internal production bindings** — `QUOTES_DB`, `INTERNAL_PASSWORD`, and `INTERNAL_SESSION_SECRET` must be configured in Cloudflare Pages.
-- [x] **Groq/Gemini integration** — `/ask` has provider fallback and graceful degradation.
-- [ ] **Workers AI `AI` binding** — required for `/ask` photo analysis; the rest of `/ask` continues to work without it.
-- [ ] **Durable rate limiting** — public estimate and `/ask` endpoints currently rely on validation, size limits, origin checks, honeypots, and provider controls rather than a durable application-level rate limiter.
-- [ ] **Full production browser smoke pass** — source/build regression coverage is strong, but real-browser verification of the latest `/ask` production behavior should still be completed.
+- [ ] **Internal production bindings** — `QUOTES_DB`, `INTERNAL_PASSWORD`, and `INTERNAL_SESSION_SECRET` configured in Cloudflare Pages.
+- [ ] **Turnstile secret** — the widget and its public site key ship; set `TURNSTILE_SECRET_KEY` (Pages secret) to start refusing requests without a valid token (`internal/README.md`, "Spam and abuse protection").
+- [ ] **Cloudflare Access** — optional sign-in for `/internal`, built and off until configured. The `*.pages.dev` hostname is not behind Access unless it is added there or disabled; only the app login protects it.
+- [ ] **Companion Worker** — deploy `workers/ops-cron/` for the nightly backup and the weekday push (`.github/workflows/deploy-ops-cron.yml`, `internal/README.md`).
+- [ ] **Workers AI `AI` binding** — required for `/ask` photo analysis and guide-search embeddings; the rest of `/ask` continues to work without it.
+- [ ] **Job-photo R2 storage** — `JOB_PHOTOS` binding; until it exists the photo endpoint answers "not connected yet" and photos stay on the phone.
+- [ ] **Reviews** — `/reviews` shows owner-supplied review cards only. The Google reviews feed is built and tested (`npm run test:google-reviews`); set `GOOGLE_PLACES_API_KEY` and `GOOGLE_PLACE_ID` to turn it on.
+- [x] **Rate limiting** — durable per-visitor limits (hashed IP, D1 `rate_limits`) cover the estimate form, Ask chat, Ask handoff and the Command Center login.
+- [x] **CI** — GitHub Actions runs again (Build, Site smoke, Pricing health, ops-cron deploy).
+- [ ] **Real-device pass** — automated browser audits run in Chromium; a real phone, screen reader and live Turnstile submission are still owner checks.
 
 ## Local development
 
@@ -37,6 +43,13 @@ Requires **Node 22.19.0 or newer**.
 ```bash
 npm install
 npm run dev
+```
+
+Before opening a PR, run the full suite and the build:
+
+```bash
+npm run test:all   # every test step, in CI order (see "Regression and build testing")
+npm run build
 ```
 
 For a normal static build:
@@ -68,18 +81,24 @@ The production build is pinned to Node `22.19.0` through `.node-version` and the
 | Internal application | `src/pages/internal/` |
 | Public API functions | `functions/api/` |
 | Ask API | `functions/ask/api/` |
-| Ask helpers | `functions/ask/_lib/` |
+| Ask helpers and guide index | `functions/ask/_lib/`, `functions/ask/_data/` |
 | Internal APIs/helpers | `functions/internal/` |
+| Shared function helpers (abuse guard, etc.) | `functions/_lib/` |
 | Site/business data | `src/data/` |
 | City content | `src/content/cities/` |
 | Guide content | `src/content/guides/` |
+| Guide graphics (owner-supplied infographics) | `src/assets/guides/` + `src/components/CanvaGuideEmbed.astro` |
+| Diagram components | `src/components/diagrams/` |
 | Review content | `src/content/reviews/` |
 | Work photography | `src/assets/work/` + `src/data/work.ts` |
 | Public static assets | `public/` |
-| Pricing worker | `workers/pricing/` |
+| Companion Worker (backup + follow-up push) | `workers/ops-cron/` |
 | Shared pricing validation | `shared/pricing-schema.mjs` |
+| Internal tool docs and D1 schema | `internal/` |
+| Design/QA/audit notes | `docs/` |
+| AI/agent context (ICM) | `CLAUDE.md`, `.ai/` |
 | Regression tests | `scripts/test-*.mjs` |
-| Live evaluations | `scripts/eval-*.mjs` |
+| Live evaluations and browser audits | `scripts/eval-*.mjs`, `scripts/audit-*.mjs` |
 
 ## Where to edit content
 
@@ -91,6 +110,7 @@ The production build is pinned to Node `22.19.0` through `.node-version` and the
 | City pages | `src/content/cities/` |
 | Reviews | `src/content/reviews/` |
 | Guides | `src/content/guides/` |
+| Guide graphics (infographics) | `src/assets/guides/`, shown through `CanvaGuideEmbed.astro` or `src/components/diagrams/` |
 | Contract terms | `src/data/contractTerms.ts` |
 | License/insurance/bond disclosure tags | `src/data/site.ts` (`lniNumber`, `insurance`, `bond`) + `src/components/LicenseTag.astro`, `InsuranceTag.astro`, `BondTag.astro` |
 | Homepage video | `public/video/logo-reveal-1.mp4` (see `VideoHero.astro` — falls back to a static photo hero when absent) |
@@ -103,6 +123,17 @@ The production build is pinned to Node `22.19.0` through `.node-version` and the
 4. Use `featured: true` only when the image belongs in the homepage featured block.
 
 Astro processes images in `src/assets/` at build time. Do not put build-processed work photography in `public/` unless it intentionally needs to ship untouched.
+
+### Adding or replacing a guide graphic
+
+Owner-supplied infographics live in `src/assets/guides/` and render through `src/components/CanvaGuideEmbed.astro` (WebP at several widths, full alt text, the graphic's own footnote as the visible caption).
+
+1. Save the PNG as RGB with metadata stripped, and give it a descriptive filename.
+2. Pass `widths` no larger than the source file. A 1536 px source takes `[1000, 1400, 1536]`; the default `[1000, 1400, 2000]` needs a 2000 px source.
+3. Write alt text that carries the graphic's actual content, not just its title.
+4. If the source is under 2000 px, list its page and file in `SOURCE_LIMITED_GRAPHICS` in `scripts/test-image-delivery.mjs` (the test reads the PNG header, so it cannot hide a downscaled file).
+5. Proofread the lettering against the original. AI upscalers (including Higgsfield's 4K upscale) have been tried on these graphics and changed words ("siimmer", "mahufacturer"), so re-export from the source at a higher resolution instead.
+6. Do not put dollar figures or invented specs in a graphic; `test:no-public-pricing` and the Non-negotiables in `CLAUDE.md` apply.
 
 ### Adding a service area
 
@@ -135,52 +166,11 @@ The marketing regression suite also checks for unsupported regulated-business cl
 
 ## Pricing
 
-The public calculator is `/tools/window-replacement-cost-calculator`. Its bundled numbers live in `src/data/pricing.ts`.
+There are **no dollar figures anywhere on the public site** (owner direction, 2026-10-09). The calculator at `/tools/window-replacement-cost-calculator` is a quote funnel: it collects the project and hands off to `/estimate`. One switch, `publicPricing = false` in `src/data/pricing.ts`, is mirrored as `PUBLIC_PRICING` in `functions/ask/_lib/pricing.mjs`; `npm run test:ask-pricing` fails if they drift, and `npm run test:no-public-pricing` scans the built HTML for dollar amounts.
 
-Each baseline is an **installed cost per opening** for a standard-size, ground-floor, vinyl insert installation, including the unit, labor, and normal finish work. Fiberglass, full-frame installation, second-story access, and custom shapes are modifiers rather than additional baselines.
+The price data itself still lives in `src/data/pricing.ts` and feeds the internal quote builder. Each baseline is an **installed cost per opening** for a standard-size, ground-floor, vinyl insert installation. Fiberglass, full-frame installation, second-story access, and custom shapes are modifiers rather than baselines. `functions/ask/_lib/pricing.mjs` is a hand-kept copy for the Ask tool.
 
-To move from regional published averages to Clearview's own reviewed pricing:
-
-1. Update `src/data/pricing.ts`.
-2. Set `basis.source` to `'clearview'`.
-3. Set `basis.reviewedAt` to the actual review date.
-
-Zero-value opening types are hidden rather than treated as free.
-
-The calculator's range (and the Ask assistant's) is the base opening prices times the material multiplier, plus the Milgard upcharge on windows, plus whatever modifiers the visitor ticks. It adds no allowance for extra work: that is stated as a note and priced at the measure. `pricing.fullFrame` is used only by the internal quote builder.
-
-### Pricing worker
-
-`workers/pricing/` is a separate Cloudflare Worker backed by KV. It validates pricing rather than attempting to scrape or invent market prices.
-
-| Route | Purpose |
-| --- | --- |
-| `GET /` | Return the validated pricing document |
-| `GET /health` | Report validation state, age, and review status |
-| `PUT /` | Replace pricing after bearer-token authentication and validation |
-| Monthly cron | Revalidate pricing and optionally email a reminder |
-
-The site keeps its own bundled pricing and only upgrades when the worker contains a document at least as recently reviewed. A worker outage, malformed response, or empty KV therefore cannot blank the estimator.
-
-The worker uses:
-
-| Variable | Project | Purpose |
-| --- | --- | --- |
-| `RESEND_API_KEY` | Pricing Worker | Reminder email from cron |
-| `ADMIN_TOKEN` | Pricing Worker | Authorizes `PUT /` |
-| `PUBLIC_PRICING_ENDPOINT` | Pages | Build-time pricing upgrade endpoint |
-| `RESEND_API_KEY` | Pages | Estimate lead delivery |
-
-`PUBLIC_PRICING_ENDPOINT` is read at **build time**, so changing it requires a Pages rebuild. Runtime secrets take effect without rebuilding.
-
-Deploy the worker with:
-
-```bash
-cd workers/pricing
-npx wrangler deploy
-```
-
-The shared validator in `shared/pricing-schema.mjs` rejects inverted ranges, excessive spreads, missing baselines, out-of-range multipliers, and future review dates.
+To refresh pricing, update `src/data/pricing.ts`, set `basis.source` to `'clearview'` and `basis.reviewedAt` to the real review date. `shared/pricing-schema.mjs` rejects inverted ranges, excessive spreads, missing baselines, out-of-range multipliers and future review dates. The **Pricing health** GitHub Action rebuilds the site monthly and when pricing files change and validates the model the site ships, which doubles as the freshness reminder. (The earlier pricing Worker was never wired to the site and has been deleted.)
 
 ## Estimate intake
 
@@ -190,23 +180,21 @@ The public estimate form submits to:
 POST /api/estimate
 ```
 
-The Pages Function validates and sanitizes the submission before sending the published Resend templates.
+The Pages Function validates and sanitizes the submission, logs the lead to D1 (a repeat of the same name, phone, email and notes within 30 minutes is not logged twice), and sends the published Resend templates.
 
 Current protections include:
 
-- `multipart/form-data` enforcement;
-- request-size protection;
+- `multipart/form-data` enforcement and request-size protection;
 - same-origin `Origin` validation when an origin is supplied;
 - honeypot spam detection;
-- strict email validation;
-- field-length and control-character normalization;
+- a per-visitor rate limit (6 per hour, hashed IP) and, once `TURNSTILE_SECRET_KEY` is set, Turnstile;
+- strict email validation, field-length and control-character normalization;
 - capped visitor-journey fields;
-- generic error responses that do not disclose provider/template internals;
-- `nosniff` JSON responses;
-- no-store response handling;
+- generic error responses that do not disclose provider/template internals, and visitor-safe messages instead of the browser's "Failed to fetch";
+- `nosniff`, no-store JSON responses;
 - real no-JavaScript fallback redirects to `/estimate/sent` and `/estimate/problem`.
 
-The lead notification and customer receipt use the existing published Resend templates. The lead notification can include a generated vCard for the submitted contact details.
+The lead notification and customer receipt use the existing published Resend templates. The lead notification can include a generated vCard.
 
 Current environment variables:
 
@@ -215,14 +203,15 @@ Current environment variables:
 | `RESEND_API_KEY` | Yes | — |
 | `NOTIFY_EMAIL` | No | `owner@windowsbyclearveiw.com` |
 | `RESEND_FROM` | No | `Clearview Windows <estimates@windowsbyclearveiw.com>` |
+| `TURNSTILE_SECRET_KEY` | No | unset (widget is cosmetic until set) |
 | `LEAD_ALERT_NTFY_TOPIC` | No | unset (push alert off). 20–64 random `[A-Za-z0-9_-]` chars; treat as a secret |
 | `LEAD_ALERT_NTFY_SERVER` | No | `https://ntfy.sh` |
 | `LEAD_ALERT_NTFY_TOKEN` | No | unset. Bearer token for a protected ntfy topic |
 | `GOOGLE_REVIEW_URL` | No | unset. Overrides the review link; otherwise the `GOOGLE_PLACE_ID` write-review form, then the profile share link |
 
-**Speed-to-lead alert.** When `LEAD_ALERT_NTFY_TOPIC` is set, every valid estimate request also sends a high-priority phone push through ntfy. It fires independently of mail delivery and carries no customer data: just "New estimate request" and a tap-through to `/internal/leads`. The privacy policy's list of companies that see submitted fields stays true. Setup: install the ntfy app, subscribe to the topic, then set the same topic as a Pages secret.
+**Speed-to-lead alert.** When `LEAD_ALERT_NTFY_TOPIC` is set, every valid estimate request also sends a high-priority phone push through ntfy. It fires independently of mail delivery and carries no customer data: just "New estimate request" and a tap-through to `/internal/leads`. Setup: install the ntfy app, subscribe to the topic, then set the same topic as a Pages secret.
 
-**Review request.** `/internal/jobs/closeout` shows "Ask for a Google review" after a closeout is finalized. Each job gets one ask, by email (Resend) or by text from Mark's own phone (`sms:` link, so no SMS provider). The ask is recorded in D1 `review_requests`. It never drafts or suggests review content.
+**Review request.** `/internal/jobs/closeout` shows "Ask for a Google review" after a closeout is finalized. Each job gets one ask, by email (Resend) or by text from Mark's own phone (`sms:` link). The ask is recorded in D1 `review_requests`. It never drafts or suggests review content.
 
 Do not change the legacy `clearveiw` mailbox address merely to correct the spelling; verify and migrate the actual mailbox first.
 
@@ -235,7 +224,7 @@ The assistant uses provider fallback:
 - **Groq:** `openai/gpt-oss-120b` for the primary fast path.
 - **Gemini:** `gemini-3.6-flash` as the fallback/native function-calling path.
 
-The API limits each turn's message and history size and limits tool rounds. Provider failure degrades gracefully rather than crashing the page.
+The API limits each turn's message and history size, limits tool rounds, and rate-limits each visitor (60 chat turns and 10 handoffs per hour). Provider failure degrades gracefully rather than crashing the page.
 
 ### Knowledge boundaries
 
@@ -245,7 +234,7 @@ The assistant keeps three knowledge tiers separate:
 2. **`estimate_price`** — the only source for numerical pricing. It follows the same published pricing model as the public calculator.
 3. **General knowledge/search** — industry information and current public information, never a substitute for Clearview-specific source material.
 
-Safety rules explicitly prevent invented dimensions, quantities, specifications, warranties, L&I numbers, regulated-business claims, competitor promotion/comparison, legal advice, and firm final pricing outside the pricing tool.
+Competitor names other than Milgard (a brand Clearview installs) are refused. Safety rules explicitly prevent invented dimensions, quantities, specifications, warranties, L&I numbers, regulated-business claims, competitor promotion/comparison, legal advice, and firm final pricing outside the pricing tool.
 
 ### Photo analysis
 
@@ -299,24 +288,20 @@ npm run test:ask-security
 
 ## Internal Command Center
 
-The internal application lives under `/internal/*` and is not part of the public marketing surface.
+The internal application lives under `/internal/*`, is phone-first, installable as an app (`.ai/references/internal-pwa.md`), and is not part of the public marketing surface. The working order is **Today → Leads → Quotes/Invoices → Jobs → Payments**.
 
-The root dashboard at `/internal/` is the **Command Center**. It provides a compact operational view of recent leads, quote counts/value, lead source/location summaries, and links to the internal tools. The dashboard reads through a small server-side aggregation endpoint rather than downloading every record to the browser.
+The root dashboard at `/internal/` is the **Command Center**: a compact view of recent leads, quote counts and value, lead sources, and links to the tools. It reads through a server-side aggregation endpoint rather than downloading every record to the browser. Lead weeks and "today" use Pacific time.
 
 The internal workflow supports:
 
-- lead management;
-- quote creation and editing;
-- line-item pricing;
-- contract generation;
-- digital or print/manual signatures;
-- opening/build-plan state;
-- field measurements;
-- opening and closeout evidence;
-- field photography;
-- payment/invoice tracking;
-- finalized closeout and completion gates;
-- Ask logs.
+- lead management and a lead analyzer (AI proposes, a person decides);
+- quote creation and editing, line-item pricing, contract generation, digital or print/manual signatures, and follow-ups;
+- opening/build-plan state, field measurements, opening and closeout evidence, field photography;
+- jobs, closeout gates and completion;
+- payment and invoice tracking;
+- analytics, permit leads, a licensed supplier permit list and the direct-mail pilot (see `internal/README.md`; address and phone data never go in git);
+- Google tools (Search Console, Business Profile, reviews and others; activation is the owner's);
+- the operations copilot and Ask logs.
 
 ### Production bindings
 
@@ -324,15 +309,18 @@ Configure these in Cloudflare Pages → **Settings → Bindings/Environment** as
 
 | Name | Type | Purpose |
 | --- | --- | --- |
-| `QUOTES_DB` | D1 | Leads, quotes, invoices, internal state, Ask logs |
+| `QUOTES_DB` | D1 | Leads, quotes, invoices, internal state, Ask logs, rate limits |
 | `INTERNAL_PASSWORD` | Secret | Internal login password |
 | `INTERNAL_SESSION_SECRET` | Secret | Signs the internal session cookie |
-| `AI` | Workers AI binding | `/ask` photo analysis, and guide-search embeddings once the index is built with `@cf/baai/bge-m3` |
-| `AI_GATEWAY_URL` | Environment variable (optional) | Routes Groq/Gemini calls through Cloudflare AI Gateway (see `internal/README.md`) |
+| `JOB_PHOTOS` | R2 binding (optional) | Job-photo backup |
+| `AI` | Workers AI binding | `/ask` photo analysis and guide-search embeddings |
+| `AI_GATEWAY_URL` | Environment variable (optional) | Routes Groq/Gemini calls through Cloudflare AI Gateway |
 | `AI_GATEWAY_TOKEN` | Secret (optional) | Only if the gateway has authentication turned on |
+| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, `ACCESS_REQUIRED` | Variables (optional) | Cloudflare Access sign-in (`internal/README.md`) |
+| `TURNSTILE_SECRET_KEY` | Secret (optional) | Turnstile enforcement on the public forms |
 | `RESEND_API_KEY` | Secret/environment variable | Email delivery |
 
-The root `wrangler.toml` is for local development and does not configure the real production Pages bindings.
+The root `wrangler.toml` is for local development and does not configure the real production Pages bindings. `internal/README.md` is the full setup guide for every item above, the backup Worker, and the optional data tools.
 
 ### Local internal development
 
@@ -346,7 +334,7 @@ npx wrangler pages dev dist \
   --ai AI
 ```
 
-`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing.
+`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing. To drive every internal page in a real browser over seeded data, use `scripts/audit-command-center.mjs` (needs Playwright; not in CI).
 
 ### Internal data rules
 
@@ -354,64 +342,47 @@ A quote remains editable until it is finalized. Once a quote/contract is finaliz
 
 Completion requires the server-side finalized Closeout state. Field verification also requires the required measurement gate. Client UI state is not treated as the authoritative source for these release decisions.
 
-Original field photos currently remain browser-local rather than being persisted to R2/cloud storage. The application maintains photo manifests and gates around the evidence workflow, but a server cannot independently prove the existence of a browser-local image.
+Original field photos stay browser-local unless the optional R2 backup (`JOB_PHOTOS`) is connected. The application maintains photo manifests and gates around the evidence workflow, but a server cannot independently prove the existence of a browser-local image.
 
-The internal application currently uses a single shared login for the intended single-operator workflow. It does not provide per-user identity, password reset, or a full actor audit trail.
+The internal application uses a single shared login (rate limited: 10 attempts per 15 minutes) for the intended single-operator workflow, with optional Cloudflare Access for per-person sign-in. It does not provide a full actor audit trail.
 
 Contract language has not received attorney review. Do not treat it as a substitute for legal review.
 
 ## Regression and build testing
 
-The repository has a layered test suite. Run the full local checks before considering a platform change complete:
+Run the full local checks before considering a platform change complete:
 
 ```bash
-npm run test:icm
-npm run test:build-plan-state
-npm run test:build-plan-integration
-npm run test:production-hardening
-npm run test:marketing-platform
-npm run test:ask-security
-npm run test:recent-fixes
-npm run test:copilot
-npm run test:ai-surfaces
-npm run eval:build-plan
+npm run test:all   # runs every CI test step in CI order (scripts/run-all-tests.mjs)
 npm run build
 ```
 
-Available npm scripts include:
+`test:all` has 59 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
+
+Notable guards:
 
 | Script | Purpose |
 | --- | --- |
-| `test:icm` | Internal command/state routing checks |
-| `test:build-plan-state` | Build-plan state machine regressions |
-| `test:build-plan-integration` | Build-plan integration behavior |
-| `test:production-hardening` | Internal production/security hardening checks |
-| `test:marketing-platform` | Public-site routing, SEO, accessibility, form, and security regressions |
-| `test:ask-security` | `/ask` endpoint security checks |
-| `test:recent-fixes` | Regression coverage for recent field-photo, login, invoice, sitemap, and estimate fixes |
-| `test:copilot` | Internal Command Center copilot contract checks |
-| `test:ai-surfaces` | Lead analyzer, evidence reviewer, and other internal AI surface checks |
-| `eval:build-plan` | End-to-end build-plan evaluation |
-| `eval:ask` | Live `/ask` behavioral evaluation |
-| `build:guides-index` | Regenerate the guide embedding index |
-| `build` | Production Astro build |
+| `test:icm-structure` | `CLAUDE.md` stays a router (80 lines max); paths named in `.ai/` exist |
+| `test:marketing-platform`, `test:seo`, `test:siding` | Public routing, SEO, accessibility, forms and regulated-claim checks |
+| `test:no-public-pricing` | No dollar figures in the built public HTML |
+| `test:layout-guards`, `test:text-gaps`, `test:a11y-names` | Layout, text-size, wrapping and accessible-name guards |
+| `test:image-delivery` | Photo and guide-graphic widths, `sizes`, metadata; guide graphics under 2000 px must be listed as source-limited |
+| `test:duplicated-facts` | Values kept equal by hand (contract terms version and hash, phone, domain) |
+| `test:abuse-guard` | Rate limits and Turnstile |
+| `eval:ask`, `eval:build-plan`, `eval:retrieval` | Live or model-backed evaluations (Ask needs a running server) |
 
-The CI workflow runs the same core suite before the production build.
+Browser tools that are not in CI (they need Playwright): `scripts/audit-command-center.mjs`, `scripts/audit-a11y.mjs`, `scripts/audit-image-delivery.mjs`.
 
-### CI note
+### CI
 
-GitHub Actions has recently experienced a repository/account-level startup/billing failure that can terminate a run before any workflow step starts. When that happens, the failure is infrastructure-level rather than a failing test in this repository. The local suite above remains the authoritative way to validate changes while that external issue persists.
+GitHub Actions runs **Build** (the test suite then the production build, then the built-site checks), **Site smoke**, **Pricing health** and the **ops-cron deploy**. Local runs remain the first gate; the Cloudflare Pages preview is the independent build signal.
 
 ## Deployment notes
 
 For a normal Pages deployment, push to `main` after local tests/build are clean. Cloudflare Pages performs the Astro build and publishes `dist`.
 
-For pricing-worker code changes:
-
-```bash
-cd workers/pricing
-npx wrangler deploy
-```
+For companion Worker (`workers/ops-cron/`) changes, merging to `main` deploys it through `.github/workflows/deploy-ops-cron.yml` once the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets exist (until then the step is skipped); setup is in `internal/README.md`.
 
 For guide-content changes that affect Ask retrieval:
 
@@ -427,12 +398,13 @@ After changes to `/ask`, pricing, internal gates, estimate intake, or authentica
 
 These are tracked deliberately rather than hidden behind optimistic documentation:
 
-1. **Durable public rate limiting** — `/api/estimate` and `/ask/api/chat` have strong request/field guards but no durable application-level rate limiter.
-2. **Production browser smoke coverage** — automated source/build tests do not replace checking the deployed UI in a real browser, particularly `/ask` sources/grounding and responsive behavior.
-3. **Field-photo durability** — original photos are browser-local; durable cloud photo storage is not currently part of the workflow.
-4. **Shared internal login** — appropriate for the current single-operator model, not a multi-user identity system.
-5. **Legal review** — contract language needs professional review before being treated as legally authoritative.
-6. **Credential wording** — the license/insurance/bond disclosure tags (`LicenseTag`, `InsuranceTag`, `BondTag`) ship on real, verified numbers, but the exact wording has not had a formal L&I/attorney sign-off — see `HANDOFF.md`'s 2026-09-22 entries for the reasoning. Never invent a placeholder value for any of the three if one goes unset again.
+1. **Real-device verification** — automated browser audits run in Chromium; a real phone, screen reader and live Turnstile submission are still owner checks.
+2. **Field-photo durability** — original photos are browser-local until the R2 `JOB_PHOTOS` backup is connected.
+3. **Shared internal login** — appropriate for the current single-operator model; Cloudflare Access (optional) adds per-person sign-in. The `pages.dev` hostname is only protected by the app login unless it is added to Access or disabled.
+4. **Legal review** — contract language needs professional review before being treated as legally authoritative.
+5. **Credential wording** — the license/insurance/bond disclosure tags ship on real, verified numbers, but the exact wording has not had a formal L&I/attorney sign-off (see `HANDOFF.md`). Never invent a placeholder value for any of the three.
+6. **Guide graphics** — most are 1536 px with no phone-sized version, so their small text is hard to read on a phone and soft on 2x screens; the double-pane graphic's subtitle and the flashing graphic's first letter need a clean re-export from Mark's source. AI upscaling was tried and rejected because it changed lettering.
+7. **Open owner decisions** are listed in `HANDOFF.md`.
 
 ## Important principle
 
@@ -445,3 +417,7 @@ This repository intentionally favors **fail-closed behavior for authoritative bu
 - optional AI/email services fail gracefully instead of taking down the site;
 - public/internal boundaries are enforced both in routing and metadata;
 - regression tests are kept alongside the fixes they protect.
+
+## AI context (ICM)
+
+The repository is organized for AI agents with the Interpretable Context Methodology: a root `CLAUDE.md` router (routing only, 80 lines max), `.ai/` for context, rules, references, workflows and specialists, and D1 as the only home for business records. Each workflow under `.ai/workflows/` declares Input / Process / Output / Stop conditions / Completion. Start at `CLAUDE.md`, then `.ai/CONTEXT.md`. A change is done when it is implemented, documented, validated, and `.ai/STATE.md`, `.ai/CHANGELOG.md` and (if needed) `HANDOFF.md` say what changed and what remains. `npm run test:icm-structure` enforces the layout.
