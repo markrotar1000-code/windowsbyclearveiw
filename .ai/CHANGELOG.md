@@ -1,5 +1,16 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, sixth round: a retried estimate no longer saves twice (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "lets do some bug sweep and repair passes." `test:all` was green at the start, so the sweep read the server side for bugs the tests do not cover: estimate, signing, payments, invoices, quotes, Copilot, ops-cron backup, body parsing, dependency advisories, built links. Everything read was sound except one flow already noted in HANDOFF.
+
+Changed:
+1. **`functions/api/estimate.js`**: `logLead` checks for a lead with the same name, phone, email and notes created in the last 30 minutes and skips the insert. Cause: the lead is stored (in `waitUntil`) before the Resend call, so when delivery fails the visitor is told to try again although the lead exists.
+2. **`scripts/test-estimate-endpoint.mjs`** group 6: failed delivery keeps the lead; the retry stores no second lead; a different phone or different notes is a new lead; the same inquiry long afterwards is a new lead. Verified failing before the fix.
+3. **`scripts/test-abuse-guard.mjs`**: the rate-limit test sends distinct inquiries (it counted six identical ones as six leads).
+
+Not changed (decisions in HANDOFF): honeypot name `company`, first-touch attribution, `/estimate/sent` reload double-count.
+
 ## 2026-10-11 - Home "Recent work" shows the newer photos (branch `claude/recent-work-newer-photos-2026-10-11`)
 
 Keith, 13:59 PT: "We should be displaying the newer images on 'our recent work'." The home page's "Recent work" grid was still the owner's older `featured` workPhotos (seven tiles, with kind labels such as "Finished result"), so none of the 2026-10-07 or 2026-10-11 photos were in it; they were only in the gallery's "More photos".

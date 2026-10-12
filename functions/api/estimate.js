@@ -15,6 +15,9 @@ const MAX_BODY_BYTES = 64 * 1024;
 // Per visitor: generous for a household (a retry, a second window list) and tight for a script.
 export const ESTIMATE_RATE_LIMIT = { bucket: 'estimate', limit: 6, windowSeconds: 3600 };
 const RECEIPT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+// The lead is saved before the email goes out, so a delivery failure tells the visitor to try again
+// although Mark already has the lead. An identical resend inside this window is that retry.
+const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
 const FROM = 'Clearview Windows <estimates@windowsbyclearveiw.com>';
 const TO = 'owner@windowsbyclearveiw.com';
 
@@ -207,6 +210,11 @@ async function logLead(env, lead, journey, visitorId) {
   try {
     const first = journey.firstTouch || {};
     // The service tag is a convenience: if the column cannot be added, the lead is saved without it.
+    const since = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString();
+    const repeat = await env.QUOTES_DB.prepare(
+      `SELECT id FROM leads WHERE created_at >= ? AND name = ? AND phone = ? AND COALESCE(email, '') = ? AND COALESCE(notes, '') = ? LIMIT 1`,
+    ).bind(since, lead.name, lead.phone, lead.email || '', lead.notes || '').first();
+    if (repeat) return;
     const hasIntent = await ensureLeadIntentColumn(env.QUOTES_DB);
     const tagged = lead.service && (await ensureLeadServiceColumn(env.QUOTES_DB));
     await env.QUOTES_DB.prepare(
