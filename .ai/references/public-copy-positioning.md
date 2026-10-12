@@ -65,4 +65,5 @@ Source of truth for `/siding` and anything else that mentions siding; do not ext
   a single-pane premise. Treat any generated window illustration as a draft, never as shippable.
 - Any new diagram must be checked by the owner/installer before it ships. Diagrams showing an
   "old vs new" comparison must match the positioning above (not a single-pane-only story).
-- Kept and verified accurate: the double-pane glass guide graphic and the vinyl-vs-fiberglass graphic.
+- Kept and verified accurate: the double-pane glass guide graphic.
+- Vinyl vs fiberglass graphic (`src/assets/guides/vinyl-fiberglass-guide.png`, shown on `/window-features` and `/replacement`): replaced 2026-10-12 with the owner's own graphic (blue branding, 1536 x 1024, no metadata). It shows both frames with chambers, says fiberglass is "stronger and more rigid" and vinyl "a common value-focused choice", and carries its own footnote "Illustrative profiles only. Construction and dimensions vary by manufacturer and series." The one it replaced labelled fiberglass a "solid profile", which the owner's version corrects. The `/replacement` caption no longer claims the two are "at the same scale". The guide page itself still draws its own SVG (`FrameMaterials.astro`), which says fiberglass is "a solid pultruded profile": see the open question in HANDOFF.

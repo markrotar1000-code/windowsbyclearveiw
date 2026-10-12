@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-12 - Vinyl vs fiberglass graphic replaced (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "I also need you to update the vinyl vs fiberglass diagram with this one" (an attached graphic).
+
+Changed:
+1. **`src/assets/guides/vinyl-fiberglass-guide.png`** is the new graphic: 1536 x 1024, PNG, no EXIF or other metadata, flattened to RGB, optimized (was a 2200 x 1557 palette PNG).
+2. **`window-features.astro`, `replacement.astro`:** `widths={[760, 1140, 1536]}` and `width={1536}` (the old list asked for 1580 and 2200 px from a smaller file); alt text describes the new graphic (white chambered PVC and dark glass-fiber-reinforced resin cross-sections, frame construction, when it matters, what you may notice, illustrative).
+3. **`replacement.astro` caption:** "Two common frame materials, side by side. Illustrative profiles: construction varies by manufacturer and series." (was "...at the same scale", which the graphic's own footnote does not support.)
+4. **`.ai/references/public-copy-positioning.md`:** records the replacement and the guide-page question.
+
+Not changed: the guide page (`/guides/vinyl-vs-fiberglass-pacific-northwest`) draws its own SVG, `FrameMaterials.astro`, which labels fiberglass "solid pultruded"; the unreferenced `src/content/guides/img-vinyl-vs-fiberglass.png`.
+
 ## 2026-10-12 - Bug sweep, thirteenth round: closeout on a fresh database, long text on phones (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "Keep looking for and fixing bugs." Method: run the Command Center instead of reading it (new `scripts/audit-command-center.mjs`).

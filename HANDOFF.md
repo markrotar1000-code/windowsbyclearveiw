@@ -51,6 +51,13 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Vinyl vs fiberglass graphic (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, graphic).
+
+- **Decision for Keith: the guide page and the new graphic disagree.** The new graphic shows both frames with hollow chambers ("Both can have hollow chambers"). `/guides/vinyl-vs-fiberglass-pacific-northwest` still draws its own SVG (`src/components/diagrams/FrameMaterials.astro`) with "hollow chambers vs solid pultrusion" and labels fiberglass "a narrower, solid pultruded profile". Options: replace the SVG on the guide with the new graphic (guide edits need your say-so and an Ask index rebuild, `npm run build:guides-index`, needs `GEMINI_API_KEY`), or redraw the SVG to match. Not changed.
+- Source is 1536 px wide. On a 2x laptop its small text is a little soft; an upscale (Higgsfield, as for the 2026-10-11 photos) would sharpen it. Not done: it spends credits.
+
 ## 2026-10-12 - Bug sweep, thirteenth round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, thirteenth round).
