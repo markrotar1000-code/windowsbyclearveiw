@@ -1,8 +1,9 @@
 ---
 name: Ridgefield
 region: Clark County
-title: Window Replacement in Ridgefield, WA
-description: Window replacement in Ridgefield, WA, from historic downtown to new subdivisions. Free in-home measure and a written estimate. Call (564) 208-0801.
+title: Window Replacement & Installation in Ridgefield, WA
+metaTitle: Ridgefield, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in Ridgefield, WA, from historic downtown to new subdivisions. Free in-home measure, written estimate. (564) 208-0801
 published: true
 faq:
   - question: Do I need a permit to replace windows in Ridgefield?
@@ -31,6 +32,6 @@ Ridgefield lists same-size window and door replacement as work that does not nee
 
 ## What we do here
 
-We do both: replacement in existing walls, and windows set while the house is still in wrap. Homeowner? We walk the openings with you. Builder? Bring the plan set and the window schedule, and see [new construction](/new-construction) for exactly what we check against it before ordering.
+We do both kinds of window installation: replacement in existing walls, and windows set while the house is still in wrap. Homeowner? We walk the openings with you. Builder? Bring the plan set and the window schedule, and see [new construction](/new-construction) for exactly what we check against it before ordering.
 
 Nearby: [La Center](/areas/la-center), [Woodland](/areas/woodland), and [Vancouver](/areas/vancouver).

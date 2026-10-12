@@ -8,6 +8,8 @@ const cities = defineCollection({
     name: z.string(),
     region: z.string().default('Washington'),
     title: z.string(),
+    /** The exact <title> (brand included or dropped to fit 50-60 characters). The H1 stays `title`. */
+    metaTitle: z.string().optional(),
     description: z.string(),
     published: z.boolean().default(true),
     faq: z.array(z.object({ question: z.string(), answer: z.string() })).default([]),

@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-12 - "Window installation" on the public pages (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith, relaying Mark: "he does 'window installation' on the site and it does have search intent so lets work that into the areas it fits."
+
+Changed:
+1. **City pages (8):** `title` (the H1) is now "Window Replacement & Installation in {City}, WA" ("Vancouver, WA Window Replacement & Installation"); new optional `metaTitle` is the exact `<title>` ("{City}, WA Window Replacement & Installation | Clearview", brand dropped for Battle Ground and Brush Prairie, which have no room); descriptions say "replacement and installation"; one sentence in "What we do here" says window installation using only facts already on the page.
+2. **`BaseLayout.astro`:** `exactTitle` prop. **`content.config.ts`:** `metaTitle`. **`areas/[slug].astro`** passes them.
+3. **Home:** title "Window Replacement & Installation, Vancouver WA | Clearview", `site.metaDescription`, hero line (`VideoHero.astro`); **footer** blurb; **`/replacement`** title, H1, lede, description; **`/areas`** title and description; **`/estimate`** description.
+4. **`test:seo`:** city-title rule rewritten for the new wording; new check that `/`, `/replacement` and `/areas` say "installation".
+5. **Docs:** positioning reference "Window installation", `.ai/WORKING.md` reviewed list.
+
+Not changed: gallery (a photo's scope is not described from the picture), guides and FAQs (Ask index rebuild, owner say-so), `/window-features`, `/reviews`, the JSON-LD (already says "Window installation"). No prices, timing, crew, certification or method claims added.
+
 ## 2026-10-12 - Bug sweep, sixth round: a retried estimate no longer saves twice (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "lets do some bug sweep and repair passes." `test:all` was green at the start, so the sweep read the server side for bugs the tests do not cover: estimate, signing, payments, invoices, quotes, Copilot, ops-cron backup, body parsing, dependency advisories, built links. Everything read was sound except one flow already noted in HANDOFF.

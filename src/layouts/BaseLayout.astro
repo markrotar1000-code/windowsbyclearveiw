@@ -34,6 +34,11 @@ interface Props {
    * They still resolve and still link out; they just should never rank.
    */
   noindex?: boolean;
+  /**
+   * Use `title` exactly as the <title>: do not append " | Clearview Windows". For pages whose
+   * keyword title leaves no room for the full brand inside Google's ~60 characters.
+   */
+  exactTitle?: boolean;
 }
 
 const {
@@ -47,6 +52,7 @@ const {
   ogCtaText = 'Request an estimate',
   ogLicenseInfoText = 'WA Reg. CLEARVW74601',
   noindex = false,
+  exactTitle = false,
 } = Astro.props;
 
 const canonical = new URL(path === '/' ? '/' : path, site.url).toString();
@@ -56,7 +62,7 @@ const canonical = new URL(path === '/' ? '/' : path, site.url).toString();
 // identical. Workers should prefer scoped <style> blocks, but this exists for
 // the cases that genuinely need an ancestor.
 const route = (path === '/' ? 'home' : path.replace(/^\/|\/$/g, '').replace(/\//g, '-')) || 'home';
-const pageTitle = title.includes(site.shortName) ? title : `${title} | ${site.shortName}`;
+const pageTitle = exactTitle || title.includes(site.shortName) ? title : `${title} | ${site.shortName}`;
 
 // OpenGraph.xyz provides the published Clearview social-card template.
 // Keep the template/version here so every page uses the same published design

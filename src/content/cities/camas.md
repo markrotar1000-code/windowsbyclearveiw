@@ -1,8 +1,9 @@
 ---
 name: Camas
 region: Clark County
-title: Window Replacement in Camas, WA
-description: Window replacement in Camas, WA for older downtown homes and newer builds. Free in-home measure, then a written estimate before anything is ordered.
+title: Window Replacement & Installation in Camas, WA
+metaTitle: Camas, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in Camas, WA for older downtown homes and newer builds. Free in-home measure, then a written estimate first.
 published: true
 faq:
   - question: Do I need a permit to replace windows in Camas?
@@ -31,6 +32,6 @@ Camas's permit list shows doors and windows as needing a permit. A like-for-like
 
 ## What we do here
 
-We replace older downtown windows and set new-construction windows on the builds still going up toward Lacamas Lake. A Camas job gets a written estimate after we see the openings, and the same flashing and finish standard as the rest of Clark County.
+We do window installation in both parts of Camas: replacing older downtown windows and setting new-construction windows on the builds still going up toward Lacamas Lake. A Camas job gets a written estimate after we see the openings, and the same flashing and finish standard as the rest of Clark County.
 
 Nearby: [Washougal](/areas/washougal) and [Vancouver](/areas/vancouver).

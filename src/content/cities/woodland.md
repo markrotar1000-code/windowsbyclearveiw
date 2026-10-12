@@ -1,8 +1,9 @@
 ---
 name: Woodland
 region: Cowlitz County
-title: Window Replacement in Woodland, WA
-description: Window replacement in Woodland, WA, on the Lewis River. Free in-home measure, then a written estimate before anything is ordered. (564) 208-0801
+title: Window Replacement & Installation in Woodland, WA
+metaTitle: Woodland, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in Woodland, WA, on the Lewis River. Free in-home measure, then a written estimate first. (564) 208-0801
 published: true
 faq:
   - question: Is Woodland outside your normal service area?
@@ -25,6 +26,6 @@ Replacement is the typical job here, not new construction: older sashes and earl
 
 ## What we do here
 
-We measure every opening the same way as in every other town on this list, and put the approach for each one in a written estimate before anything is ordered. Farther north in Kalama or Longview? Ask, and we will quote those case by case.
+Window installation in Woodland works the way it does in every other town on this list: we measure every opening and put the approach for each one in a written estimate before anything is ordered. Farther north in Kalama or Longview? Ask, and we will quote those case by case.
 
 Nearby: [Ridgefield](/areas/ridgefield) and [Vancouver](/areas/vancouver).

@@ -1,8 +1,9 @@
 ---
 name: Battle Ground
 region: Clark County
-title: Window Replacement in Battle Ground, WA
-description: Window replacement in Battle Ground, WA. Free in-home measure, then a written estimate before anything is ordered. Call (564) 208-0801 to book.
+title: Window Replacement & Installation in Battle Ground, WA
+metaTitle: Battle Ground, WA Window Replacement & Installation
+description: Window replacement and installation in Battle Ground, WA. Free in-home measure, then a written estimate before anything is ordered. (564) 208-0801
 published: true
 faq:
   - question: Do I need a permit to replace windows in Battle Ground?
@@ -31,6 +32,6 @@ Battle Ground's permit FAQ lists same-size window replacement as work that does 
 
 ## What we do here
 
-We check the opening first, then put the right approach in the written estimate based on what is actually there, not the neighborhood's age. See [what each opening needs](/guides/what-your-openings-need) for how we look at it. Yacolt and Brush Prairie jobs are quoted the same way if the drive makes sense.
+Window installation here starts with the opening. We check it first, then put the right approach in the written estimate based on what is actually there, not the neighborhood's age. See [what each opening needs](/guides/what-your-openings-need) for how we look at it. Yacolt and Brush Prairie jobs are quoted the same way if the drive makes sense.
 
 Nearby: [Brush Prairie](/areas/brush-prairie) and [Vancouver](/areas/vancouver).

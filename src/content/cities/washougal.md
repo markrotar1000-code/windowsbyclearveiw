@@ -1,8 +1,9 @@
 ---
 name: Washougal
 region: Clark County
-title: Window Replacement in Washougal, WA
-description: Window replacement in Washougal, WA, from river-side homes to newer east-county builds. Free in-home measure and a written estimate. Call (564) 208-0801.
+title: Window Replacement & Installation in Washougal, WA
+metaTitle: Washougal, WA Window Replacement & Installation | Clearview
+description: Window replacement and installation in Washougal, WA, from river-side homes to east-county builds. Free in-home measure, written estimate. (564) 208-0801
 published: true
 faq:
   - question: Does Gorge wind change what you'd recommend for a Washougal house?
@@ -25,6 +26,6 @@ In the riverside core, the two most common complaints are sashes that stick and 
 
 ## What we do here
 
-We drive from Vancouver, measure each opening, and install replacement or new-construction windows suited to this climate. See [vinyl vs. fiberglass in the Pacific Northwest](/guides/vinyl-vs-fiberglass-pacific-northwest) for which material holds up against Gorge wind on a wide opening.
+We drive from Vancouver, measure each opening, and handle the window installation for replacement or new-construction windows suited to this climate. See [vinyl vs. fiberglass in the Pacific Northwest](/guides/vinyl-vs-fiberglass-pacific-northwest) for which material holds up against Gorge wind on a wide opening.
 
 Nearby: [Camas](/areas/camas) and [Vancouver](/areas/vancouver).
