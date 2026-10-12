@@ -79,11 +79,9 @@ assert.match(formPage, /turnstile\.render\(slot,\s*\{[^}]*size:\s*[^,]*'compact'
 // 5. Public pages keep text at 12 px (0.75rem) or larger. The Command Center (src/pages/internal, InternalLayout) is
 //    Mark's own phone tool and is left out. Exceptions, each with its reason:
 //      - Brand.astro `.brand-sub`: "Vancouver, WA" under the logo wordmark, a fixed logo lockup.
-//      - FrameMaterials.astro: SVG text sized in viewBox units, which scale with the drawing, not CSS pixels.
 const TEXT_FLOOR_PX = 12;
 const floorExceptions = new Map([
   ['src/components/Brand.astro', 'logo lockup sub-label'],
-  ['src/components/diagrams/FrameMaterials.astro', 'SVG text in viewBox units'],
 ]);
 function* sources(dir) {
   for (const name of readdirSync(dir)) {

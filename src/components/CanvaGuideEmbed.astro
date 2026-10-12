@@ -12,9 +12,11 @@ interface Props {
   desktopMaxWidth?: string;
   /** The `sizes` of the desktop <img>: how wide it renders above the phone breakpoint. */
   sizes?: string;
+  /** Candidate widths for the desktop <img>. Never list one larger than the source file (nothing is gained, and the srcset would claim pixels that are not there). */
+  widths?: number[];
 }
 
-const { desktopSrc, mobileSrc, alt, title, description, desktopMaxWidth = '100%', sizes = SLOT_SIZES.guideGraphic } = Astro.props;
+const { desktopSrc, mobileSrc, alt, title, description, desktopMaxWidth = '100%', sizes = SLOT_SIZES.guideGraphic, widths = [1000, 1400, 2000] } = Astro.props;
 
 // Source files come straight out of Canva at several megabytes each. Running
 // them through Astro's image pipeline instead of a plain <img> gets them down
@@ -25,7 +27,7 @@ const { desktopSrc, mobileSrc, alt, title, description, desktopMaxWidth = '100%'
 // The graphic is shown up to 1180 px wide, so a laptop at 2x needs 2360 px: one 1400 px file left it
 // at 0.59 of what the screen can show. The srcset lets the browser pick; the Canva export is 2000 px
 // wide, so 2000 is as sharp as this graphic can get.
-const desktop = await getImage({ src: desktopSrc, widths: [1000, 1400, 2000], width: 1400, format: 'webp', quality: 78 });
+const desktop = await getImage({ src: desktopSrc, widths, width: widths.includes(1400) ? 1400 : widths[widths.length - 1], format: 'webp', quality: 78 });
 const mobile = mobileSrc
   ? await getImage({ src: mobileSrc, width: 900, format: 'webp', quality: 78 })
   : null;

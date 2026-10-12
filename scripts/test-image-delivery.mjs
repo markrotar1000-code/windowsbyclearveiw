@@ -221,6 +221,12 @@ ok('the home hero photo is offered up to 2560 px', () => {
   assert.equal(attr(tag, 'fetchpriority'), 'low', 'the settle-on photo must not compete with the video and poster');
 });
 
+// A guide graphic is offered at 2000 px (the Canva exports are 2000 px wide). The vinyl vs fiberglass graphic is the
+// owner's own export at 1536 px, which is everything the file has: it must offer exactly that, and the width here must be
+// the real width of the source (read from its PNG header), so this cannot hide a graphic that was downscaled.
+const SOURCE_LIMITED_GRAPHICS = new Map([['guides/vinyl-vs-fiberglass-pacific-northwest', 'src/assets/guides/vinyl-fiberglass-sightlines.png']]);
+const pngWidth = (path) => readFileSync(new URL(`../${path}`, import.meta.url)).readUInt32BE(16);
+
 ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => {
   let leads = 0;
   let graphics = 0;
@@ -235,7 +241,8 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
     }
     for (const tag of images(html).filter((entry) => /class="guide-image"/.test(entry))) {
       graphics++;
-      assert.ok(widestCandidate(tag) >= 2000, `${page}: the guide graphic tops out below 2000 px (shown 1180 px wide; 2x needs 2360)`);
+      const limit = SOURCE_LIMITED_GRAPHICS.has(page) ? pngWidth(SOURCE_LIMITED_GRAPHICS.get(page)) : 2000;
+      assert.ok(widestCandidate(tag) >= limit, `${page}: the guide graphic tops out below ${limit} px (shown 1180 px wide; 2x needs 2360${SOURCE_LIMITED_GRAPHICS.has(page) ? ', but its source file is only ' + limit + ' px' : ''})`);
       assert.equal(attr(tag, 'sizes'), SLOT_SIZES.guideGraphic, `${page}: guide graphic sizes drifted from SLOT_SIZES.guideGraphic`);
     }
   }
