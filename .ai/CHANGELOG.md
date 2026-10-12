@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, thirteenth round: closeout on a fresh database, long text on phones (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "Keep looking for and fixing bugs." Method: run the Command Center instead of reading it (new `scripts/audit-command-center.mjs`).
+
+Changed:
+1. **`functions/internal/api/job-closeout.js`** calls `ensureSchema` (now exported from **`job-checklist.js`**, which creates both tables) before reading. Test in `test-command-center-fixes.mjs`: no checklist tables, closeout GET is 200 with every opening incomplete, finalize is a 409 `CLOSEOUT_NOT_READY`. Failed first with "no such table: job_checklist_items".
+2. **`src/layouts/InternalLayout.astro`:** `.internal-main{overflow-wrap:anywhere}` plus a `:global(:is(button,select,th,[role=tab],.btn,[class*="btn"|"filter"|"pill"|"chip"|"tab"])){overflow-wrap:normal}` reset. Chosen by measuring four candidates (global; global with controls reset; text elements only; global with `summary` and links reset) for sideways overflow and for controls that got narrower and taller than without the rule. Global alone crushed `/jobs` filter tabs (85 to 42 px wide, 44 to 140 px tall) and the job page's action buttons; resetting `summary` left the lead journey line overflowing.
+3. **`leads.astro`, `leads/analyze.astro`:** list tracks `minmax(0, 1fr)`, cards break long words.
+4. **`test-internal-mobile.mjs`:** guard for the layout rule, the `:global()` reset and its control list, and the two list tracks.
+5. **`scripts/audit-command-center.mjs`** (documented in its header).
+
+Not bugs: siding and general jobs answer 409 on the window-only pages (Build Plan, Field, Closeout) and show a plain "does not apply" message; the audit treats those as expected.
+
 ## 2026-10-12 - Bug sweep, twelfth round: the plan-too-large refusal says what to do (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "keep sweeping for more bugs." Method: read the job, closeout and import code; measured Build Plan size against the real handlers (about 1 KB per opening; one quote line is capped at 50 openings, a quote has no cap on lines); bundled every server file with esbuild; fuzzed nothing new.

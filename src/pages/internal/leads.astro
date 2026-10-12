@@ -201,8 +201,11 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
   .ld-search { display:grid; gap:.2rem; max-width:20rem; margin-bottom:var(--space-m); font-size:var(--step--1); font-weight:500; }
   .ld-search input { border:1px solid var(--line-strong); border-radius:var(--radius); padding:.55rem; font:inherit; font-size:var(--step-0); }
   .ld-empty-filtered { color:var(--ink-soft); }
-  .ld-list { display:grid; gap:var(--space-s); }
-  :global(.ld-card) { border:1px solid var(--line); border-radius:var(--radius); padding:var(--space-s) var(--space-m); }
+  /* A bare `1fr` track will not shrink below its content, and `overflow-wrap: break-word` does not lower a
+     grid item's minimum width: one 1,800-character note with no spaces made every card 11,800 px wide.
+     `minmax(0, 1fr)` plus `overflow-wrap: anywhere` lets a long link or name break inside the card. */
+  .ld-list { display:grid; grid-template-columns:minmax(0, 1fr); gap:var(--space-s); }
+  :global(.ld-card) { min-width:0; overflow-wrap:anywhere; border:1px solid var(--line); border-radius:var(--radius); padding:var(--space-s) var(--space-m); }
   :global(.ld-card-top) { display:flex; justify-content:space-between; align-items:start; gap:var(--space-m); }
   :global(.ld-card-top h2) { margin:0; font-size:var(--step-1); }
   :global(.ld-meta) { margin:.2rem 0 0; font-size:var(--step--1); color:var(--ink-soft); }

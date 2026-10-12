@@ -26,4 +26,20 @@ const plan = read('src/pages/internal/quotes/build-plan.astro');
 assert.match(plan, /<input value="\$\{esc\(v\)\}"[^>]*aria-label="\$\{esc\(listName\(key\)\)\} \$\{i\+1\}"/, 'every build-plan list input has a name');
 assert.match(plan, /aria-label="Remove \$\{esc\(listName\(key\)\)\} \$\{i\+1\}"/, 'every remove button says which item it removes');
 
+// Long unbroken text must not push a Command Center page sideways. Found 2026-10-12 by running every internal page
+// against seeded data (a long email, a pasted link or a long note with no spaces): 22 of 58 page views scrolled
+// sideways, the leads list by 11,000 px, because `overflow-wrap: break-word` does not lower a grid or flex item's
+// minimum width, so one long word set the width of the whole card.
+//   - `.internal-main` breaks long words (`overflow-wrap: anywhere`, which does lower that minimum);
+//   - controls are put back to normal wrapping, or the same rule crushes them (a first attempt without this turned
+//     the job page's "Field mode" and "Closeout" buttons into one-letter-wide columns and the /jobs filter tabs
+//     into tall slivers). The reset is inside :global() so it reaches page content, not just the layout's own markup.
+const internalLayout = read('src/layouts/InternalLayout.astro');
+assert.match(internalLayout, /\.internal-main\{[^}]*overflow-wrap:anywhere\}/, 'the Command Center content area breaks long unbroken text');
+const reset = internalLayout.match(/\.internal-main :global\(:is\(([^)]*(?:\([^)]*\)[^)]*)*)\)\)\{overflow-wrap:normal\}/);
+assert.ok(reset, 'controls are reset to normal wrapping through :global()');
+for (const control of ['button', 'select', 'th', '[role=tab]', '.btn']) assert.ok(reset[1].includes(control), `the reset covers ${control}`);
+assert.match(read('src/pages/internal/leads.astro'), /\.ld-list \{ display:grid; grid-template-columns:minmax\(0, 1fr\);/, 'the leads list track may shrink');
+assert.match(read('src/pages/internal/leads/analyze.astro'), /\.la-list\{display:grid;grid-template-columns:minmax\(0,1fr\)/, 'the lead analyzer list track may shrink');
+
 console.log('internal mobile: ok');
