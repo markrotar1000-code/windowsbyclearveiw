@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, ninth round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, ninth round).
+
+What the next agent must know:
+- **Business time is Pacific.** Weekly lead counts and "today" use Pacific calendar dates (`weekStartMs` in `lead-sources.mjs`, `pacificDayRange`). Do not bucket instants by `getUTCDay()` or `toISOString().slice(0, 10)`; do not step back in 7 x 24-hour blocks to find an earlier week.
+- **Source labels come from `sourceLabel`** (`lead-sources.mjs`), never from raw columns, on every screen.
+- Not changed: quote, invoice and job IDs embed the UTC date, so something written at 6 pm Pacific on the 12th is `Q-20261013-...`. Nothing parses an ID for its date; changing it would mean new-format IDs next to old ones.
+
 ## 2026-10-12 - Bug sweep, eighth round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, eighth round).

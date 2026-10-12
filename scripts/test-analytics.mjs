@@ -180,6 +180,25 @@ function mockFetch({ tokenOk = true, reportsOk = true, reports = goodReports } =
   pass('lead sources are counted from first-touch attribution, windowed, deduplicated by label, and bucketed by week');
 }
 
+// Weeks run Monday to Sunday on Clearview's calendar (Pacific), not UTC. A lead at 6 pm on a Sunday is
+// Monday 01:00 in UTC, and used to be counted in the following week.
+{
+  const count = (iso, week) => summarizeLeadSources([{ created_at: iso }], { now: Date.parse('2026-10-14T12:00:00Z') }).weekly.find((w) => w.weekOf === week)?.value;
+  assert.equal(count('2026-10-12T01:00:00.000Z', '2026-10-05'), 1, 'Sunday 6 pm Pacific belongs to the week that is ending');
+  assert.equal(count('2026-10-12T06:59:59.000Z', '2026-10-05'), 1, 'Sunday 11:59:59 pm Pacific is still that week');
+  assert.equal(count('2026-10-12T07:00:00.000Z', '2026-10-12'), 1, 'Monday 00:00 Pacific starts the new week');
+  assert.equal(count('2026-10-05T07:00:00.000Z', '2026-10-05'), 1, 'and so does the Monday before');
+  // Daylight saving: stepping back 7 x 24 hours from just after midnight on the Monday that follows
+  // spring-forward must still give 8 different Mondays.
+  for (const now of ['2026-03-09T07:30:00Z', '2026-03-09T08:30:00Z', '2026-11-02T08:30:00Z', '2026-11-02T07:30:00Z', '2026-01-05T08:30:00Z']) {
+    const weeks = summarizeLeadSources([], { now: Date.parse(now) }).weekly.map((w) => w.weekOf);
+    assert.equal(new Set(weeks).size, 8, `8 distinct weeks at ${now}`);
+    assert.ok(weeks.every((w) => new Date(`${w}T12:00:00Z`).getUTCDay() === 1), `every week starts on a Monday at ${now}`);
+    assert.ok(weeks.every((w, i) => i === 0 || (Date.parse(`${w}T12:00:00Z`) - Date.parse(`${weeks[i - 1]}T12:00:00Z`)) === 7 * 86400000), `weeks are 7 days apart at ${now}`);
+  }
+  pass('weekly lead counts follow Pacific weeks, across daylight saving');
+}
+
 {
   const page = fs.readFileSync('src/pages/internal/analytics.astro', 'utf8');
   const endpoint = fs.readFileSync('functions/internal/api/analytics.js', 'utf8');
