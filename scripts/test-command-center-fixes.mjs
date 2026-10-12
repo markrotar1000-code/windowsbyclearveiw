@@ -110,6 +110,30 @@ async function approvedQuote(env, body) {
   pass('dashboard cities: NULL, empty and spacing/case variants are one row each');
 }
 
+// ── Dashboard sources ──────────────────────────────────────────────────────
+// "Top sources" showed the raw referrer URL, so one site split into a row per page it linked from, UTM names
+// split on capitals, and Clearview's own pages counted as a source. It uses the Analytics page's sourceLabel.
+{
+  const env = freshEnv();
+  const insert = env.QUOTES_DB.raw.prepare("INSERT INTO leads (created_at, name, city, first_utm_source, first_referrer) VALUES ('2026-10-01T00:00:00Z', 'x', 'Camas', ?, ?)");
+  const rows = [
+    [null, 'https://www.google.com/'], [null, 'https://google.com/search?q=window+installation+vancouver'], [null, 'https://www.google.com/'],
+    ['Nextdoor', null], ['nextdoor', ''], [' NEXTDOOR ', 'https://nextdoor.com/'],
+    [null, 'https://l.facebook.com/l.php?u=https%3A%2F%2Fwindowsbyclearview.com&h=AT0abc'], [null, 'https://l.facebook.com/'],
+    [null, 'https://windowsbyclearview.com/guides/fogged-windows'], [null, null], [null, ''], [null, 'not a url'],
+  ];
+  for (const row of rows) insert.run(...row);
+  const { body } = await call(dashboardApi.onRequestGet, env);
+  const byLabel = Object.fromEntries(body.sources.map((s) => [s.source, s.count]));
+  assert.equal(byLabel['google.com'], 3, 'google.com is one source however the visitor arrived');
+  assert.equal(byLabel.nextdoor, 3, 'a UTM source and a referrer for the same place are one row, whatever the capitals');
+  assert.equal(byLabel['l.facebook.com'], 2, 'a referrer is shown as its host, with no path or query string');
+  assert.equal(byLabel['Direct / unknown'], 3, 'no referrer and a visit from our own pages are Direct');
+  assert.ok(body.sources.every((s) => s.source === 'Direct / unknown' || !/[/?=]/.test(s.source)), 'no source label contains a URL path or query');
+  assert.equal(body.sources.reduce((n, s) => n + s.count, 0), rows.length, 'every lead is counted once');
+  pass('dashboard sources: one row per source, shown as a host, never a raw URL');
+}
+
 // ── Deleting a draft leaves nothing behind ─────────────────────────────────
 {
   const env = freshEnv();

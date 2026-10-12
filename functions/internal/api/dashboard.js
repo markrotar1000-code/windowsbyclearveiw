@@ -4,6 +4,7 @@ import { syncQuoteFollowUps } from '../_lib/quote-follow-ups.mjs';
 import { ensureJobsSchema } from '../_lib/jobs-schema.mjs';
 import { ensureQuoteWorkTypeColumn } from '../_lib/work-types.mjs';
 import { ensureLeadServiceColumn } from '../../_lib/lead-service.mjs';
+import { sourceLabel } from '../_lib/lead-sources.mjs';
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -30,6 +31,18 @@ async function ensureTaskSchema(db) {
   ]);
 }
 
+
+function topSources(rows, limit = 6) {
+  const totals = new Map();
+  for (const row of rows) {
+    const label = sourceLabel(row);
+    totals.set(label, (totals.get(label) || 0) + (Number(row.count) || 0));
+  }
+  return [...totals.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([source, count]) => ({ source, count }));
+}
 
 /** Compact read model for the Command Center. */
 export async function onRequestGet(context) {
@@ -60,14 +73,9 @@ export async function onRequestGet(context) {
     `).bind(weekAgo, today.start, today.end, now).first(),
     env.QUOTES_DB.prepare(`SELECT id, created_at, name, phone, email, city, role${leadService} FROM leads ORDER BY created_at DESC LIMIT 6`).all(),
     env.QUOTES_DB.prepare(`SELECT id, created_at, status, work_type, customer_name, customer_city, total_cents FROM quotes ORDER BY created_at DESC LIMIT 6`).all(),
-    env.QUOTES_DB.prepare(`
-      SELECT CASE
-        WHEN first_utm_source IS NOT NULL AND first_utm_source <> '' THEN first_utm_source
-        WHEN first_referrer IS NOT NULL AND first_referrer <> '' THEN first_referrer
-        ELSE 'Direct / unknown'
-      END AS source, COUNT(*) AS count
-      FROM leads GROUP BY source ORDER BY count DESC, source ASC LIMIT 6
-    `).all(),
+    // Labelled in code, not SQL: a raw referrer is a full URL, so one site split into a row per page it linked
+    // from. sourceLabel is the Analytics page's own rule (UTM name, else the referrer's host, own pages are Direct).
+    env.QUOTES_DB.prepare(`SELECT first_utm_source, first_referrer, COUNT(*) AS count FROM leads GROUP BY first_utm_source, first_referrer LIMIT 5000`).all(),
     // Group on what is displayed: leads with a NULL city, an empty city, or the same city typed with
     // different spacing or capitals are one row, not several rows with the same label.
     env.QUOTES_DB.prepare(`
@@ -96,7 +104,7 @@ export async function onRequestGet(context) {
     counts: counts || {},
     recentLeads: recentLeads.results || [],
     recentQuotes: recentQuotes.results || [],
-    sources: sources.results || [],
+    sources: topSources(sources.results || []),
     cities: cities.results || [],
     tasks: tasks.results || [],
     recentJobs: recentJobs.results || [],

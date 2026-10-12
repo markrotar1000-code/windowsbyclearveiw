@@ -1,5 +1,16 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, ninth round: Pacific weeks and real sources on the lead numbers (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "keep sweeping for more bugs." Method: read the aggregations behind the Command Center numbers, then run them on awkward dates (daylight-saving days, Sunday evening, midnight edges) and with messy stored values.
+
+Changed:
+1. **`functions/internal/_lib/lead-sources.mjs`:** weeks run Monday to Sunday on the Pacific calendar. `weekStartMs` takes the Pacific date and its Monday; the eight week buckets step back in whole calendar weeks from this week's Monday (the old code stepped back 7 x 24 hours from `now`).
+2. **`functions/internal/api/dashboard.js`:** "Top sources" selects `first_utm_source, first_referrer, COUNT(*)` grouped, labels each pair with `sourceLabel` and merges. Same response shape (`[{source, count}]`).
+3. **Tests (both failed first):** `test-analytics.mjs` (Sunday 6 pm and 11:59 pm Pacific belong to the ending week, Monday 00:00 starts the next; 8 distinct Mondays 7 days apart at five daylight-saving and year-start instants); `test-command-center-fixes.mjs` (google.com three ways is one row, Nextdoor by UTM and referrer in three capitalisations is one row, a referrer shows as a host, our own pages are Direct, every lead counted once). Source mutation-checked.
+
+Checked, no change: `pacificDayRange` (23 h on 2026-03-08, 25 h on 2026-11-01, edges at 07:00Z), pipeline and source-revenue summaries, dashboard counts.
+
 ## 2026-10-12 - Bug sweep, eighth round: Ask names Milgard; non-text JSON no longer crashes public endpoints (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "keep sweeping for more bugs." Method: a Node fuzz over the public handlers (null, booleans, 1e308, 5 KB strings, arrays, nested objects, NUL, SQL text, `{"toString":1}` in every JSON field and form field), plus `chat.js` bundled with esbuild and run against stubbed model replies for the rule-enforcement paths.

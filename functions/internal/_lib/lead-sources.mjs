@@ -37,11 +37,19 @@ function pathLabel(value) {
   return path.split(/[?#]/)[0] || '/';
 }
 
-function weekStart(ms) {
-  const d = new Date(ms);
-  const day = (d.getUTCDay() + 6) % 7; // Monday = 0
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() - day)).toISOString().slice(0, 10);
+// Weeks run Monday to Sunday on Clearview's calendar (Pacific), not UTC: a lead at 6 pm on a Sunday is
+// Monday 01:00 UTC and would otherwise land in the week that has not started. Everything below works on
+// calendar dates (UTC midnight of the Pacific date), so daylight saving cannot move a week boundary.
+const PACIFIC_DATE = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+function weekStartMs(ms) {
+  const parts = Object.fromEntries(PACIFIC_DATE.formatToParts(new Date(ms)).map(({ type, value }) => [type, value]));
+  const date = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day));
+  return date - ((new Date(date).getUTCDay() + 6) % 7) * DAY; // Monday = 0
 }
+
+const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+const weekStart = (ms) => isoDay(weekStartMs(ms));
 
 function tally(map, key) {
   map.set(key, (map.get(key) || 0) + 1);
@@ -59,7 +67,9 @@ export function summarizeLeadSources(rows, { now = Date.now(), days = 90, weeks 
   const sources = new Map();
   const landing = new Map();
   const perWeek = new Map();
-  for (let i = weeks - 1; i >= 0; i -= 1) perWeek.set(weekStart(now - i * 7 * DAY), 0);
+  // Step back in whole calendar weeks from this week's Monday, not in 7 x 24-hour blocks from `now`.
+  const thisWeek = weekStartMs(now);
+  for (let i = weeks - 1; i >= 0; i -= 1) perWeek.set(isoDay(thisWeek - i * 7 * DAY), 0);
   let total = 0;
   for (const row of rows || []) {
     const created = Date.parse(row?.created_at);
