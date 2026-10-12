@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { takeRateLimit, verifyTurnstile, TURNSTILE_VERIFY_URL } from '../functions/_lib/abuse-guard.mjs';
 import { onRequestPost as estimate, ESTIMATE_RATE_LIMIT } from '../functions/api/estimate.js';
 import { onRequest as askMiddleware } from '../functions/ask/api/_middleware.js';
+import { onRequestPost as login, LOGIN_RATE_LIMIT } from '../functions/internal/api/login.js';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 
 process.removeAllListeners('warning');
@@ -135,6 +136,35 @@ await ok(() => {
   const site = readFileSync(new URL('../src/data/site.ts', import.meta.url), 'utf8');
   assert.match(site, /turnstileSiteKey: '[^']*'/);
   assert.ok(!/TURNSTILE_SECRET/.test(form), 'the secret key is never referenced by the form');
+});
+
+// The shared Command Center password is the only door on the *.pages.dev address (Cloudflare Access fronts the
+// custom domain only), so the login must not be guessable at network speed. Every attempt counts; the 11th in
+// 15 minutes from one visitor is refused before the password is even compared, and a different visitor is not.
+await ok(async () => {
+  const env = { QUOTES_DB: freshDb(), INTERNAL_PASSWORD: 'correct horse battery staple', INTERNAL_SESSION_SECRET: 'secret' };
+  const attempt = async (password, ip = '203.0.113.50') => {
+    const form = new FormData();
+    form.set('password', password);
+    form.set('next', '/internal/leads');
+    const request = new Request('https://windowsbyclearveiw.pages.dev/internal/api/login', { method: 'POST', headers: { 'cf-connecting-ip': ip }, body: form });
+    const response = await login({ request, env });
+    return { status: response.status, location: response.headers.get('location') || '', cookie: response.headers.get('set-cookie') || '' };
+  };
+  assert.equal(LOGIN_RATE_LIMIT.limit, 10, 'ten attempts');
+  assert.equal(LOGIN_RATE_LIMIT.windowSeconds, 900, 'per fifteen minutes');
+  for (let i = 1; i <= LOGIN_RATE_LIMIT.limit; i++) {
+    const r = await attempt(`guess ${i}`);
+    assert.match(r.location, /error=wrong-password/, `attempt ${i} is judged on its password`);
+    assert.equal(r.cookie, '', 'a wrong password never gets a session');
+  }
+  const locked = await attempt('correct horse battery staple');
+  assert.match(locked.location, /error=too-many/, 'the 11th attempt is refused even with the right password');
+  assert.equal(locked.cookie, '', 'and gets no session');
+  const other = await attempt('correct horse battery staple', '198.51.100.9');
+  assert.equal(other.status, 303);
+  assert.match(other.cookie, /^cv_session=/, 'another visitor can still sign in');
+  assert.match(readFileSync(new URL('../src/pages/internal/login.astro', import.meta.url), 'utf8'), /'too-many':\s*'/, 'the login page explains the lockout');
 });
 
 globalThis.fetch = mail;

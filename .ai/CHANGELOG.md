@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, eleventh round: login throttle (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "keep sweeping for more bugs." Method: probe production over HTTP (read-only): host and path variants, headers, the `pages.dev` address, then read what stands in front of `/internal` on each.
+
+Changed:
+1. **`functions/internal/api/login.js`:** `takeRateLimit` with `LOGIN_RATE_LIMIT = { bucket: 'internal-login', limit: 10, windowSeconds: 900 }` after the not-configured check and before the form and password are read. Over the limit: 303 to `/internal/login?error=too-many`, no session.
+2. **`src/pages/internal/login.astro`:** message for `too-many`.
+3. **`scripts/test-abuse-guard.mjs`** group 8 (failed before: no `LOGIN_RATE_LIMIT`). **`internal/README.md`:** "Sign-in attempts are limited" with the two owner options for the `pages.dev` address.
+
+Checked, no change: session tokens (HMAC-SHA256 over the expiry, constant-time compare, 30-day expiry), `next` cannot leave `/internal`, password compare is on SHA-256 digests, the signing pad normalises and clamps every point to 600 x 180, `ops-sw.js` caching (documented).
+
+Not changed: sessions are stateless, so logout only clears the cookie and a copied cookie works until it expires or `INTERNAL_SESSION_SECRET` is rotated.
+
 ## 2026-10-12 - Bug sweep, tenth round: facts that are duplicated by hand are now tested (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "keep sweeping for more bugs." Method: look for places where the code says the same thing twice and nothing makes the copies agree. `functions/` and `workers/` never import from `src/`, so contract terms, the phone number and the site address each exist in both.
