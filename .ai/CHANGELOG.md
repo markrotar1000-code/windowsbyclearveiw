@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "Here's a revised version to replace it with" (the guide page's drawn diagram, after the first graphic went onto `/window-features` and `/replacement`).
+
+Changed:
+1. **`src/assets/guides/vinyl-fiberglass-sightlines.png`** (new): the owner's graphic; one stray, half-clipped duplicate "choice." (rows 846 to 847, under the vinyl note) was filled with the surrounding background; RGB, no metadata.
+2. **`guides/[slug].astro`:** `vinyl-vs-fiberglass` renders `CanvaGuideEmbed` with the graphic, a full alt text and the footnote as visible caption; `FrameMaterials` import removed; the "answer" line reworded to match the graphic.
+3. **`CanvaGuideEmbed.astro`:** optional `widths` (default `[1000, 1400, 2000]`).
+4. **Deleted** the `FrameMaterials` component and its entry in the font-size exceptions of `test-layout-guards.mjs`.
+5. **`test-image-delivery.mjs`:** `SOURCE_LIMITED_GRAPHICS` (the page must offer exactly the width of its source PNG, read from the header); mutation-checked by offering only 1400 px.
+6. Docs: positioning reference, HANDOFF (earlier question resolved; phone legibility and upscale noted).
+
 ## 2026-10-12 - Vinyl vs fiberglass graphic replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "I also need you to update the vinyl vs fiberglass diagram with this one" (an attached graphic).

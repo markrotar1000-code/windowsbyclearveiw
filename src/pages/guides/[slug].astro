@@ -7,8 +7,8 @@ import OpeningScope from '../../components/diagrams/OpeningScope.astro';
 import FlashingOrder from '../../components/diagrams/FlashingOrder.astro';
 import CanvaGuideEmbed from '../../components/CanvaGuideEmbed.astro';
 import doublePaneGlassDesktop from '../../assets/guides/double-pane-glass-desktop.png';
+import frameSightlinesGraphic from '../../assets/guides/vinyl-fiberglass-sightlines.png';
 import doublePaneGlassMobile from '../../assets/guides/double-pane-glass-mobile.png';
-import FrameMaterials from '../../components/diagrams/FrameMaterials.astro';
 import SignsChecklist from '../../components/diagrams/SignsChecklist.astro';
 import EstimateBuildUp from '../../components/diagrams/EstimateBuildUp.astro';
 import FaqAccordion from '../../components/FaqAccordion.astro';
@@ -52,7 +52,7 @@ const diagramNotes = {
     eyebrow: 'Frame construction',
     title: 'See the difference in the frame itself.',
     body: 'Vinyl and fiberglass can both work well. The useful comparison is how the frame is built, how it behaves on larger openings, and what that means for the finished window.',
-    answer: 'Vinyl uses a hollow multi-chamber profile. Fiberglass uses a denser profile with a slimmer sightline. The right choice depends on the opening and finish.',
+    answer: 'Vinyl uses a chambered profile, often a little broader. Fiberglass is a stronger, more rigid material that can allow a slimmer sightline. The right choice depends on the opening, the product\'s rated size and the finish.',
   },
   'signs-checklist': {
     eyebrow: 'Photo guide',
@@ -182,7 +182,13 @@ const pageHeadings = [...guide.body.matchAll(/^##\s+(.+)$/gm)]
             />
           )}
           {guide.data.diagram === 'vinyl-vs-fiberglass' && (
-            <FrameMaterials />
+            <CanvaGuideEmbed
+              desktopSrc={frameSightlinesGraphic}
+              widths={[1000, 1400, 1536]}
+              alt="Frame Strength. Slimmer Sightlines. A white vinyl window and a dark fiberglass window in the same opening, with a cross-section of each frame. Vinyl is the everyday workhorse, a chambered PVC profile where a broader profile can provide needed stiffness, and is often a practical, cost-conscious choice for typical bedroom and bath openings. Fiberglass is a stronger, more rigid material whose stiffness can allow a slimmer frame and leave more room for glass, and can help support wide sliders and tall picture windows. Choose by the opening, the product's rated size and the sightline you want."
+              title="Vinyl and fiberglass frames: strength and sightlines"
+              description="Illustrative comparison. Frame widths, reinforcement and maximum sizes vary by manufacturer and series."
+            />
           )}
           {guide.data.diagram === 'signs-checklist' && <SignsChecklist />}
         </div>

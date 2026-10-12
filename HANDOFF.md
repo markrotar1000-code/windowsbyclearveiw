@@ -55,8 +55,8 @@ What the next agent must know:
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, graphic).
 
-- **Decision for Keith: the guide page and the new graphic disagree.** The new graphic shows both frames with hollow chambers ("Both can have hollow chambers"). `/guides/vinyl-vs-fiberglass-pacific-northwest` still draws its own SVG (`src/components/diagrams/FrameMaterials.astro`) with "hollow chambers vs solid pultrusion" and labels fiberglass "a narrower, solid pultruded profile". Options: replace the SVG on the guide with the new graphic (guide edits need your say-so and an Ask index rebuild, `npm run build:guides-index`, needs `GEMINI_API_KEY`), or redraw the SVG to match. Not changed.
-- Source is 1536 px wide. On a 2x laptop its small text is a little soft; an upscale (Higgsfield, as for the 2026-10-11 photos) would sharpen it. Not done: it spends credits.
+- **Resolved (second owner graphic, same day): the guide page now uses "Frame Strength. Slimmer Sightlines."** (`src/assets/guides/vinyl-fiberglass-sightlines.png`) through `CanvaGuideEmbed`; the drawn SVG (`FrameMaterials.astro`, "solid pultruded") and its test exception are deleted. The page's intro "answer" line was reworded to match the graphic. The guide's Markdown and FAQs are unchanged, so no Ask index rebuild was needed. Open: the graphic's own small text is not legible on a phone (about 305 px wide); the double-pane graphic has a separate mobile image, and a portrait or stacked version of this one would fix it (an owner design call). Also: a stray half-clipped duplicate "choice." in the file was retouched out.
+- Both graphics are 1536 px wide, which is everything the files have. On a 2x laptop their small text is a little soft; an upscale (Higgsfield, as for the 2026-10-11 photos) would sharpen it. Not done: it spends credits. `test:image-delivery` expects 2000 px for guide graphics except this page, which must offer the real width of its source file (`SOURCE_LIMITED_GRAPHICS`).
 
 ## 2026-10-12 - Bug sweep, thirteenth round (branch `claude/bug-sweep-repair-ub27ah`)
 
