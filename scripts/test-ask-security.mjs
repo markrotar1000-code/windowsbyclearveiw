@@ -25,5 +25,17 @@ assert.match(chat, /cleanHistory\(body\.history\)/);
 assert.match(middleware, /pathname\.split\('\/'\)\.filter\(Boolean\)\.pop\(\)/);
 assert.match(chat, /Body must be a JSON object/);
 assert.match(chat, /args must be an object/);
+// `String({toString: 1})` throws, which escaped as a 500 from a public endpoint. Only real strings are a message.
+assert.match(chat, /typeof body\.message==='string'/, 'the Ask message must be accepted only when it is a string');
+assert.doesNotMatch(chat, /String\(body\.message/, 'String() on a JSON field throws for {"toString":1}');
+
+// Milgard is one of the two window lines Clearview installs (/window-features, /replacement, the Cascade vs
+// Milgard guide the assistant retrieves from, quote line items). Listing it as a competitor made the assistant
+// rewrite, then refuse ("not available"), any answer that named it. Real competitors stay blocked.
+const competitor = chat.match(/const COMPETITOR=(\/.*?\/i);/);
+assert.ok(competitor, 'chat.js must define COMPETITOR');
+const competitorRe = new Function(`return ${competitor[1]}`)();
+for (const name of ['Andersen', 'Pella', 'Marvin', 'Jeld-Wen', 'Simonton', 'Renewal by Andersen']) assert.ok(competitorRe.test(`${name} windows`), `${name} stays a blocked competitor`);
+for (const own of ['Milgard', 'milgard', 'Cascade', 'Cascade vs Milgard']) assert.ok(!competitorRe.test(`We install ${own} windows`), `${own} is a Clearview window line, not a competitor`);
 
 console.log('Ask API security audit: PASS');

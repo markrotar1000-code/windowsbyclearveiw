@@ -1,5 +1,16 @@
 # ICM Changelog
 
+## 2026-10-12 - Bug sweep, eighth round: Ask names Milgard; non-text JSON no longer crashes public endpoints (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "keep sweeping for more bugs." Method: a Node fuzz over the public handlers (null, booleans, 1e308, 5 KB strings, arrays, nested objects, NUL, SQL text, `{"toString":1}` in every JSON field and form field), plus `chat.js` bundled with esbuild and run against stubbed model replies for the rule-enforcement paths.
+
+Changed:
+1. **`functions/ask/api/chat.js`:** `milgard` removed from `COMPETITOR` (Clearview installs Milgard); `message` accepted only when it is a string.
+2. **`functions/api/quote-sign.js`:** `name` accepted only when it is a string (a non-text name is the existing 400).
+3. **Tests:** `test-ask-security.mjs` (evaluates the `COMPETITOR` literal: Pella, Andersen and the rest stay blocked, Milgard and Cascade are not; message must be a string-typed field); `test-quote-signing.mjs` (valid link, six non-text names, 400 each, nothing signed). Both failed before the fix.
+
+Checked, no change: all `/internal` pages and APIs on the live site demand the Cloudflare Access login for GET, POST, PATCH and DELETE; price, "bonded and insured" and competitor answers are repaired or refused as intended; provider errors and empty answers give the call-us 503.
+
 ## 2026-10-12 - Bug sweep, seventh round: navigation and planner without JavaScript (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "continue fixing bugs across the platform." Method: Playwright with `javaScriptEnabled: false` over all 37 public pages at 390 and 1280 px, counting visible header links, invisible text and dead controls.

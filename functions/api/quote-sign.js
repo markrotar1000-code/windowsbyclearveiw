@@ -62,7 +62,8 @@ export async function onRequestPost(context) {
   if (resolved.error) return json({ error: resolved.error }, resolved.status);
   if (resolved.row.signed_at) return json({ error: 'This quote has already been signed.' }, 409);
   if (body?.consent !== true) return json({ error: 'Please confirm you agree to sign electronically.', field: 'consent' }, 400);
-  const name = String(body?.name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
+  // Only real text is a name: String() on a crafted JSON object ({"toString": 1}) throws, which was a 500.
+  const name = (typeof body?.name === 'string' ? body.name : '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200);
   if (name.length < 2) return json({ error: 'Please type your full name.', field: 'name' }, 400);
   const signature = renderSignatureSvg(body?.strokes);
   if (signature.error) return json({ error: signature.error, field: 'signature' }, 400);
