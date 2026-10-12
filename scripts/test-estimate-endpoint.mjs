@@ -135,4 +135,24 @@ const base = { name: 'Pat Doe', phone: '(360) 555-0100', city: 'Camas', email: '
   assert(status === 503 && pushes.length === 1, 'push still fires when mail is not configured');
 }
 
+// 6. A retry after a failed delivery must not save the same inquiry twice. The lead is stored before
+//    the email goes out, so a Resend failure tells the visitor "failed" even though Mark has the
+//    lead; they press Send again and, without a guard, Mark sees two identical leads.
+{
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('{}', { status: 500 });
+  const failed = await submit(env, { ...base, notes: 'Four windows' });
+  globalThis.fetch = realFetch;
+  assert(failed.status === 502 && leadCount(env.QUOTES_DB) === 1, 'a failed delivery still keeps the lead');
+  const retry = await submit(env, { ...base, notes: 'Four windows' });
+  assert(retry.status === 200 && leadCount(env.QUOTES_DB) === 1, 'retrying the same inquiry does not save a second lead');
+  await submit(env, { ...base, notes: 'Four windows', phone: '(360) 555-0199' });
+  await submit(env, { ...base, notes: 'Also a patio door' });
+  assert(leadCount(env.QUOTES_DB) === 3, 'a different phone or different notes is still a new lead');
+  env.QUOTES_DB.raw.prepare("UPDATE leads SET created_at = '2020-01-01T00:00:00.000Z'").run();
+  await submit(env, { ...base, notes: 'Four windows' });
+  assert(leadCount(env.QUOTES_DB) === 4, 'the same inquiry sent long afterwards is a new lead');
+}
+
 console.log('estimate endpoint tests passed');

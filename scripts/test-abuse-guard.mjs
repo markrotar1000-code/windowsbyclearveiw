@@ -80,8 +80,8 @@ const leads = (env) => env.QUOTES_DB.raw.prepare('SELECT COUNT(*) AS n FROM lead
 
 await ok(async () => {
   const env = { QUOTES_DB: freshDb(), RESEND_API_KEY: 'k' };
-  for (let i = 0; i < ESTIMATE_RATE_LIMIT.limit; i++) assert.equal((await submit(env, {})).status, 200, `request ${i + 1} is accepted`);
-  const over = await submit(env, {});
+  for (let i = 0; i < ESTIMATE_RATE_LIMIT.limit; i++) assert.equal((await submit(env, { notes: `Inquiry ${i + 1}` })).status, 200, `request ${i + 1} is accepted`);
+  const over = await submit(env, { notes: 'Inquiry over the limit' });
   assert.equal(over.status, 429);
   assert.match(over.body.error, /call us/i, 'the refusal points at the phone');
   assert.ok(Number(over.headers.get('retry-after')) >= 1);
