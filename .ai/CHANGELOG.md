@@ -11,6 +11,7 @@ Changed:
 4. **`PhotoGuide.astro`:** the `flashing` type (stock photo plus numbered notes) is removed.
 5. **Deleted** the old `double-pane-glass-desktop.png` and `-mobile.png`.
 7. **U-factor / SHGC (third graphic, same PR):** "Window Energy Ratings, Explained" (`src/assets/guides/window-energy-ratings-explained.png`) replaces the coded `UFactorGauge` on `/window-features` through `CanvaGuideEmbed`; the component is deleted. The gauge's own numbers (a 0.30 "WA rebate range" line and a "typical Clearview install 0.27" mark) are gone with it: the graphic names no figures and says to confirm ratings and rebate requirements.
+8. **Window trouble (fourth graphic, follow-up PR):** "Window Trouble: Know the Signs" (`src/assets/guides/window-trouble-know-the-signs.png`, 4096 x 2737, the owner's own 4K export) replaces the stock-photo `SignsChecklist` on `/guides/signs-you-need-new-windows` through `CanvaGuideEmbed`; the component and the `symptoms` type of `PhotoGuide` are deleted, and the guide now shows its job hero photo (it is no longer a photo-based diagram). One retouch: the export rendered "lock" as "!lock" (a detached dot under the stem); the stem was extended over the gap and the dot removed. Photo-guide count expectation in `test-image-delivery.mjs` is now 2.
 6. **`test-image-delivery.mjs`:** `SOURCE_LIMITED_GRAPHICS` lists the four pages that carry a 1536 px graphic; the photo-guide count expectation drops from 4 to 3.
 
 ## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)

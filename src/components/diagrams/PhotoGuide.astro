@@ -3,7 +3,7 @@ import { Image } from 'astro:assets';
 import { findWork } from '../../data/work';
 import { LEAD_PHOTO_WIDTHS, SLOT_SIZES } from '../../lib/image-sizes';
 
-interface Props { type: 'installation' | 'symptoms' | 'cost'; heading?: string | null; concise?: boolean; }
+interface Props { type: 'installation' | 'cost'; heading?: string | null; concise?: boolean; }
 const { type, heading = null, concise = false } = Astro.props;
 
 const photo = {
@@ -18,20 +18,6 @@ const photo = {
       ['01', 'THE OPENING', 'We check what is already there: sill, sides, head, and how square it is.'],
       ['02', 'THE APPROACH', 'The right approach for each opening goes in the written estimate.'],
       ['03', 'WHAT CHANGES', 'Trim, siding, flashing, and interior finish can become part of the scope, depending on the opening.'],
-    ],
-  },
-  symptoms: {
-    intro: 'A normal residential opening is a better starting point than a staged “damage” photo. Start with what you can see and touch before deciding what failed.',
-    source: 'Pexels',
-    sourceUrl: 'https://www.pexels.com/photo/interior-of-room-with-window-5691512/',
-    image: 'https://images.pexels.com/photos/5691512/pexels-photo-5691512.jpeg?auto=compress&cs=tinysrgb&w=1800',
-    alt: 'Bright residential room with a white-framed window and windowsill, showing a typical home opening.',
-    title: 'Inspect the opening you actually have.',
-    points: [
-      ['01', 'AIR', 'Feel around the sash, meeting rail, lock, and corners with the window closed.'],
-      ['02', 'GLASS', 'Look for fog that stays between panes after the room-side surface is wiped.'],
-      ['03', 'WOOD / SILL', 'Probe stained or soft areas. Moisture damage changes the scope.'],
-      ['04', 'OPERATION', 'Binding, dropping, or failed locks can point to movement, hardware, or frame condition.'],
     ],
   },
   cost: {
@@ -52,11 +38,9 @@ const photo = {
 
 const clearviewPhoto = type === 'installation'
     ? findWork('blue-ladder')
-    : type === 'symptoms'
-      ? findWork('bedroom-view')
-      : type === 'cost'
-        ? findWork('caulk-gun-interior-sill')
-        : null;
+    : type === 'cost'
+      ? findWork('caulk-gun-interior-sill')
+      : null;
 const isClearviewPhoto = Boolean(clearviewPhoto?.image);
 ---
 <figure class="photo-guide">
