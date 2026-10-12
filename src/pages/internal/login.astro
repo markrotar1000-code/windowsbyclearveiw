@@ -31,6 +31,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     'wrong-password': 'That password did not match.',
     'not-configured': 'The internal tool is not set up yet — INTERNAL_PASSWORD and INTERNAL_SESSION_SECRET need to be set in the Cloudflare Pages environment.',
     'bad-request': 'Something went wrong submitting the form. Try again.',
+    'too-many': 'Too many sign-in attempts. Wait about 15 minutes, then try again.',
   };
 
   if (error && MESSAGES[error]) {

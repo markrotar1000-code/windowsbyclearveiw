@@ -51,6 +51,15 @@ What the next agent must know:
 - **Resolved:** Keith confirmed on 2026-10-11 that the 2026-10-11 gallery photos are Clearview jobs (`docs/GALLERY-PHOTOS-2026-10-11.md`). The door now leads the doors page's "Finished patio door installs" grid. Still open: the job scope of each photo is not known (replacement, new construction, door), so captions describe only what is visible.
 
 
+## 2026-10-12 - Bug sweep, eleventh round (branch `claude/bug-sweep-repair-ub27ah`)
+
+Details: `.ai/CHANGELOG.md` (2026-10-12, eleventh round).
+
+What the next agent must know:
+- **Decision for Keith (dashboard, not code): the `windowsbyclearveiw.pages.dev` address serves the whole site and the Command Center login.** Cloudflare Access covers only the custom domain, so the shared password (now limited to 10 attempts per 15 minutes) is the only door there. Add that address to the Access application or turn the `pages.dev` domain off for production. Nothing public is at risk otherwise: its pages declare the production canonical URL.
+- **Logout does not revoke a session.** Tokens are stateless HMACs valid for 30 days. If a phone is lost, rotate `INTERNAL_SESSION_SECRET` (that signs everyone out) and change `INTERNAL_PASSWORD`.
+- `LOGIN_RATE_LIMIT` counts every attempt including correct ones; ten in 15 minutes is generous for one person.
+
 ## 2026-10-12 - Bug sweep, tenth round (branch `claude/bug-sweep-repair-ub27ah`)
 
 Details: `.ai/CHANGELOG.md` (2026-10-12, tenth round).

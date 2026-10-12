@@ -69,6 +69,10 @@ One-time setup (owner, free):
    `/google-ai-studio/v1beta/...` follows Cloudflare's docs pattern; if the first Gemini request
    shows an error in the gateway, Ask still answers through the direct fallback.)
 
+## Sign-in attempts are limited
+
+`/internal/api/login` allows 10 attempts per visitor per 15 minutes (a right password counts too; the 11th is refused with "Too many sign-in attempts" before the password is compared). It matters most on the `windowsbyclearveiw.pages.dev` address, where the shared password is the only door: Cloudflare Access fronts the custom domain, not that address. To close that address entirely, either add `windowsbyclearveiw.pages.dev` to the Access application, or turn the `pages.dev` domain off for production (Pages project, Custom domains). Both are dashboard changes.
+
 ## Cloudflare Access sign-in (optional; replaces the shared password)
 
 Today the Command Center has one shared password. Cloudflare Access (Zero Trust, free for small

@@ -1,4 +1,10 @@
 import { createSessionToken, sessionCookie } from '../_lib/session.mjs';
+import { takeRateLimit } from '../../_lib/abuse-guard.mjs';
+
+// One shared password guards the Command Center. Cloudflare Access fronts the custom domain, but the
+// *.pages.dev address has only this login, so it must not be guessable at network speed. Every attempt
+// counts (a right password too), per visitor, and is refused before the password is compared.
+export const LOGIN_RATE_LIMIT = { bucket: 'internal-login', limit: 10, windowSeconds: 900 };
 
 const encoder = new TextEncoder();
 
@@ -29,6 +35,9 @@ export async function onRequestPost(context) {
   if (!env.INTERNAL_PASSWORD || !env.INTERNAL_SESSION_SECRET) {
     return redirectToLogin(request, 'not-configured');
   }
+
+  const limited = await takeRateLimit(env, request, LOGIN_RATE_LIMIT);
+  if (limited.limited) return redirectToLogin(request, 'too-many');
 
   let form;
   try {
