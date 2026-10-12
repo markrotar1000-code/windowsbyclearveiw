@@ -6,9 +6,8 @@ import CtaBar from '../../components/CtaBar.astro';
 import OpeningScope from '../../components/diagrams/OpeningScope.astro';
 import FlashingOrder from '../../components/diagrams/FlashingOrder.astro';
 import CanvaGuideEmbed from '../../components/CanvaGuideEmbed.astro';
-import doublePaneGlassDesktop from '../../assets/guides/double-pane-glass-desktop.png';
+import doublePaneGlassGraphic from '../../assets/guides/double-pane-glass-how-it-works.png';
 import frameSightlinesGraphic from '../../assets/guides/vinyl-fiberglass-sightlines.png';
-import doublePaneGlassMobile from '../../assets/guides/double-pane-glass-mobile.png';
 import SignsChecklist from '../../components/diagrams/SignsChecklist.astro';
 import EstimateBuildUp from '../../components/diagrams/EstimateBuildUp.astro';
 import FaqAccordion from '../../components/FaqAccordion.astro';
@@ -37,9 +36,9 @@ const diagramNotes = {
     answer: 'The condition of the opening, and what you want the finished window to look like, decide how much work each window takes.',
   },
   'flashing-order': {
-    eyebrow: 'Photo guide',
+    eyebrow: 'Flashing diagram',
     title: 'Follow the water path, not the product names.',
-    body: 'Start with the installation photo, then use the numbered notes to see how the bottom, sides, top, and wall weather barrier work together.',
+    body: 'Start with the numbered layers, then see how the bottom, sides, top, and wall weather barrier overlap so water has a way out.',
     answer: 'The objective is controlled drainage: water moves down through the exterior layers and leaves the wall assembly instead of turning inward.',
   },
   'double-pane-glass': {
@@ -98,9 +97,9 @@ const currentDiagramNote = guide.data.diagram ? diagramNotes[guide.data.diagram]
 
 // These diagram types already wrap a full photo (see PhotoGuide.astro), so
 // showing the guide's own heroImage right after them would duplicate the
-// section. The illustration-style diagrams below (double-pane-glass, vinyl-vs-fiberglass) are
+// section. The illustration-style diagrams below (double-pane-glass, vinyl-vs-fiberglass, flashing-order) are
 // graphics, not photos, so pairing them with a real job photo is intentional.
-const photoBasedDiagrams = ['opening-scope', 'flashing-order', 'signs-checklist'];
+const photoBasedDiagrams = ['opening-scope', 'signs-checklist'];
 const diagramIsPhotoBased = guide.data.diagram ? photoBasedDiagrams.includes(guide.data.diagram) : false;
 
 const slugifyHeading = (value) => value
@@ -174,11 +173,11 @@ const pageHeadings = [...guide.body.matchAll(/^##\s+(.+)$/gm)]
           {guide.data.diagram === 'flashing-order' && <FlashingOrder />}
           {guide.data.diagram === 'double-pane-glass' && (
             <CanvaGuideEmbed
-              desktopSrc={doublePaneGlassDesktop}
-              mobileSrc={doublePaneGlassMobile}
-              alt="Double-pane glass education infographic showing two glass panes, insulating space, Low-E coating, spacer and edge seal."
+              desktopSrc={doublePaneGlassGraphic}
+              widths={[1000, 1400, 1536]}
+              alt="Double-Pane Glass: How It Works. A cutaway of an insulated glass unit in a white vinyl frame, with numbered callouts: 1 two glass panes, the exterior and interior glass that enclose the insulating space; 2 the sealed gap, where air or an insulating gas such as argon slows heat transfer; 3 the Low-E coating, a microscopically thin coating that reduces radiant heat transfer; 4 the spacer that keeps the panes apart around the edge; 5 the edge seal that helps keep moisture out and insulating gas in. Below: the insulating space slows heat movement between the panes, Low-E performance lets daylight through while reducing radiant heat transfer, and persistent fog between the panes can indicate a failed seal. Comfort comes from the complete system: glass, coatings, gas fill, frame and installation."
               title="How double-pane energy-efficient glass works"
-              description="A visual explanation of two glass panes, the insulating space, Low-E coating, spacer and edge seal."
+              description="Illustrative double-pane unit. Coatings, gas fills, spacers and performance vary by product."
             />
           )}
           {guide.data.diagram === 'vinyl-vs-fiberglass' && (

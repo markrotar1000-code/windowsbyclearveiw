@@ -221,10 +221,16 @@ ok('the home hero photo is offered up to 2560 px', () => {
   assert.equal(attr(tag, 'fetchpriority'), 'low', 'the settle-on photo must not compete with the video and poster');
 });
 
-// A guide graphic is offered at 2000 px (the Canva exports are 2000 px wide). The vinyl vs fiberglass graphic is the
-// owner's own export at 1536 px, which is everything the file has: it must offer exactly that, and the width here must be
+// A guide graphic is offered at 2000 px (the Canva exports are 2000 px wide). The vinyl vs fiberglass, double-pane and flashing graphics are the
+// owner's own exports at 1536 px, which is everything the file has: it must offer exactly that, and the width here must be
 // the real width of the source (read from its PNG header), so this cannot hide a graphic that was downscaled.
-const SOURCE_LIMITED_GRAPHICS = new Map([['guides/vinyl-vs-fiberglass-pacific-northwest', 'src/assets/guides/vinyl-fiberglass-sightlines.png']]);
+const SOURCE_LIMITED_GRAPHICS = new Map([
+  ['guides/vinyl-vs-fiberglass-pacific-northwest', 'src/assets/guides/vinyl-fiberglass-sightlines.png'],
+  ['guides/fogged-windows', 'src/assets/guides/double-pane-glass-how-it-works.png'],
+  ['guides/what-your-openings-need', 'src/assets/guides/window-flashing-water-way-out.png'],
+  ['new-construction', 'src/assets/guides/window-flashing-water-way-out.png'],
+  ['window-features', 'src/assets/guides/window-energy-ratings-explained.png'],
+]);
 const pngWidth = (path) => readFileSync(new URL(`../${path}`, import.meta.url)).readUInt32BE(16);
 
 ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => {
@@ -233,6 +239,7 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
   for (const [page, html] of pages) {
     for (const wrap of html.matchAll(/<div class="photo-wrap[^"]*"[^>]*>[\s\S]*?<\/div>/g)) {
       const [tag] = images(wrap[0]);
+      // (The flashing guide became a graphic on 2026-10-12, so three pages carry a job-photo lead now.)
       // The stock-photo guides use a plain <img> with no srcset; only the job photos are responsive.
       if (!tag || !attr(tag, 'srcset')) continue;
       leads++;
@@ -246,7 +253,7 @@ ok('photo-guide lead photos and guide graphics are offered past 1600 px', () => 
       assert.equal(attr(tag, 'sizes'), SLOT_SIZES.guideGraphic, `${page}: guide graphic sizes drifted from SLOT_SIZES.guideGraphic`);
     }
   }
-  assert.ok(leads >= 4, `expected the photo guide on at least 4 pages, found ${leads}`);
+  assert.ok(leads >= 3, `expected the photo guide on at least 3 pages, found ${leads}`);
   assert.ok(graphics >= 1, 'the double-pane glass guide graphic was not found');
 });
 

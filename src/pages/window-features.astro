@@ -10,7 +10,7 @@ import { SLOT_SIZES } from '../lib/image-sizes';
 import { pricing, publicBlurb } from '../data/pricing';
 import { findWork } from '../data/work';
 import CanvaGuideEmbed from '../components/CanvaGuideEmbed.astro';
-import UFactorGauge from '../components/diagrams/UFactorGauge.astro';
+import energyRatingsGraphic from '../assets/guides/window-energy-ratings-explained.png';
 
 const ogPhoto = findWork('stone-craftsman')!;
 
@@ -134,7 +134,13 @@ width={1536}
         A cloudy or fogged pane is a different problem: a failed seal, not a coating choice. <a href="/guides/fogged-windows">How to tell the difference</a>.
       </p>
       <div class="diagram-slot">
-        <UFactorGauge />
+        <CanvaGuideEmbed
+          desktopSrc={energyRatingsGraphic}
+          widths={[1000, 1400, 1536]}
+          alt="Window Energy Ratings, Explained. U-factor measures heat transfer: how well the window insulates. Lower means better insulation, because less heat passes through the window; U-factor is not an air-leakage rating. SHGC, the solar heat gain coefficient, measures how much solar heat enters: a lower SHGC admits less of the sun's heat and a higher SHGC admits more, and the right balance depends on the home. What matters for your home: climate, balancing winter heat retention with summer comfort; orientation and shade, meaning which way windows face and how much sun reaches them; and whole-window ratings, comparing NFRC ratings for the complete window. Start with good insulation, then choose solar heat gain for the room, exposure and shading."
+          title="Window energy ratings: U-factor and SHGC"
+          description="Conceptual illustrations. Confirm product ratings and current utility rebate requirements before selecting windows."
+        />
       </div>
     </div>
   </section>
