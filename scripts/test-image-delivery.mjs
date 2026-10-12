@@ -229,6 +229,7 @@ const SOURCE_LIMITED_GRAPHICS = new Map([
   ['guides/fogged-windows', 'src/assets/guides/double-pane-glass-how-it-works.png'],
   ['guides/what-your-openings-need', 'src/assets/guides/window-flashing-water-way-out.png'],
   ['new-construction', 'src/assets/guides/window-flashing-water-way-out.png'],
+  ['window-features', 'src/assets/guides/window-energy-ratings-explained.png'],
 ]);
 const pngWidth = (path) => readFileSync(new URL(`../${path}`, import.meta.url)).readUInt32BE(16);
 

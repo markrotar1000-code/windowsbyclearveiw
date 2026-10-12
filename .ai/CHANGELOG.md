@@ -10,7 +10,8 @@ Changed:
 3. **`FlashingOrder.astro`:** renders the flashing graphic through `CanvaGuideEmbed` (the `builder` prop is gone); used by `/new-construction` and the `what-your-openings-need` guide.
 4. **`PhotoGuide.astro`:** the `flashing` type (stock photo plus numbered notes) is removed.
 5. **Deleted** the old `double-pane-glass-desktop.png` and `-mobile.png`.
-6. **`test-image-delivery.mjs`:** `SOURCE_LIMITED_GRAPHICS` lists the three pages that carry a 1536 px graphic; the photo-guide count expectation drops from 4 to 3.
+7. **U-factor / SHGC (third graphic, same PR):** "Window Energy Ratings, Explained" (`src/assets/guides/window-energy-ratings-explained.png`) replaces the coded `UFactorGauge` on `/window-features` through `CanvaGuideEmbed`; the component is deleted. The gauge's own numbers (a 0.30 "WA rebate range" line and a "typical Clearview install 0.27" mark) are gone with it: the graphic names no figures and says to confirm ratings and rebate requirements.
+6. **`test-image-delivery.mjs`:** `SOURCE_LIMITED_GRAPHICS` lists the four pages that carry a 1536 px graphic; the photo-guide count expectation drops from 4 to 3.
 
 ## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
