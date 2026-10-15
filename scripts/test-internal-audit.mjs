@@ -5,6 +5,7 @@
 //   3. Field mode must send the body the evidence API reads, or the Verify gate can never be passed
 //   4. the quote builder must refuse a bad quantity out loud instead of blocking the save in silence
 //   5. the Mail pilot break-even box must only name a problem with something that was typed
+//   6. a saved quote must say what to do next and link to the Build Plan; the pen copy must be printable as a contract
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -208,6 +209,23 @@ const planRow = (env, id) => env.QUOTES_DB.prepare('SELECT * FROM quote_build_pl
   assert.ok(page.includes('breakEvenProblem(inputs)'), 'the page asks the shared rule what to say');
   assert.ok(!page.includes("Fill in the first four boxes to see the result. Profit has to be"), 'no fixed profit sentence is glued to every empty result');
   pass('mail pilot: the profit sentence appears only when the profit box is the problem');
+}
+
+// ── 6. Saved quote: next step, phone layout and the printed pen copy ───────
+{
+  const view = read('src/pages/internal/quotes/view.astro');
+  // Nothing on the saved quote used to link to the Build Plan, and a window quote cannot be signed without it.
+  assert.ok(view.includes('data-next-panel') && view.includes('loadNextStep(quote)'), 'a draft quote shows a "next step" panel');
+  assert.ok(view.includes('/internal/quotes/build-plan?quoteId=') && view.includes('/internal/quotes/build-plan-approval?quoteId='), 'it links to the Build Plan and to its approval');
+  assert.ok(view.includes("quote.work_type === 'siding'") && view.includes('Siding quotes skip the Build Plan'), 'a siding quote is told it has no plan');
+  assert.ok(!view.includes('Approve the Build Plan before sending a signing link.'), 'the duplicate blocked message is gone (the next-step panel says it)');
+  // Phone: "$1,00 / 0" split across two lines was measured at 390 px.
+  assert.ok(/contract-items td:not\(:first-child\)[\s\S]{0,160}white-space: nowrap/.test(view), 'quantity, unit and total never wrap');
+  // Print: the signature page must name the quote and total, keep the cancellation notice with the signature, and have a company line.
+  assert.ok(/data-sig-quote-id/.test(view) && /data-sig-total/.test(view) && /\.sig-print-id\s*\{\s*display: block !important/.test(view), 'the printed signature block carries quote id, customer and total');
+  assert.ok(/\.contract-signature\s*\{\s*break-inside: avoid/.test(view) && /contract-terms h3 ~ p/.test(view), 'the notice of right to cancel and the signature are not split across pages');
+  assert.ok(view.includes('For {site.legalName} (signature, printed name, date)'), 'the pen copy has a line for Clearview');
+  pass('saved quote: next step links to the Build Plan, money does not wrap on a phone, the pen copy prints as a signable contract');
 }
 
 console.log('\nAll internal audit regression tests passed.');
