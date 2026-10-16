@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - Fin and price edits
+
+Internal quoting says fin (the quote builder's Method is Insert or Fin; a fin install never changes a price); a vinyl Cascade slider starts at $850 (`quotePrice` in `src/data/pricing.ts`); changing any line's price does not make an approved Build Plan stale (`sameSource` ignores price, and older snapshots that carry a total are still read). Shipped by #248 and #250; #247 adds the quotes-list stale flag for older plans and `fin` in Field, job preparation and the plan visualizer. Detail: `.ai/CHANGELOG.md`.
+
 ## 2026-10-16 - /new-construction: diagram out, gable-windows photos in
 
 The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is removed everywhere as inaccurate: `/new-construction`, the `what-your-openings-need` guide, its component and image file, and the `flashing-order` diagram options. Do not reinstate it without Mark's say-so. Also on `/new-construction`: five photos of one gable-windows job are in as their own block (`newBuildGableWork` in `src/data/work.ts`) and in the gallery's New construction group. Details: `.ai/CHANGELOG.md` (2026-10-16).

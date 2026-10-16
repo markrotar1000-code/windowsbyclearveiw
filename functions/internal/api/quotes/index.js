@@ -1,7 +1,7 @@
 import { TERMS_VERSION, json, parseQuoteBody } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
 import { ensureQuoteLeadColumn, parseLeadId, leadExists } from '../../_lib/lead-links.mjs';
-import { sourceSnapshot } from '../../../_lib/build-plan-rules.mjs';
+import { sameSource, sourceSnapshot } from '../../../_lib/build-plan-rules.mjs';
 import { WORK_TYPES, ensureQuoteWorkTypeColumn, workTypeOf } from '../../_lib/work-types.mjs';
 
 function newQuoteId() {
@@ -69,10 +69,10 @@ export async function onRequestGet(context) {
     try { plan = quote.build_plan_json ? JSON.parse(quote.build_plan_json) : {}; } catch {}
     let source = plan.sourceItems || [];
     try { if (quote.build_plan_source_json) source = JSON.parse(quote.build_plan_source_json); } catch {}
-    const currentKey = JSON.stringify(sourceSnapshot(itemsByQuote.get(quote.id) || []));
+    const current = sourceSnapshot(itemsByQuote.get(quote.id) || []);
     const hasPlan = Boolean(quote.build_plan_json);
     const planState = quote.build_plan_state || plan.status || null;
-    const stale = hasPlan && JSON.stringify(source || []) !== currentKey;
+    const stale = hasPlan && !sameSource(source, current);
     return {
       id: quote.id, created_at: quote.created_at, status: quote.status, work_type: workTypeOf(quote), customer_name: quote.customer_name,
       customer_city: quote.customer_city, total_cents: quote.total_cents, signature_method: quote.signature_method,

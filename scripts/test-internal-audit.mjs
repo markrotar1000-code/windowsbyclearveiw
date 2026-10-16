@@ -7,6 +7,7 @@
 //   5. the Mail pilot break-even box must only name a problem with something that was typed
 //   6. a saved quote must say what to do next and link to the Build Plan; the pen copy must be printable as a contract
 //   8. the quote, plan and job handlers answer a literal JSON null body with a 400, not an unhandled 500
+//   9. a plan saved before prices left its snapshot is not flagged stale; every page that shows a stored install method calls full-frame fin
 //   7. a quote must refuse an amount that cannot be a real price (a pasted phone number, an overflow) instead of saving a NULL or imprecise total
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -259,6 +260,33 @@ const planRow = (env, id) => env.QUOTES_DB.prepare('SELECT * FROM quote_build_pl
     assert.equal(result.status, 400, `${name}: a null body is a client mistake, not a server error`);
   }
   pass('build plan, build plan state and jobs: a JSON null body answers 400 instead of an unhandled error');
+}
+
+// ── 9. Older plans and the word fin ────────────────────────────────────────
+{
+  const env = freshEnv();
+  const id = await draftQuote(env);
+  await savePlan(env, id, await generatedPlan(env, id));
+  await transition(env, id, 'submit-review');
+  await transition(env, id, 'approve');
+  // A snapshot as it was saved before prices left it (2026-10-16): each line also carried its total.
+  const legacy = JSON.parse((await planRow(env, id)).source_json).map((line) => ({ ...line, lineTotalCents: 90000 }));
+  env.QUOTES_DB.raw.prepare('UPDATE quote_build_plans SET source_json = ? WHERE quote_id = ?').run(JSON.stringify(legacy), id);
+  const list = await call(quotesIndex.onRequestGet, env, { path: '/internal/api/quotes' });
+  assert.equal(list.body.quotes.find((quote) => quote.id === id).build_plan_stale, false, 'the quotes list does not flag a plan saved in the old snapshot shape as stale');
+  assert.equal((await sign(env, id)).status, 200, 'and the gates agree with the list: the quote can be signed');
+
+  const { installMethodLabel } = await import(pathToFileURL(`${root}src/lib/install-method.ts`).href);
+  assert.equal(installMethodLabel('full-frame'), 'fin', 'a stored full-frame method is shown as fin');
+  assert.equal(installMethodLabel('fin'), 'fin');
+  assert.equal(installMethodLabel('insert'), 'insert');
+  assert.equal(installMethodLabel(undefined), '');
+  for (const page of ['src/pages/internal/jobs/field.astro', 'src/pages/internal/jobs/prepare.astro', 'src/pages/internal/quotes/build-plan-visualizer.astro']) {
+    const source = read(page);
+    assert.ok(source.includes('installMethodLabel(o.installationMethod)'), `${page} shows a stored method through installMethodLabel`);
+    assert.ok(!/\$\{o\.installationMethod\|\|/.test(source) && !/esc\(o\.installationMethod\|\|/.test(source), `${page} no longer prints the raw stored method`);
+  }
+  pass('older plans stay current in the quotes list; Field, job preparation and the plan visualizer say fin for a stored full-frame');
 }
 
 console.log('\nAll internal audit regression tests passed.');
