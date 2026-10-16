@@ -36,6 +36,14 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     <div class="qv-lead-actions" data-lead-actions></div>
   </section>
 
+  <section class="qv-prices no-print" data-price-panel hidden aria-label="Change a price">
+    <h2>Prices</h2>
+    <p class="qv-prices-hint">Change any line's price here until the quote is signed. The contract below updates when you save.</p>
+    <div class="qv-price-rows" data-price-rows></div>
+    <p class="qv-prices-status" data-price-status role="status" hidden></p>
+    <button class="btn btn-primary" type="button" data-price-save>Save prices</button>
+  </section>
+
   <p data-loading>Loading…</p>
   <p class="qv-error" data-error hidden role="alert"></p>
 
@@ -374,6 +382,123 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       }
     }
 
+    // On-screen price editing for an unsigned quote. The printed contract below stays plain text; this panel is
+    // no-print. Saving sends the whole quote back through the same PUT the edit form uses, so the server stays
+    // the one place that recomputes totals and revokes a customer link that was sent with the old numbers.
+    function renderPricePanel(quote: any, items: any[]) {
+      const panel = document.querySelector('[data-price-panel]');
+      const rowsHost = document.querySelector('[data-price-rows]');
+      const saveBtn = document.querySelector('[data-price-save]');
+      const statusEl = document.querySelector('[data-price-status]');
+      if (!(panel instanceof HTMLElement) || !(rowsHost instanceof HTMLElement) || !(saveBtn instanceof HTMLButtonElement) || !(statusEl instanceof HTMLElement)) return;
+      panel.hidden = quote.status !== 'draft';
+      rowsHost.replaceChildren();
+      if (quote.status !== 'draft') return;
+
+      const inputs: HTMLInputElement[] = [];
+      const totals: HTMLElement[] = [];
+      const cents = (input: HTMLInputElement) => Math.round((Number(input.value) || 0) * 100);
+      const refresh = () => {
+        inputs.forEach((input, index) => {
+          totals[index].textContent = money(items[index].quantity * cents(input));
+        });
+      };
+      items.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'qv-price-row';
+        const label = document.createElement('span');
+        label.className = 'qv-price-label';
+        label.textContent = item.label;
+        const qty = document.createElement('span');
+        qty.className = 'qv-price-qty';
+        qty.textContent = `Qty ${item.quantity}`;
+        const field = document.createElement('label');
+        field.className = 'qv-price-field';
+        const cap = document.createElement('span');
+        cap.textContent = 'Unit price ($)';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.inputMode = 'decimal';
+        input.min = '0';
+        input.step = '0.01';
+        input.value = String(item.unit_price_cents / 100);
+        input.setAttribute('aria-label', `Unit price in dollars: ${item.label}`);
+        input.addEventListener('input', () => {
+          statusEl.hidden = true;
+          refresh();
+        });
+        field.append(cap, input);
+        const total = document.createElement('span');
+        total.className = 'qv-price-total';
+        row.append(label, qty, field, total);
+        rowsHost.append(row);
+        inputs.push(input);
+        totals.push(total);
+      });
+      refresh();
+
+      // Replace the click handler on every render so it always saves the quote now on screen.
+      saveBtn.onclick = async () => {
+        statusEl.hidden = true;
+        statusEl.classList.remove('is-error');
+        const bad = inputs.find((input) => input.value.trim() === '' || !(Number(input.value) >= 0));
+        if (bad) {
+          statusEl.textContent = 'Enter a price of $0 or more on every line.';
+          statusEl.classList.add('is-error');
+          statusEl.hidden = false;
+          bad.focus();
+          return;
+        }
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving…';
+        try {
+          const response = await fetch(`/internal/api/quotes/${encodeURIComponent(quote.id)}`, {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              customer: {
+                name: quote.customer_name,
+                phone: quote.customer_phone,
+                email: quote.customer_email,
+                address: quote.customer_address,
+                city: quote.customer_city,
+                role: quote.customer_role,
+              },
+              notes: quote.notes,
+              workType: quote.work_type,
+              items: items.map((item, index) => ({
+                label: item.label,
+                description: item.description || '',
+                quantity: item.quantity,
+                unitPriceCents: cents(inputs[index]),
+              })),
+              discountCents: quote.discount_cents || 0,
+              discountReason: quote.discount_reason || '',
+              signatureMethod: quote.signature_method,
+            }),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'Could not save the prices.');
+          await load();
+          const after = document.querySelector('[data-price-status]');
+          if (after instanceof HTMLElement) {
+            after.classList.remove('is-error');
+            after.textContent = result.signLinkRevoked
+              ? 'Saved. The customer signing link you sent was cancelled because the price changed: create a new one below.'
+              : 'Saved.';
+            after.hidden = false;
+          }
+        } catch (error) {
+          statusEl.textContent = error instanceof Error ? error.message : 'Could not save the prices.';
+          statusEl.classList.add('is-error');
+          statusEl.hidden = false;
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save prices';
+        }
+      };
+    }
+
     async function load() {
       const response = await fetch(`/internal/api/quotes/${encodeURIComponent(id!)}`);
       if (!response.ok) {
@@ -388,6 +513,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       if (loading instanceof HTMLElement) loading.hidden = true;
       if (toolbar instanceof HTMLElement) toolbar.hidden = false;
       root.hidden = false;
+
+      renderPricePanel(quote, items);
 
       const editLink = document.querySelector('[data-edit-link]');
       if (editLink instanceof HTMLAnchorElement) {
@@ -866,6 +993,104 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
   .contract-dl dd {
     margin: 0;
+  }
+
+  .qv-prices {
+    margin: 0 0 var(--space-m);
+    padding: var(--space-m);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    display: grid;
+    gap: var(--space-s);
+  }
+
+  .qv-prices h2 {
+    margin: 0;
+    font-size: var(--step-1);
+  }
+
+  .qv-prices-hint {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+  }
+
+  .qv-price-rows {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  :global(.qv-price-row) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    gap: var(--space-2xs) var(--space-s);
+    align-items: end;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--line);
+  }
+
+  :global(.qv-price-label) {
+    overflow-wrap: anywhere;
+  }
+
+  :global(.qv-price-qty),
+  :global(.qv-price-total) {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    padding-bottom: 0.55rem;
+  }
+
+  :global(.qv-price-field) {
+    display: grid;
+    gap: 0.2rem;
+    font-size: var(--step--2);
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  :global(.qv-price-field input) {
+    width: 7rem;
+    box-sizing: border-box;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 0.55rem;
+    font: inherit;
+    font-size: var(--step-0);
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .qv-prices-status {
+    margin: 0;
+    border-left: 2px solid var(--accent-ink);
+    padding-left: var(--space-2xs);
+  }
+
+  .qv-prices-status:global(.is-error) {
+    color: var(--danger);
+    border-left-color: var(--danger);
+  }
+
+  @media (max-width: 560px) {
+    :global(.qv-price-row) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    :global(.qv-price-label) {
+      grid-column: 1 / -1;
+    }
+
+    :global(.qv-price-field input) {
+      width: 100%;
+    }
+
+    :global(.qv-price-total) {
+      grid-column: 1 / -1;
+      text-align: right;
+      padding-bottom: 0;
+    }
   }
 
   .contract-items {

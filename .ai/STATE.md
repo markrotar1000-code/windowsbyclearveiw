@@ -4,6 +4,10 @@
 
 The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is removed everywhere as inaccurate: `/new-construction`, the `what-your-openings-need` guide, its component and image file, and the `flashing-order` diagram options. Do not reinstate it without Mark's say-so. Also on `/new-construction`: five photos of one gable-windows job are in as their own block (`newBuildGableWork` in `src/data/work.ts`) and in the gallery's New construction group. Details: `.ai/CHANGELOG.md` (2026-10-16).
 
+## 2026-10-16 - Prices editable on the quote screen
+
+`/internal/quotes/view` has a "Prices" panel (draft quotes only) to change any line's unit price in place. Details: `.ai/CHANGELOG.md` (2026-10-16).
+
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits
 
 Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) starts at $850 via `quotePrice` in `src/data/pricing.ts`; fin is only the method label and never changes a price. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a `quotePrice`; other openings start at their range midpoint until he gives his number.

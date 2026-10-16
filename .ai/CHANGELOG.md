@@ -12,6 +12,10 @@ Keith: the flashing diagram is inaccurate, remove it everywhere. Deleted the Fla
 
 Keith: remove the diagram on the new-construction page. Dropped the `FlashingOrder` diagram (and its "Flashing sequence" heading) from `src/pages/new-construction.astro`; the "Prep and flashing" section keeps its two note cards. The component and `/guides/what-your-openings-need` are unchanged. `test-image-delivery` no longer lists `/new-construction` among pages carrying the flashing graphic. `npm run test:all` 60/60.
 
+## 2026-10-16 - Prices editable on the quote screen itself
+
+Mark still could not change a line price from the quote screen: `/internal/quotes/view` is the read-only contract, and prices lived only in the separate Edit quote form. Added a no-print "Prices" panel to the view page for any draft (unsigned) quote: one unit-price field per line with a live line total, and "Save prices". It sends the whole quote back through the same PUT as the edit form (customer, notes, discount and signature method kept), so the server still recomputes totals and revokes a customer signing link sent with the old numbers (the panel says so). Hidden once the quote is finalized. The printed contract is unchanged. Test: `test:quote-price-edit` replays the panel's request against the real handlers. Checked in a browser at 1280 and 390 px with the API simulated.
+
 ## 2026-10-16 - Correction: fin is a name, not a price
 
 Keith: "Fin is not a price. It's replacing the term for full-frame replacement internally." PR #248 had treated it as a price (`finPrice`, a frame allowance fallback, and a request for per-opening fin numbers). Reverted that reading:
