@@ -1,5 +1,7 @@
 // Runs the full regression suite locally, in the order .github/workflows/build.yml defines it.
-// GitHub Actions cannot run right now (billing), so this is the verification gate.
+// GitHub Actions works again (since 2026-10-03); this is the local first gate, and it cannot drift from CI
+// because it reads the step list from that file. A commit message containing `[skip actions]` skips CI, so
+// run this before pushing one.
 // Usage: npm run test:all            (everything, including the Astro build)
 //        npm run test:all -- --fast  (skip the Astro build and everything after it)
 import { spawnSync } from 'node:child_process';

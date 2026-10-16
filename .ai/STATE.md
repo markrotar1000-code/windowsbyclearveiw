@@ -8,6 +8,10 @@ The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is re
 
 Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) starts at $850 via `quotePrice` in `src/data/pricing.ts`; fin is only the method label and never changes a price. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a `quotePrice`; other openings start at their range midpoint until he gives his number.
 
+## 2026-10-16 - Repo-wide bug sweep
+
+Two real bugs fixed (a quote accepted nonsense amounts and saved a NULL or imprecise total; a JSON `null` body crashed the build-plan, build-plan-state and jobs handlers), both with failing-first tests in `test:internal-audit`. Everything else swept was clean (Command Center audit 232 views, axe 152 views, links, redirects, prune step, client navigation, CI coverage). Detail and the list of what was checked: `.ai/CHANGELOG.md`.
+
 ## 2026-10-16 - Home hero and footer line reworded
 
 Hero lede (`VideoHero.astro`) and footer blurb (`Footer.astro`) now read "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." (footer adds "in Vancouver, WA and surrounding Clark County"). Title, H1 and description untouched. Detail: `.ai/CHANGELOG.md`.
