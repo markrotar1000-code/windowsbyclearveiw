@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-16 - Home hero and footer line reworded (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith: the hero line "Window installation to replace old windows and sliding glass doors, or to set new construction — quoted in person, installed on a scheduled date." sounds weird. Now (his wording): "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." The footer blurb carries the same sentence plus the service area. Title, H1 and meta description are unchanged, so "installation" is still in the home title (`test:seo`). The old line's "quoted in person" and "scheduled date" are no longer on the home page. "Done right" is the owner's wording, not a measurable claim; no guarantee is implied. `test:all` passes (59 steps).
+
 ## 2026-10-16 - Audit: siding handoff, diagrams, cold builds and login binding
 
 - Shared header/footer/mobile estimate buttons on `/siding` carry the siding service; persisted header refreshes the target after client navigation. Layout passes the explicit route into shared components.
