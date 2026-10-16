@@ -9,6 +9,7 @@ import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES } from '../lib/image-sizes';
 import { pricing, publicBlurb } from '../data/pricing';
 import { findWork } from '../data/work';
+import { galleryAdditions } from '../data/gallery-additions';
 import CanvaGuideEmbed from '../components/CanvaGuideEmbed.astro';
 import energyRatingsGraphic from '../assets/guides/window-energy-ratings-explained.png';
 
@@ -19,18 +20,24 @@ const brands = pricing.brands;
 const styles = pricing.openings.filter((opening) => !opening.isDoor);
 const doors = pricing.openings.filter((opening) => opening.isDoor);
 
+// Newer, sharper job photos from the 2026-10-07 and 2026-10-11 batches (src/data/gallery-additions.ts).
+// Looked up by caption so the build fails if one of them is renamed or removed.
+const pickGalleryPhoto = (caption: string) => {
+  const photo = galleryAdditions.find((entry) => entry.caption === caption);
+  if (!photo) throw new Error(`window-features: gallery photo not found: ${caption}`);
+  return photo;
+};
+
 const stylePhotos = [
-  { id: 'blue-slider', label: 'Slider' },
-  { id: 'new-unit-interior', label: 'Double-hung' },
-  { id: 'blue-hung', label: 'Single-hung' },
-  { id: 'green-craftsman-upper', label: 'Picture' },
-]
-  .map(({ id, label }) => ({ label, photo: findWork(id) }))
-  .filter((entry): entry is { label: string; photo: NonNullable<ReturnType<typeof findWork>> } => Boolean(entry.photo));
+  { label: 'Slider', photo: pickGalleryPhoto('Sliding window on a dark house') },
+  { label: 'Double-hung', photo: pickGalleryPhoto('Tall windows with transoms') },
+  { label: 'Single-hung', photo: pickGalleryPhoto('Garden window beside the chimney') },
+  { label: 'Picture', photo: pickGalleryPhoto('Black-framed windows on a tall wall') },
+];
 ---
 <BaseLayout
   title="Window features"
-  description="What's in a Clearview window: vinyl or fiberglass, Cascade or Milgard, the glass package, and every style we install in Vancouver, WA and Clark County."
+  description="What's in a Clearview window: vinyl or fiberglass, Cascade or Milgard, the glass package, and every style we install for Washington homes."
   path="/window-features"
   crumbs={[{ name: 'Window features', href: '/window-features' }]}
   ogImageSrc={ogPhoto.image}
@@ -63,10 +70,6 @@ const stylePhotos = [
         all show up the same way: a draft at the lock, a cold spot by the window, and higher
         heating bills.
       </p>
-      <p>
-        Not every window needs replacing. The options below are worth understanding before you
-        buy, whether from us or anyone else.
-      </p>
     </div>
   </section>
 
@@ -97,7 +100,7 @@ width={1536}
       </div>
       <p class="fine-print">
         We install both. Vinyl suits most standard openings; fiberglass suits wide sliders and
-        picture windows that might otherwise flex. We recommend one on site, not from a photo.
+        picture windows that might otherwise flex.
       </p>
     </div>
   </section>
@@ -151,10 +154,6 @@ width={1536}
     <div class="wrap is-wide" data-reveal>
       <p class="rule-label">Shapes and operation</p>
       <h2>Window styles.</h2>
-      <p class="lede">
-        The style does not change the glass. It changes how the window opens and how much frame
-        you see when it is shut.
-      </p>
 
       <div class="style-list">
         {styles.map((style) => (
@@ -193,8 +192,7 @@ width={1536}
       <h2>Hardware and color options.</h2>
       <p>
         Locking hardware, interior and exterior color, and grid patterns depend on the line we
-        order, and Cascade's options are not identical to Milgard's. We bring real samples to the
-        measure so you choose from what is actually available.
+        order, and Cascade's options are not identical to Milgard's.
       </p>
     </div>
   </section>
@@ -212,8 +210,8 @@ width={1536}
   </section>
 
   <CtaBar
-    heading="See it in your own opening."
-    body="The right material, brand, and style depend on the house. We measure, then tell you exactly what we're ordering and why."
+    heading="Get your zero pressure quote."
+    body="The right material, brand, and style depend on the house. Call for your quote today. Nothing is ordered until you are ready."
   />
 </BaseLayout>
 

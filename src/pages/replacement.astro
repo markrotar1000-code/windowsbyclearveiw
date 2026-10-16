@@ -26,7 +26,7 @@ const schema = {
   serviceType: 'Window replacement',
   name: 'Window replacement',
   description:
-    'Window replacement for existing Vancouver, WA and Clark County homes, measured on site and quoted in writing.',
+    'Window replacement for Washington homes. Milgard and Cascade windows and sliding doors, with a zero pressure estimate.',
   provider: { '@id': `${site.url}/#business` },
   areaServed: site.nearby.map((place) => ({
     '@type': 'City',
@@ -37,8 +37,8 @@ const schema = {
 
 const offers = [
   {
-    title: 'Measured in person',
-    text: 'A window cannot be sized from a photo. We measure every opening on site and check the condition of what is already there.',
+    title: 'A zero pressure estimate',
+    text: 'We measure every opening on site and put the estimate in writing. Take your time deciding. Nothing is ordered until you are ready.',
   },
   {
     title: 'A written recommendation',
@@ -55,7 +55,7 @@ const offers = [
 ];
 
 const spec = [
-  ['Materials', 'Vinyl and fiberglass, in the sizes Clark County houses actually have'],
+  ['Materials', 'Vinyl and fiberglass, in the sizes Washington houses actually have'],
   ['Glass', 'Double- and triple-pane insulated units'],
   ['Coatings', 'Low-E matched to a Pacific Northwest heating season'],
   ['Styles', 'Picture, slider, single- and double-hung, casement, awning'],
@@ -64,7 +64,7 @@ const spec = [
 ---
 <BaseLayout
   title="Window replacement & installation"
-  description="Window replacement and installation for Vancouver and Clark County homes, from measure to finish, with a written estimate before anything is ordered."
+  description="Window replacement for Washington homes. Milgard and Cascade windows and sliding doors, with a zero pressure estimate. Call for your quote today."
   path="/replacement"
   crumbs={[{ name: 'Window replacement', href: '/replacement' }]}
   ogImageSrc={ogPhoto.image}
@@ -74,10 +74,9 @@ const spec = [
   <section class="page-hero page-hero-photo" style={`background-image: linear-gradient(180deg, color-mix(in srgb, var(--black) 58%, transparent), color-mix(in srgb, var(--black) 88%, transparent)), url(${heroBg.src})`}>
     <div class="wrap">
       <p class="kicker">Services</p>
-      <h1>Window replacement and installation in Vancouver, WA</h1>
+      <h1>Window replacement in Clark county and beyond</h1>
       <p class="lede">
-        Window replacement and installation for Vancouver and Clark County homes. We measure every opening in
-        person and give you a written estimate before anything is ordered.
+        Window replacement for Washington homes. Call for your quote today!
       </p>
       <p class="hero-note">
         Framing a new build or an addition instead? See <a href="/new-construction">new construction window installs</a>.
@@ -92,7 +91,7 @@ const spec = [
   <section class="section">
     <div class="wrap" data-reveal>
       <p class="rule-label">What we can do for you</p>
-      <h2>Tell us what you need. We measure every opening.</h2>
+      <h2>Tell us what you need. We handle the rest.</h2>
       <p class="lede">
         We measure each opening, look at what is already there, and put our recommendation for it
         in writing before we give you a price.
@@ -141,7 +140,7 @@ width={1536}
     <div class="wrap split" data-reveal>
       <div>
         <p class="rule-label">What we install</p>
-        <h2>Vinyl and fiberglass windows, measured properly.</h2>
+        <h2>Milgard and Cascade windows and sliding doors.</h2>
         <p>
           A good replacement comes down to how the opening is measured, prepared, and flashed.
         </p>
@@ -190,8 +189,8 @@ width={1536}
   </section>
 
   <CtaBar
-    heading="Get a written estimate."
-    body="We measure every opening in person and write up the approach and the price for each one before anything is ordered."
+    heading="Get your zero pressure estimate."
+    body="Call for your quote today. Nothing is ordered until you are ready."
   />
 </BaseLayout>
 

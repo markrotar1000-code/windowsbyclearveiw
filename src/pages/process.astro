@@ -84,7 +84,7 @@ const schema = {
       <p class="rule-label">Install day</p>
       <h2>What install day looks like.</h2>
       <div class="work-grid">
-        {processWork.map((photo) => (
+        {processWork.filter((photo) => photo.id !== 'cabin-gable-install-crew').map((photo) => (
           <WorkCard image={photo.image} alt={photo.alt} caption={photo.caption} kind={workKindLabel(photo.kind)} sizes={SLOT_SIZES.autoFill} />
         ))}
       </div>
