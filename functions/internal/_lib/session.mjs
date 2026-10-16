@@ -11,6 +11,11 @@
 
 const encoder = new TextEncoder();
 
+/** Production originally configured the binding without its final T. Keep its key material. */
+export function sessionSecret(env) {
+  return env?.INTERNAL_SESSION_SECRET || env?.INTERNAL_SESSION_SECRE || '';
+}
+
 async function hmacHex(secret, message) {
   const key = await crypto.subtle.importKey(
     'raw',

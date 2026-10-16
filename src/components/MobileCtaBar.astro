@@ -1,4 +1,5 @@
 ---
+import { estimateLink } from '../lib/estimate-link';
 import { site, telHref } from '../data/site';
 ---
 <nav class="mobile-cta-bar" aria-label="Quick contact">
@@ -8,7 +9,7 @@ import { site, telHref } from '../data/site';
     </svg>
     <span>Call us</span>
   </a>
-  <a class="mobile-cta-item mobile-cta-primary" href="/estimate">
+  <a class="mobile-cta-item mobile-cta-primary" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>
     <svg viewBox="0 0 22 22" aria-hidden="true">
       <path d="M6 3h7l4 4v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
       <path d="M13 3v4h4M8 12h6M8 15.5h4" />

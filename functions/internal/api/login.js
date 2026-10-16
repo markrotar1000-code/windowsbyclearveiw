@@ -1,4 +1,4 @@
-import { createSessionToken, sessionCookie } from '../_lib/session.mjs';
+import { createSessionToken, sessionCookie, sessionSecret } from '../_lib/session.mjs';
 import { takeRateLimit } from '../../_lib/abuse-guard.mjs';
 
 // One shared password guards the Command Center. Cloudflare Access fronts the custom domain, but the
@@ -32,7 +32,8 @@ async function timingSafeEqual(a, b) {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  if (!env.INTERNAL_PASSWORD || !env.INTERNAL_SESSION_SECRET) {
+  const secret = sessionSecret(env);
+  if (!env.INTERNAL_PASSWORD || !secret) {
     return redirectToLogin(request, 'not-configured');
   }
 
@@ -53,7 +54,7 @@ export async function onRequestPost(context) {
     return redirectToLogin(request, 'wrong-password', next);
   }
 
-  const token = await createSessionToken(env.INTERNAL_SESSION_SECRET);
+  const token = await createSessionToken(secret);
   const target = next.startsWith('/internal') ? next : '/internal/quotes';
 
   return new Response(null, {

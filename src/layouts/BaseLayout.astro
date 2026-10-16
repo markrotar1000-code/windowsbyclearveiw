@@ -241,12 +241,12 @@ const breadcrumbSchema =
     >
     <!-- End Google Tag Manager (noscript) -->
     <a class="skip-link" href="#main">Skip to content</a>
-    <Header />
+    <Header pathname={path} />
     <main id="main" tabindex="-1" data-route={route}>
       <slot />
     </main>
-    <Footer />
-    <MobileCtaBar />
+    <Footer pathname={path} />
+    <MobileCtaBar pathname={path} />
     <script>
       import { trackIntent } from "../scripts/intent-tracking";
       // Gate the hidden state on JS actually running: if this script never

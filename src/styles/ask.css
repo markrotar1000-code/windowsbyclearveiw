@@ -57,3 +57,7 @@ html body:not(.internal){padding-bottom:0}}
 .ask-callback-success[hidden],.ask-callback-form[hidden]{display:none}
 /* iOS Safari zooms the page in when a text field under 16px takes focus and does not zoom back out by itself. Touch screens (any width, iPads included) get 16px. */
 @media(pointer:coarse){.ask-composer textarea{font-size:1rem}}
+
+/* Let the welcome grid shrink on a 320px phone; only starter chips scroll sideways. */
+.ask-transcript{min-width:0;grid-template-columns:minmax(0,1fr)}
+.ask-welcome{min-width:0;max-width:100%}

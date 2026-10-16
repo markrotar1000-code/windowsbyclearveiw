@@ -34,7 +34,7 @@ import { mailHref, site, telHref } from '../data/site';
         <p class="rule-label">Prefer to talk</p>
         <p class="phone-display"><a href={telHref()}>{site.phoneDisplay}</a></p>
         <p>
-          If it rings out, leave a name, city, and a window count, or email <a href={mailHref()}>{site.email}</a>.
+          If it rings out, leave a name, city, and a window count, or email <Fragment set:html={'<!--email_off-->'} /><a href={mailHref()}>{site.email}</a><Fragment set:html={'<!--/email_off-->'} />.
         </p>
 
         <p class="rule-label">What to expect</p>

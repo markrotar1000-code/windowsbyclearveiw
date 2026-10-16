@@ -1,11 +1,12 @@
 ---
+import { estimateLink } from '../lib/estimate-link';
 import { site, telHref } from '../data/site';
 import Brand from './Brand.astro';
 import FacebookIcon from './icons/FacebookIcon.astro';
 import GoogleIcon from './icons/GoogleIcon.astro';
 import NextdoorIcon from './icons/NextdoorIcon.astro';
 
-const here = Astro.url.pathname.replace(/\/$/, '') || '/';
+const here = (Astro.props.pathname ?? Astro.url.pathname).replace(/\/$/, '') || '/';
 const links = [
   ['/replacement', 'Replacement'],
   ['/new-construction', 'New construction'],
@@ -29,7 +30,7 @@ const links = [
       {links.map(([href, label]) => (
         <a href={href} aria-current={here === href ? 'page' : undefined}>{label}</a>
       ))}
-      <a class="nav-estimate" href="/estimate">Request an estimate</a>
+      <a class="nav-estimate" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>Request an estimate</a>
     </nav>
 
     <div class="header-actions">
@@ -56,7 +57,7 @@ const links = [
         <span class="header-cta-short" aria-hidden="true">Call</span>
         <span class="visually-hidden">Call {site.phoneDisplay}</span>
       </a>
-      <a class="btn btn-primary header-estimate" href="/estimate">Get an estimate</a>
+      <a class="btn btn-primary header-estimate" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>Get an estimate</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span data-nav-toggle-label>Menu</span>
       </button>
@@ -66,6 +67,7 @@ const links = [
 </header>
 
 <script>
+  import { estimateLink } from '../lib/estimate-link';
   function bindNav() {
     const toggle = document.querySelector('.nav-toggle');
     const nav = document.getElementById('site-nav');
@@ -106,6 +108,9 @@ const links = [
   function markCurrentPage() {
     const nav = document.getElementById('site-nav');
     if (!nav) return;
+    document.querySelectorAll<HTMLAnchorElement>('.site-header .nav-estimate, .site-header .header-estimate').forEach((link) => {
+      link.href = estimateLink(window.location.pathname);
+    });
     const here = window.location.pathname.replace(/\/$/, '') || '/';
     nav.querySelectorAll('a').forEach((link) => {
       const target = link.getAttribute('href')?.replace(/\/$/, '') || '/';

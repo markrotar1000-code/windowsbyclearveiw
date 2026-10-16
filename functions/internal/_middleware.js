@@ -1,4 +1,4 @@
-import { readCookie, verifySessionToken } from './_lib/session.mjs';
+import { readCookie, verifySessionToken, sessionSecret } from './_lib/session.mjs';
 import { accessConfig, verifyAccessJwt } from './_lib/access.mjs';
 
 // Paths under /internal/ that must stay reachable without a session, or
@@ -37,7 +37,7 @@ export async function onRequest(context) {
   }
 
   const token = readCookie(request, 'cv_session');
-  const valid = !access?.required && (await verifySessionToken(token, env.INTERNAL_SESSION_SECRET));
+  const valid = !access?.required && (await verifySessionToken(token, sessionSecret(env)));
 
   if (!valid) {
     const redirect = new URL('/internal/login', url);

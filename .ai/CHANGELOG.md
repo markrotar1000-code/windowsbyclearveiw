@@ -1,5 +1,16 @@
 # ICM Changelog
 
+## 2026-10-16 - Audit: siding handoff, diagrams, cold builds and login binding
+
+- Shared header/footer/mobile estimate buttons on `/siding` carry the siding service; persisted header refreshes the target after client navigation. Layout passes the explicit route into shared components.
+- URL cleanup keeps the allowlisted service while still removing project details and invalid campaign values.
+- Guide graphics link to their largest optimized variant for native browser zoom. Existing art is unchanged.
+- Build cleanup removes only unreferenced JPEG/PNG originals with generated WebP/AVIF siblings, scanning published text assets and preserving linked downloads. It excludes build-only `.prerender` metadata from reference detection.
+- Existing production session-binding typo is supported consistently in login and middleware; the canonical binding takes precedence and required Access remains enforced. No credentials changed.
+- Added email-obfuscation opt-outs around public contact links, a shrinkable mobile chat welcome grid, and a clearer window-service category label.
+- Final validation: all 59 local steps passed; a separate cold image build and image-delivery check also passed after removing 64.5 MiB of unreferenced originals.
+- Regression coverage: route cleanup, every built siding estimate link, largest diagram links, legacy signing/verification and Access enforcement. Audit and open verification gaps: `docs/AUDIT-2026-10-16.md`.
+
 ## 2026-10-15 - One-window job, signed in pen: flow audit (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith: run the whole flow and make sure there are no missed bugs and it is as easy as possible for Mark (one window, printed and signed in pen).
