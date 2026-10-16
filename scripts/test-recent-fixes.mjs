@@ -103,3 +103,13 @@ assert(JSON.stringify(pacificDayRange(new Date('2026-03-08T18:00:00Z'))) === JSO
 assert(JSON.stringify(pacificDayRange(new Date('2026-11-01T18:00:00Z'))) === JSON.stringify({ start: '2026-11-01T07:00:00.000Z', end: '2026-11-02T08:00:00.000Z' }), 'Pacific due-today range handles fall daylight-saving transition');
 
 console.log('Recent-fix regression checks passed.');
+
+// Siding routing survives every shared CTA and refreshing the cleaned estimate URL.
+const { estimateLink, retainedEstimateParams } = await import('../src/lib/estimate-link.ts');
+assert(estimateLink('/siding') === estimateLink('/siding/') && estimateLink('/siding').includes('service=siding'), 'siding estimate links retain the service');
+assert(estimateLink('/replacement') === '/estimate', 'window pages keep the ordinary estimate route');
+const retained = retainedEstimateParams(new URLSearchParams('service=siding&scope=House+siding&city=private&role=builder&utm_source=facebook&utm_medium=paid_social&utm_campaign=fall-2026'));
+assert(retained.get('service') === 'siding' && !retained.has('scope') && !retained.has('city') && !retained.has('role'), 'cleaned estimate URL keeps siding classification without free-text details');
+assert(retained.get('utm_source') === 'facebook' && retained.get('utm_medium') === 'paid_social', 'valid campaign attribution survives cleaning');
+assert(retainedEstimateParams(new URLSearchParams('service=unknown&utm_source=person@example.com')).size === 0, 'unrecognised service and private campaign values are removed');
+assert(estimateForm.includes('const campaign = retainedEstimateParams(params);'), 'estimate form uses the tested cleanup helper');

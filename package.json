@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/prune-unused-image-originals.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "build:guides-index": "node scripts/build-guides-index.mjs",

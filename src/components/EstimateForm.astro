@@ -21,6 +21,7 @@ import '../styles/estimate-form.css';
 import { site } from "../data/site";
 import { readIntent, trackIntent } from "../scripts/intent-tracking";
 import { visitorMessage } from "../lib/visitor-errors";
+import { retainedEstimateParams } from "../lib/estimate-link";
 import { keepPhoneTogether } from "../lib/phone";
 // These messages are written by script, so the build-time check cannot see them: keep the number on one line here.
 const phoneDisplay = keepPhoneTogether(site.phoneDisplay);
@@ -73,11 +74,7 @@ function bindEstimate() {
     if (role instanceof HTMLInputElement) role.checked = true;
   }
   if (window.history.replaceState && ['home_type', 'openings', 'opening_type', 'concern', 'stage', 'scope', 'role', 'service'].some((key) => params.has(key))) {
-    const campaign = new URLSearchParams();
-    for (const key of ['utm_source', 'utm_medium', 'utm_campaign']) {
-      const value = params.get(key);
-      if (value && /^[a-zA-Z][a-zA-Z0-9_.-]{0,99}$/.test(value)) campaign.set(key, value);
-    }
+    const campaign = retainedEstimateParams(params);
     const search = campaign.size ? `?${campaign.toString()}` : '';
     window.history.replaceState({}, '', `${window.location.pathname}${search}${window.location.hash}`);
   }

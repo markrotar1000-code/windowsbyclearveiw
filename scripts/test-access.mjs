@@ -136,3 +136,24 @@ await ok(() => {
   assert.ok(pages.length > 0, 'the customer signing page lives at /sign, outside /internal, so Access never gates customers');
 });
 console.log(`access: ok (${groups} groups)`);
+
+// Production's legacy binding name must sign and verify with the same existing secret.
+{
+  const { onRequestPost: login } = await import('../functions/internal/api/login.js');
+  const { sessionSecret } = await import('../functions/internal/_lib/session.mjs');
+  const legacy = { INTERNAL_PASSWORD: 'test-password', INTERNAL_SESSION_SECRE: 'legacy-test-secret' };
+  assert.equal(sessionSecret({ ...legacy, INTERNAL_SESSION_SECRET: 'canonical' }), 'canonical', 'canonical binding takes precedence');
+  const form = new FormData();
+  form.set('password', legacy.INTERNAL_PASSWORD);
+  form.set('next', '/internal/today');
+  const signedIn = await login({ env: legacy, request: new Request('https://example.com/internal/api/login', { method: 'POST', body: form }) });
+  assert.equal(new URL(signedIn.headers.get('location')).pathname, '/internal/today', 'legacy binding can sign in');
+  const cookie = signedIn.headers.get('set-cookie')?.split(';')[0];
+  assert.ok(cookie?.startsWith('cv_session='));
+  const visit = await middleware({ env: legacy, request: new Request('https://example.com/internal/today', { headers: { cookie } }), next: () => new Response('signed in') });
+  assert.equal(visit.status, 200, 'middleware accepts the session signed with the legacy binding');
+  const required = { ...legacy, ACCESS_TEAM_DOMAIN: 'clearview', ACCESS_AUD: 'a'.repeat(64), ACCESS_REQUIRED: '1' };
+  const gated = await middleware({ env: required, request: new Request('https://example.com/internal/today', { headers: { cookie } }), next: () => new Response('must not enter') });
+  assert.equal(gated.status, 302, 'legacy binding cannot bypass required Access');
+  console.log('PASS: legacy session binding signs/verifies consistently; canonical name wins and required Access stays enforced.');
+}

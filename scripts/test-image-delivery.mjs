@@ -391,4 +391,17 @@ ok('the gallery shows no photo count (a number there reads as the jobs Clearview
   assert.ok(!/class="[^"]*\b(?:gallery-count|group-count)\b/.test(html), 'a count element is back on the gallery page');
 });
 
+ok('every siding estimate CTA preserves its service and diagrams open their largest candidate', () => {
+  for (const link of pages.get('siding').matchAll(/<a\b[^>]*href="([^"]*)"[^>]*>/g)) {
+    if (link[1].startsWith('/estimate')) assert.ok(link[1].includes('service=siding'), `siding CTA drops service: ${link[0]}`);
+  }
+  for (const [page, html] of pages) {
+    const diagrams = [...html.matchAll(/<figure class="guide-graphic"[\s\S]*?<\/figure>/g)];
+    for (const [figure] of diagrams) {
+      const candidates = [...(attr(images(figure)[0], 'srcset') ?? '').matchAll(/(\S+)\s+(\d+)w/g)].sort((a,b) => Number(b[2])-Number(a[2]));
+      assert.ok(candidates.length && figure.includes(`href="${candidates[0][1]}"`), `${page}: full-size diagram must open the largest responsive file`);
+    }
+  }
+});
+
 console.log(`PASS  image delivery (${groups} groups, ${pages.size} pages)`);

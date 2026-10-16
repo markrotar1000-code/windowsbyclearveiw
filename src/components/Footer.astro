@@ -1,4 +1,5 @@
 ---
+import { estimateLink } from '../lib/estimate-link';
 import { mailHref, site, telHref } from '../data/site';
 import Brand from './Brand.astro';
 import FacebookIcon from './icons/FacebookIcon.astro';
@@ -61,7 +62,7 @@ const columns = [
       ['/guides', 'Guides'],
       ['/ask', 'Ask AI a question'],
       ['/reviews', 'Reviews'],
-      ['/estimate', 'Request an estimate'],
+      [estimateLink(Astro.props.pathname ?? Astro.url.pathname), 'Request an estimate'],
     ],
   },
 ];
@@ -94,7 +95,7 @@ const columns = [
         </li>
         <li>
           <span class="footer-contact-label">Email</span>
-          <a href={mailHref()}>{site.email}</a>
+          <Fragment set:html={'<!--email_off-->'} /><a href={mailHref()}>{site.email}</a><Fragment set:html={'<!--/email_off-->'} />
         </li>
       </ul>
     </div>

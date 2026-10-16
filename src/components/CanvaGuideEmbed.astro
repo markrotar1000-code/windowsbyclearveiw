@@ -47,6 +47,7 @@ const mobile = mobileSrc
       class="guide-image"
     />
   </picture>
+  <a class="guide-full-size" href={desktop.srcSet.values.at(-1)?.url ?? desktop.src}>Open full-size diagram</a>
   {title && <figcaption class="sr-only">{title}</figcaption>}
   {description && <p class="guide-caption">{description}</p>}
 </figure>
@@ -59,6 +60,7 @@ const mobile = mobileSrc
     background:var(--paper-raised);overflow:hidden;box-shadow:var(--shadow-soft)
   }
   .guide-image{display:block;width:100%;height:auto;max-width:100%;object-fit:contain}
+  .guide-full-size{display:flex;align-items:center;min-height:44px;width:fit-content;max-width:100%;margin-inline:auto;font-size:var(--step--1)}
   .guide-caption{
     width:min(100%,var(--desktop-max-width));margin:.65rem auto 0;
     color:var(--ink-soft);font-size:var(--step--2);line-height:1.45
