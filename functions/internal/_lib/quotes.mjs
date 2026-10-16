@@ -14,6 +14,15 @@ export function json(data, status = 200) {
   });
 }
 
+// Sanity ceilings on a quote, a typo guard and not a pricing rule: any one line and the whole quote may not exceed
+// $5,000,000 (the same ceiling a general job's agreed amount has, `GENERAL_LIMITS.maxAgreedCents`), and a quantity
+// may not exceed 1,000,000. Far above any real job, far below the point where cents stop being exact integers
+// (2^53). Without them a pasted phone number or an overflow was saved as a quote with a NULL or imprecise total,
+// which then flows into the contract, invoice and payment limits.
+export const MAX_QUOTE_CENTS = 500_000_000;
+const MAX_QUOTE_TEXT = '$5,000,000';
+const MAX_QUANTITY = 1_000_000;
+
 export const clean = (v, max = 500) => String(v ?? '').trim().slice(0, max);
 
 /**
@@ -50,6 +59,10 @@ export function parseQuoteBody(body) {
     if (!Number.isFinite(unitPriceCents) || unitPriceCents < 0) {
       return { error: `Line ${index + 1}: unit price is invalid.` };
     }
+    const lineTotalCents = Math.round(quantity * unitPriceCents);
+    if (quantity > MAX_QUANTITY || unitPriceCents > MAX_QUOTE_CENTS || !(lineTotalCents <= MAX_QUOTE_CENTS)) {
+      return { error: `Line ${index + 1}: the amount looks too large (more than ${MAX_QUOTE_TEXT}), which looks like a typo. Check the quantity and price.` };
+    }
     cleanItems.push({
       label,
       description: clean(raw?.description, 500),
@@ -57,11 +70,14 @@ export function parseQuoteBody(body) {
       unitPriceCents,
       // Rounded to whole cents: fractional quantities (linear feet of trim) must
       // never put half-cents on a signed contract or invoice.
-      lineTotalCents: Math.round(quantity * unitPriceCents),
+      lineTotalCents,
     });
   }
 
   const subtotalCents = cleanItems.reduce((sum, item) => sum + item.lineTotalCents, 0);
+  if (subtotalCents > MAX_QUOTE_CENTS) {
+    return { error: `The quote total looks too large (more than ${MAX_QUOTE_TEXT}), which looks like a typo. Check the line prices and quantities.` };
+  }
   const discountCents = Math.max(0, Math.min(subtotalCents, Math.round(Number(body.discountCents) || 0)));
   const totalCents = subtotalCents - discountCents;
 

@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-16 - Gable-windows photos added to /new-construction
+
+Keith sent five photos of one job (gable-end triangular windows, flashing tape and house wrap, gridded windows below, tan trim and lap siding going up) for the new-construction page. Added to `src/data/work.ts` as kind `new construction` (orders 52-56; metadata stripped, 1200x1600, no GPS, no people, no address or house number legible). `/new-construction` shows them as their own "Flashing on a recent job" block (three across, two on a phone) via the new `newBuildGableWork` export; the two older landscape shots keep the "Completed work" band (`newBuildWork` now excludes the gable set). The gallery's "New construction" group picks all seven up automatically. Home "Recent work" is untouched (it reads `gallery-additions.ts`). `test-image-delivery` now expects landscape, landscape, then five portrait tiles on that page. Captions and alt text describe only what is visible; the job's scope is not known. `npm run test:all` 60/60; checked in a browser at 1280 and 390 px.
+
+## 2026-10-16 - Flashing diagram removed everywhere (inaccurate)
+
+Keith: the flashing diagram is inaccurate, remove it everywhere. Deleted the FlashingOrder diagram component and its window-flashing-water-way-out image (both under src/); dropped its use from `src/pages/guides/[slug].astro` (diagram note, both render slots), the `secondaryDiagram: flashing-order` line in `what-your-openings-need.md`, and the `flashing-order` options in `src/content.config.ts`; removed the matching `test-image-delivery` entry and updated `public-copy-positioning.md` and STATE. The `/guides/what-your-openings-need` page now ends without the "More detail" block. Nothing else used it. `npm run test:all` 60/60.
+
+## 2026-10-16 - Flashing diagram removed from /new-construction (superseded: now removed everywhere)
+
+Keith: remove the diagram on the new-construction page. Dropped the `FlashingOrder` diagram (and its "Flashing sequence" heading) from `src/pages/new-construction.astro`; the "Prep and flashing" section keeps its two note cards. The component and `/guides/what-your-openings-need` are unchanged. `test-image-delivery` no longer lists `/new-construction` among pages carrying the flashing graphic. `npm run test:all` 60/60.
+
 ## 2026-10-16 - Prices editable on the quote screen itself
 
 Mark still could not change a line price from the quote screen: `/internal/quotes/view` is the read-only contract, and prices lived only in the separate Edit quote form. Added a no-print "Prices" panel to the view page for any draft (unsigned) quote: one unit-price field per line with a live line total, and "Save prices". It sends the whole quote back through the same PUT as the edit form (customer, notes, discount and signature method kept), so the server still recomputes totals and revokes a customer signing link sent with the old numbers (the panel says so). Hidden once the quote is finalized. The printed contract is unchanged. Test: `test:quote-price-edit` replays the panel's request against the real handlers. Checked in a browser at 1280 and 390 px with the API simulated.
@@ -21,6 +33,19 @@ Keith (from Mark's quote screen): internal quoting must say **fin**, not full-fr
 - **$850 fin slider.** New optional `finPrice` per opening in `src/data/pricing.ts`; only `slider` has one (850, vinyl Cascade). Math moved to `src/lib/quote-pricing.ts` (fin price x material multiplier + brand step-up; Milgard slider fin suggests $950). Before: insert midpoint $1,000 + $1,400 frame allowance = $2,400. Openings without a `finPrice` keep the old fallback (insert + `pricing.fullFrame` allowance).
 - **Price edits never strand an approved plan.** `sourceSnapshot` no longer carries `lineTotalCents`, so a price change does not mark the Build Plan stale or block signing/job creation. One shared `sameSource` (in `build-plan-rules.mjs`, replacing four copies) ignores the price on snapshots saved before this change. Quantity, label or description changes still require re-approval. A finalized (signed) quote still cannot be repriced; editing a draft still revokes unsigned customer links.
 - Tests: new `test:quote-price-edit` (in `build.yml`); `test-quote-signing` now asserts a price-only edit keeps the plan approved and a quantity edit makes it stale. `npm run test:all` 60/60 and `npm run build` pass locally.
+
+## 2026-10-16 - Repo-wide bug sweep (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith: "Can you do a repo-wide bug sweep and repair?" Baseline `test:all` green (59 steps), `npm audit --omit=dev` clean. Angles not used by earlier rounds, and what each found:
+
+Fixed, each with a test that failed first (`test:internal-audit` groups 7 and 8):
+1. **A quote accepted amounts that cannot be real.** Quantity 1e308 x price 1e308 saved a quote with a NULL total; 1e15 x $900 saved an imprecise float (9e19 cents); a phone number pasted into the price box saved a $3.6 billion quote. `parseQuoteBody` (`functions/internal/_lib/quotes.mjs`) now refuses a quantity over 1,000,000, a line or total over $5,000,000 (`MAX_QUOTE_CENTS`, the same typo guard a general job's agreed amount already had) with "the amount looks too large. Check the quantity and price." The builder already shows the server's message. Create and edit share the check.
+2. **A JSON `null` body crashed three handlers** (`build-plan.js`, `build-plan-state.js`, `jobs.js` POST: "Cannot read properties of null", an unhandled 500). They answer 400 "Body must be a JSON object." Found by sending bad JSON, `null`, arrays, strings, numbers and odd query strings to every method of all 30 internal handlers.
+3. `scripts/run-all-tests.mjs` header said GitHub Actions cannot run; corrected (comment only).
+
+Checked and clean: the whole pen-signing lifecycle on the real handlers (second Confirm answers 409, a signed quote cannot be edited or deleted, a second Create job returns the same job, an empty signer name is refused); `audit-command-center.mjs` (232 page views, 0 problems) and `audit-a11y.mjs` (152 page-views, no violations) on current main; every local link and image in `dist/` (4,838 refs, only `/internal/` and two API links "missing", all expected) including the five new full-size diagram links; `email_off` markers survive into the built HTML; the image-prune step leaves 0 unreferenced originals and nothing outside the built text references `_astro/` files; `_redirects` (6 rules, no loop or missing target); syntax of 168 function, worker and script files; CI runs all 57 `test:*` scripts; real-browser client navigation (home, siding, replacement, Back) keeps the estimate buttons' target right and the siding service reaches the form; a type check (`astro check`, installed with `--no-save`) gave 202 strict-mode errors, none a bug (DOM `Element` typing, literal-typed constants, values already guarded earlier in the page).
+
+Not changed: `copilot-summary.js` throws "no such table: follow_up_tasks" on a database the dashboard has never loaded (the dashboard creates the table; production has it); quote, invoice and job IDs carry the UTC date (cosmetic, noted 2026-10-12); the server still accepts fractional quantities (an owner decision, noted 2026-10-08). `test:all` is 59 steps.
 
 ## 2026-10-16 - Home hero and footer line reworded (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
@@ -49,6 +74,10 @@ Found and fixed, in `src/pages/internal/quotes/view.astro`:
 3. **Printed pen copy.** Notice of right to cancel, acknowledgement and signature stay on one page; the signature block prints quote number, customer and total; a signature/date line for Clearview was added. The contract text is untouched, so `TERMS_VERSION` and its hash guard are unchanged.
 
 Test: `test:internal-audit` group 6 (source-level; mutation-checked against the previous page). Not changed, noted for Mark: the price book pre-fills a range midpoint as an editable price; Build Plan needs "Move to review" then "Approve for Job" (two taps); dimensions remain a VERIFY warning. Not verified: a real phone, a real printer's margins, the live Access sign-in.
+
+## 2026-10-16 - Pricing audit: quote amounts have a ceiling (branch `claude/bug-sweep-repair-ub27ah`)
+
+Keith: "Check the rest of the pricing now for me." Read-only checks first, all clean: the calculator and Ask formulas agree line for line (`test:ask-pricing`); no dollar figure on any public page, in the Ask guide index or in the guides (`test:no-public-pricing`; one `$100` in the terms is the pinned contract wording); the built calculator ships no price fields; `check-pricing.mjs` validates the internal reference figures (reviewed 2026-10-02, 14 days old, limit 180); payments are bounded to the invoice total; the quote builder's midpoint-times-multiplier plus brand and frame add-ons match the documented model. One real gap: `parseQuoteBody` (create and edit) recomputed totals but bounded nothing, so a price of `1e300` or a quantity of `1e15` was stored and printed as "1e+300", and two lines near 2^53 cents lost precision. New `MAX_QUOTE_CENTS` ($5,000,000) caps each line and the subtotal with a message naming the line (the builder already shows the server's text). New `test:quote-amounts` (CI step, `test:all` is now 60 steps) failed first. Also fixed two stale comments that still mentioned the deleted pricing Worker. VERIFY with Mark: is $5,000,000 a sensible ceiling (it is not a pricing rule)? Not changed: a quantity of 1e-9 still produces a $0.00 line (the earlier open "confirm before $0.00 lines" decision).
 
 ## 2026-10-12 - README brought up to date (branch `claude/bug-sweep-repair-ub27ah`)
 

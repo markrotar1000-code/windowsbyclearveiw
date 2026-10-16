@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - /new-construction: diagram out, gable-windows photos in
+
+The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is removed everywhere as inaccurate: `/new-construction`, the `what-your-openings-need` guide, its component and image file, and the `flashing-order` diagram options. Do not reinstate it without Mark's say-so. Also on `/new-construction`: five photos of one gable-windows job are in as their own block (`newBuildGableWork` in `src/data/work.ts`) and in the gallery's New construction group. Details: `.ai/CHANGELOG.md` (2026-10-16).
+
 ## 2026-10-16 - Prices editable on the quote screen
 
 `/internal/quotes/view` has a "Prices" panel (draft quotes only) to change any line's unit price in place. Details: `.ai/CHANGELOG.md` (2026-10-16).
@@ -7,6 +11,10 @@
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits
 
 Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) starts at $850 via `quotePrice` in `src/data/pricing.ts`; fin is only the method label and never changes a price. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a `quotePrice`; other openings start at their range midpoint until he gives his number.
+
+## 2026-10-16 - Repo-wide bug sweep
+
+Two real bugs fixed (a quote accepted nonsense amounts and saved a NULL or imprecise total; a JSON `null` body crashed the build-plan, build-plan-state and jobs handlers), both with failing-first tests in `test:internal-audit`. Everything else swept was clean (Command Center audit 232 views, axe 152 views, links, redirects, prune step, client navigation, CI coverage). Detail and the list of what was checked: `.ai/CHANGELOG.md`.
 
 ## 2026-10-16 - Home hero and footer line reworded
 
@@ -20,13 +28,17 @@ Audit branch `codex/clearview-audit-2026-10-16`: all shared siding estimate link
 
 Mark has a one-window job to quote and sign on paper. The whole path was driven in Chromium at phone width over the real handlers (`scripts/audit-command-center.mjs --serve`): new quote (price book, pen option) -> save -> Build Plan -> approval -> print -> Confirm it's signed -> Create job. It works; the quote-to-job, signing, command-center and internal-audit suites pass. Three real gaps fixed: (1) a saved quote had **no link to the Build Plan** (only the quotes list did), so after "Save & continue" Mark landed on a page that said "approve the Build Plan" with no way to it; a "Next step" panel now links to the plan and its approval and says what is blocking (no plan yet, plan stale, approved, siding has none), and the duplicate "signing link" message is gone; (2) on a phone the unit and total wrapped ("$1,00 / 0") and the email split mid-word; (3) the printed pen copy split the right-to-cancel notice from the signature, so the signature sat on page 2 with no quote number or price: the notice and signature now stay together, the signature block prints the quote number, customer and total, and there is a line for Clearview. Guard: `test:internal-audit` group 6 (fails against the old page). Contract wording and `TERMS_VERSION` are unchanged. Open: the price book pre-fills the midpoint of its range as an editable unit price (a $1,000 slider), so Mark must type his real price; the plan's dimensions stay a VERIFY warning until typed; the contract still says no deposit; no lawyer has reviewed the terms; a real phone and a real printer were not used.
 
+## 2026-10-16 - Pricing audit and a ceiling on quote amounts
+
+The pricing model, Ask mirror, calculator, public-price guards and payment bounds were checked and are consistent. Added `MAX_QUOTE_CENTS` ($5,000,000) in `functions/internal/_lib/quotes.mjs` so a typo cannot reach a stored quote or contract; `test:quote-amounts` guards it (`test:all` is 60 steps). Open: owner to confirm the ceiling; $0.00 custom lines still allowed.
+
 ## 2026-10-12 - Window trouble graphic replaces the signs photo guide
 
 Keith supplied "Window Trouble: Know the Signs" (4096 px, `src/assets/guides/window-trouble-know-the-signs.png`) for `/guides/signs-you-need-new-windows`; it replaces the stock-photo checklist (`SignsChecklist`, `PhotoGuide` `symptoms`, both deleted). The export had a "!lock" glyph defect, retouched. Open: none specific to this graphic; the 1536 px graphics from earlier today remain source-limited (a Higgsfield 4K upscale was tried and rejected because it altered lettering).
 
 ## 2026-10-12 - Double-pane and flashing graphics replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
-Keith supplied two new owner graphics. "Double-Pane Glass: How It Works" (`src/assets/guides/double-pane-glass-how-it-works.png`) replaces the Canva desktop and mobile pair on `/guides/fogged-windows`; "Window Flashing: Give Water a Way Out" (`src/assets/guides/window-flashing-water-way-out.png`) replaces the stock-photo flashing guide, so `FlashingOrder.astro` now renders it through `CanvaGuideEmbed` on `/new-construction` and as the secondary diagram on `/guides/what-your-openings-need`. Both are 1536 x 1024 RGB with metadata stripped, shown with full alt text and the graphic's own footnote as the visible caption. The old desktop/mobile pair is deleted (the double-pane graphic is one image at every width, so phone text is small). The `flashing` type is removed from `PhotoGuide.astro`. A third graphic, "Window Energy Ratings, Explained" (`window-energy-ratings-explained.png`), replaces the coded U-factor/SHGC gauge on `/window-features`; the gauge's unsourced "0.27 typical Clearview install" and rebate-range numbers are gone. Open: the supplied double-pane graphic has a washed-out subtitle ("Two panes. A sealed insulating space. Layers that work together."), so a clean re-export is wanted; the flashing graphic's "Overlapping layers..." line starts with a clipped "O".
+Keith supplied two new owner graphics. "Double-Pane Glass: How It Works" (`src/assets/guides/double-pane-glass-how-it-works.png`) replaces the Canva desktop and mobile pair on `/guides/fogged-windows`; "Window Flashing: Give Water a Way Out" replaced the stock-photo flashing guide (since removed everywhere as inaccurate, 2026-10-16: see the top entry; the file and `FlashingOrder.astro` are deleted). Both are 1536 x 1024 RGB with metadata stripped, shown with full alt text and the graphic's own footnote as the visible caption. The old desktop/mobile pair is deleted (the double-pane graphic is one image at every width, so phone text is small). The `flashing` type is removed from `PhotoGuide.astro`. A third graphic, "Window Energy Ratings, Explained" (`window-energy-ratings-explained.png`), replaces the coded U-factor/SHGC gauge on `/window-features`; the gauge's unsourced "0.27 typical Clearview install" and rebate-range numbers are gone. Open: the supplied double-pane graphic has a washed-out subtitle ("Two panes. A sealed insulating space. Layers that work together."), so a clean re-export is wanted; the flashing graphic's "Overlapping layers..." line starts with a clipped "O".
 
 ## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)
 

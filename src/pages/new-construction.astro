@@ -2,13 +2,13 @@
 import { getHeroBg } from '../lib/hero-bg';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
-import FlashingOrder from '../components/diagrams/FlashingOrder.astro';
 import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES, frameForGroup } from '../lib/image-sizes';
-import { newBuildWork, findWork, workKindLabel } from '../data/work';
+import { newBuildWork, newBuildGableWork, findWork, workKindLabel } from '../data/work';
 
 // Both new-build photos are wider than tall, so they get a landscape frame instead of a cropped strip.
 const newBuildFrame = frameForGroup(newBuildWork);
+const gableFrame = frameForGroup(newBuildGableWork);
 import { site, mailHref, telHref } from '../data/site';
 
 const ogPhoto = findWork('new-build-sheathed-garage')!;
@@ -191,7 +191,6 @@ const projectInquiryMailto = site.email
           </p>
         </article>
       </div>
-      <FlashingOrder heading="Flashing sequence" />
     </div>
   </section>
 
@@ -270,7 +269,25 @@ const projectInquiryMailto = site.email
     </div>
   </section>
 
-  <section class="section section-sunk" id="project-inquiry">
+  <section class="section section-sunk">
+    <div class="wrap" data-reveal>
+      <p class="rule-label">Flashing on a recent job</p>
+      <h2>Windows set and taped before siding.</h2>
+      <div class="work-grid work-grid-gable">
+        {newBuildGableWork.map((photo) => (
+          <WorkCard
+            image={photo.image}
+            alt={photo.alt}
+            caption={photo.caption}
+            sizes={SLOT_SIZES.threeAcross}
+            frame={gableFrame}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="project-inquiry">
     <div class="wrap is-narrow" data-reveal>
         <p class="rule-label">Request pricing</p>
         <h2>Send plans or request an estimate.</h2>
@@ -344,14 +361,12 @@ const projectInquiryMailto = site.email
     color: var(--accent-bright);
   }
 
-  /* Two short notes beside the flashing diagram — framing tolerance and wall
-     sequence — read better as a pair of cards than as more paragraph text
-     competing with the diagram's own callouts below. */
+  /* Two short notes — framing tolerance and wall sequence — read better as a pair of cards than as more paragraph text. */
   .ro-notes {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-m);
-    margin: var(--space-l) 0 var(--space-xl);
+    margin: var(--space-l) 0 0;
   }
 
   .ro-notes article {

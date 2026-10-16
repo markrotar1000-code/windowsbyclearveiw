@@ -72,6 +72,7 @@
     "test:review-request": "node --disable-warning=ExperimentalWarning scripts/test-review-request.mjs",
     "test:lead-links": "node --disable-warning=ExperimentalWarning scripts/test-lead-links.mjs",
     "test:quote-follow-ups": "node --disable-warning=ExperimentalWarning scripts/test-quote-follow-ups.mjs",
+    "test:quote-amounts": "node --disable-warning=ExperimentalWarning scripts/test-quote-amounts.mjs",
     "test:quote-price-edit": "node --disable-warning=ExperimentalWarning scripts/test-quote-price-edit.mjs",
     "test:quote-signing": "node --disable-warning=ExperimentalWarning scripts/test-quote-signing.mjs",
     "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs",

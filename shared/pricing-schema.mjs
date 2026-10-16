@@ -1,7 +1,7 @@
 /**
- * The one definition of "valid pricing", shared by the site and the pricing
- * worker. Plain ESM with no dependencies so a Cloudflare Worker can import it
- * unchanged.
+ * The one definition of "valid pricing", shared by the site and the Pricing
+ * health check (the pricing Worker that once used it has been deleted). Plain ESM with no
+ * dependencies so any runtime can import it unchanged.
  *
  * This is deliberately about *integrity*, not about whether a number is the
  * right market rate — nothing can check that automatically. It catches the
@@ -115,8 +115,7 @@ export function validatePricing(doc, now = new Date()) {
   }
 
   // --- brands ----------------------------------------------------------------
-  // Optional — older pricing documents (and the worker's stored copy, until
-  // it is next PUT) may not have this field yet, so an empty/missing array
+  // Optional — older pricing documents may not have this field yet, so an empty/missing array
   // is not an error, just nothing to check.
   const brands = Array.isArray(doc.brands) ? doc.brands : [];
   if (brands.length > 0 && !brands.some((b) => b?.low === 0 && b?.high === 0)) {

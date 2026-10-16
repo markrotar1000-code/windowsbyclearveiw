@@ -36,7 +36,7 @@ export type PricingBasis = {
   region: string;
   /** ISO date the figures were last checked against reality. */
   reviewedAt: string;
-  /** Flagged as stale past this age; the pricing worker emails a reminder. */
+  /** Flagged as stale past this age; the monthly Pricing health GitHub Action warns. */
   maxAgeDays: number;
   notes: string;
 };
