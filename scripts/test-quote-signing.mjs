@@ -29,7 +29,7 @@ async function call(handler, env, { method = 'GET', path = '/', body, headers = 
 }
 
 const freshEnv = () => ({ QUOTES_DB: createD1({ schemaFiles: ['functions/api/_data/schema.sql', 'internal/db/schema.sql'] }) });
-const items = [{ label: 'Milgard vinyl slider, full-frame', quantity: 2, unitPriceCents: 90000 }];
+const items = [{ label: 'Milgard vinyl slider, fin', quantity: 2, unitPriceCents: 90000 }];
 const customer = { name: 'Pat Doe', phone: '(360) 555-0100', email: 'pat@example.com', address: '1 Main St', city: 'Camas' };
 const strokes = [[[10, 10], [60, 40], [120, 30]], [[200, 90], [260, 120]]];
 
@@ -268,7 +268,7 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
     request: new Request(`${ORIGIN}/internal/api/quotes/${id}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ customer, items: [{ label: 'Milgard vinyl slider, full-frame', quantity: 2, unitPriceCents: 95000 }], signatureMethod: 'digital' }),
+      body: JSON.stringify({ customer, items: [{ label: 'Milgard vinyl slider, fin', quantity: 2, unitPriceCents: 95000 }], signatureMethod: 'digital' }),
     }),
     env,
     params: { id },
@@ -283,9 +283,25 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   assert.equal(staleSign.status, 410, 'a fully valid signing request on the revoked link is refused');
   assert.equal(env.QUOTES_DB.raw.prepare(`SELECT COUNT(*) AS n FROM quote_sign_links WHERE signed_at IS NOT NULL`).get().n, 0);
 
+  // The edit above only changed the price, which is not a build fact: the approved plan still stands.
   const fresh = await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: id } });
-  assert.equal(fresh.status, 409, 'a new link needs the Build Plan re-approved first');
-  assert.equal(fresh.body.code, 'BUILD_PLAN_STALE');
+  assert.equal(fresh.status, 201, 'a price-only edit keeps the Build Plan approved, so a new link can be sent');
+  assert.notEqual(tokenOf(fresh.body.url), oldToken);
+
+  // A change to what is installed still needs the plan re-approved before a new link goes out.
+  const resized = await quoteById.onRequestPut({
+    request: new Request(`${ORIGIN}/internal/api/quotes/${id}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ customer, items: [{ label: 'Milgard vinyl slider, fin', quantity: 3, unitPriceCents: 95000 }], signatureMethod: 'digital' }),
+    }),
+    env,
+    params: { id },
+  });
+  assert.equal(resized.status, 200);
+  const stalePlan = await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: id } });
+  assert.equal(stalePlan.status, 409, 'a new link needs the Build Plan re-approved first');
+  assert.equal(stalePlan.body.code, 'BUILD_PLAN_STALE');
   pass('editing a draft revokes unsigned signing links');
 }
 

@@ -28,8 +28,8 @@ function freshEnv() {
 }
 
 const items = [
-  { label: 'Milgard vinyl slider, full-frame', quantity: 2, unitPriceCents: 90000 },
-  { label: 'Double-hung, full-frame', quantity: 1, unitPriceCents: 85000 },
+  { label: 'Milgard vinyl slider, fin', quantity: 2, unitPriceCents: 90000 },
+  { label: 'Double-hung, fin', quantity: 1, unitPriceCents: 85000 },
 ];
 const customer = { name: 'Pat Doe', phone: '3605550100', city: 'Camas' };
 
@@ -102,7 +102,7 @@ const makeJob = (env, quoteId) => call(jobs.onRequestPost, env, { method: 'POST'
   const env = freshEnv();
   const id = await createQuote(env);
   await saveGeneratedPlan(env, id);
-  await editQuote(env, id, [{ label: 'Casement, full-frame', quantity: 5, unitPriceCents: 70000 }]);
+  await editQuote(env, id, [{ label: 'Casement, fin', quantity: 5, unitPriceCents: 70000 }]);
   await transition(env, id, 'submit-review');
   const approve = await transition(env, id, 'approve');
   assert(approve.status === 409 && approve.body.code === 'BUILD_PLAN_STALE', 'approval is refused when the plan was built for different quote items');

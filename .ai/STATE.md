@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - Fin naming, $850 fin slider, price edits
+
+Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) fin suggests $850 via `finPrice` in `src/data/pricing.ts`. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a fin price; every other opening still suggests insert + the $800-$2,000 frame allowance until he gives a fin number.
+
 ## 2026-10-16 - Home hero and footer line reworded
 
 Hero lede (`VideoHero.astro`) and footer blurb (`Footer.astro`) now read "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." (footer adds "in Vancouver, WA and surrounding Clark County"). Title, H1 and description untouched. Detail: `.ai/CHANGELOG.md`.

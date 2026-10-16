@@ -36,7 +36,7 @@ async function call(handler, env, { method = 'GET', path = '/', body, params = {
 }
 const freshEnv = () => ({ QUOTES_DB: createD1({ schemaFiles: ['functions/api/_data/schema.sql', 'internal/db/schema.sql'] }) });
 const customer = { name: 'Pat Doe', phone: '(360) 555-0100', email: 'pat@example.com', address: '1 Main St', city: 'Camas' };
-const windowItems = [{ label: 'Milgard vinyl slider, full-frame', quantity: 1, unitPriceCents: 90000 }];
+const windowItems = [{ label: 'Milgard vinyl slider, fin', quantity: 1, unitPriceCents: 90000 }];
 
 async function draftQuote(env) {
   const created = await call(quotesIndex.onRequestPost, env, { method: 'POST', body: { customer, items: windowItems, signatureMethod: 'pen' } });

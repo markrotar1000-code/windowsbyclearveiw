@@ -15,7 +15,7 @@
  *
  * Every opening figure is INSTALLED cost per opening: unit, labour, and a
  * block install (no trim, just re-caulk), for a standard-size ground-floor
- * opening, in vinyl, as an insert. Fiberglass, full-frame, upper-floor access,
+ * opening, in vinyl, as an insert. Fiberglass, fin installs, upper-floor access,
  * custom shapes, and trim are modifiers further down — never bake them into
  * the baseline or they double-count.
  */
@@ -50,6 +50,10 @@ export type OpeningType = {
   /** True for door-type openings (patio, French). The window-brand choice
    *  below does not apply to these — Cascade/Milgard is a window line. */
   isDoor?: boolean;
+  /** Mark's own all-in installed price for a fin install of this opening (vinyl, Cascade),
+   *  used by the internal quote builder instead of insert price + frame allowance. Only openings
+   *  Mark has priced carry one; the rest fall back to the frame allowance and Mark edits the line. */
+  finPrice?: number;
 };
 
 export type WindowBrand = {
@@ -82,6 +86,7 @@ export const pricing = {
       blurb: 'Two sashes, one slides sideways past the other.',
       low: 600,
       high: 1400,
+      finPrice: 850,
     },
     {
       id: 'double-hung',

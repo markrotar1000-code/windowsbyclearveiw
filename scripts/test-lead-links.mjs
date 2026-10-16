@@ -22,7 +22,7 @@ async function call(handler, env, { method = 'GET', path = '/', body } = {}) {
 }
 
 const freshEnv = () => ({ QUOTES_DB: createD1({ schemaFiles: ['functions/api/_data/schema.sql', 'internal/db/schema.sql'] }) });
-const items = [{ label: 'Vinyl slider, full-frame', quantity: 1, unitPriceCents: 90000 }];
+const items = [{ label: 'Vinyl slider, fin', quantity: 1, unitPriceCents: 90000 }];
 
 function addLead(env, { name = 'Pat Doe', phone = '(503) 555-0100', email = 'pat@example.com', referrer = 'https://www.google.com/', utm = null, daysAgo = 3 } = {}) {
   const created = new Date(Date.now() - daysAgo * 86400000).toISOString();
