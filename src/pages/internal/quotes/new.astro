@@ -8,7 +8,7 @@ import { sidingLabor, sidingDryRot } from '../../../data/siding';
 // suggests a starting price; every line stays editable, because a real quote
 // reflects what Mark actually saw at the house, not a catalog lookup.
 const catalog = {
-  openings: pricing.openings.map((o) => ({ id: o.id, label: o.label, low: o.low, high: o.high, isDoor: !!o.isDoor })),
+  openings: pricing.openings.map((o) => ({ id: o.id, label: o.label, low: o.low, high: o.high, isDoor: !!o.isDoor, finPrice: 'finPrice' in o ? o.finPrice : null })),
   materials: pricing.materials.map((m) => ({ id: m.id, label: m.label, multiplier: m.multiplier })),
   brands: pricing.brands.map((b) => ({ id: b.id, label: b.label, low: b.low, high: b.high })),
   fullFrame: { low: pricing.fullFrame.low, high: pricing.fullFrame.high },
@@ -87,7 +87,7 @@ const catalog = {
         <label>Method
           <select data-catalog-method>
             <option value="insert">Insert</option>
-            <option value="full-frame">Full-frame</option>
+            <option value="fin">Fin</option>
           </select>
         </label>
         <label>Qty
@@ -164,8 +164,9 @@ const catalog = {
 <script>
   import { formatCents } from '../../../lib/money';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
+  import { suggestedUnitPrice } from '../../../lib/quote-pricing';
 
-  type CatalogOpening = { id: string; label: string; low: number; high: number; isDoor: boolean };
+  type CatalogOpening = { id: string; label: string; low: number; high: number; isDoor: boolean; finPrice: number | null };
   type CatalogMaterial = { id: string; label: string; multiplier: number };
   type CatalogBrand = { id: string; label: string; low: number; high: number };
   type Catalog = {
@@ -251,8 +252,6 @@ const catalog = {
 
     clearProblemOnEdit(qtyInput);
     if (sidingAreaInput instanceof HTMLInputElement) clearProblemOnEdit(sidingAreaInput);
-
-    const mid = (low: number, high: number) => (low + high) / 2;
 
     for (const o of catalog.openings) {
       const opt = document.createElement('option');
@@ -417,12 +416,16 @@ const catalog = {
       }
       lineProblem(qtyInput, '');
 
-      let unitPrice = mid(opening.low, opening.high) * (material?.multiplier ?? 1);
-      if (!opening.isDoor && brand) unitPrice += mid(brand.low, brand.high);
-      if (method === 'full-frame') unitPrice += mid(catalog.fullFrame.low, catalog.fullFrame.high);
-      unitPrice = Math.round(unitPrice / 10) * 10;
+      const isFin = method === 'fin';
+      const { unitPrice } = suggestedUnitPrice({
+        opening,
+        materialMultiplier: material?.multiplier,
+        brand,
+        method: isFin ? 'fin' : 'insert',
+        finAllowance: catalog.fullFrame,
+      });
 
-      const labelParts = [opening.label, material?.label, !opening.isDoor ? brand?.label : null, method === 'full-frame' ? 'full-frame' : 'insert'].filter(Boolean);
+      const labelParts = [opening.label, material?.label, !opening.isDoor ? brand?.label : null, isFin ? 'fin' : 'insert'].filter(Boolean);
 
       items.push({ label: labelParts.join(' — '), description: '', quantity: qty, unitPrice });
       render();

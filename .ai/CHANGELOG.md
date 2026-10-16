@@ -1,5 +1,14 @@
 # ICM Changelog
 
+## 2026-10-16 - Fin naming, $850 fin slider, price edits after Build Plan approval
+
+Keith (from Mark's quote screen): internal quoting must say **fin**, not full-frame; a vinyl Cascade slider fin was suggesting $2,400 and should be $850; Mark must be able to change any line's price until the quote is finalized.
+
+- **Fin naming (internal only).** Quote builder method is "Fin"; saved line labels read "Slider — Vinyl — Cascade — fin"; the Build Plan method list, plan generation (`inferPlanItem`, which reads both "fin" and legacy "full-frame" labels as `fin`), install rule I-02 and the job view say fin. Stored plans with `installationMethod: 'full-frame'` still display as Fin. Public pages are unchanged (they must not name install methods; `test:public-terminology`).
+- **$850 fin slider.** New optional `finPrice` per opening in `src/data/pricing.ts`; only `slider` has one (850, vinyl Cascade). Math moved to `src/lib/quote-pricing.ts` (fin price x material multiplier + brand step-up; Milgard slider fin suggests $950). Before: insert midpoint $1,000 + $1,400 frame allowance = $2,400. Openings without a `finPrice` keep the old fallback (insert + `pricing.fullFrame` allowance).
+- **Price edits never strand an approved plan.** `sourceSnapshot` no longer carries `lineTotalCents`, so a price change does not mark the Build Plan stale or block signing/job creation. One shared `sameSource` (in `build-plan-rules.mjs`, replacing four copies) ignores the price on snapshots saved before this change. Quantity, label or description changes still require re-approval. A finalized (signed) quote still cannot be repriced; editing a draft still revokes unsigned customer links.
+- Tests: new `test:quote-price-edit` (in `build.yml`); `test-quote-signing` now asserts a price-only edit keeps the plan approved and a quantity edit makes it stale. `npm run test:all` 60/60 and `npm run build` pass locally.
+
 ## 2026-10-16 - Home hero and footer line reworded (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith: the hero line "Window installation to replace old windows and sliding glass doors, or to set new construction — quoted in person, installed on a scheduled date." sounds weird. Now (his wording): "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." The footer blurb carries the same sentence plus the service area. Title, H1 and meta description are unchanged, so "installation" is still in the home title (`test:seo`). The old line's "quoted in person" and "scheduled date" are no longer on the home page. "Done right" is the owner's wording, not a measurable claim; no guarantee is implied. `test:all` passes (59 steps).

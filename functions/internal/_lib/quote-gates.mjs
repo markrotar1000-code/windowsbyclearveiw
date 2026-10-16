@@ -3,12 +3,8 @@
 // (functions/api/quote-sign.js). A quote can only be signed against an
 // explicitly approved Build Plan that still matches the quote's items.
 
-import { sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
+import { sameSource, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
 import { isSidingQuoteId } from './work-types.mjs';
-
-function sameSource(a, b) {
-  return JSON.stringify(a || []) === JSON.stringify(b || []);
-}
 
 export async function requireApprovedBuildPlan(db, quoteId) {
   // The Build Plan describes window openings and does not apply to siding. A siding quote is

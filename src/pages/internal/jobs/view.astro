@@ -214,7 +214,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
           <article class="job-opening">
             <strong>#${index + 1} · ${esc(opening.openingType || 'unknown')}</strong>
             <span>${esc(opening.product || 'Quoted opening')}</span>
-            <small>${esc(opening.installationMethod || 'verify')} · ${esc(opening.dimensions || 'VERIFY dimensions')}</small>
+            <small>${esc(opening.installationMethod === 'full-frame' ? 'fin' : (opening.installationMethod || 'verify'))} · ${esc(opening.dimensions || 'VERIFY dimensions')}</small>
           </article>`).join('') || '<p class="muted">No openings in snapshot.</p>';
       }
     }
