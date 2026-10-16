@@ -78,7 +78,7 @@ for (const [label, line] of publicPricing ? [
   assert.ok(text.includes(`${label} ${line}`), `${label}: "${line}"`);
 }
 assert.ok(/A square foot is total wall area: height times width/.test(text), 'square foot is defined as total wall area');
-assert.ok(/siding itself is a separate cost/.test(text) && (!publicPricing || /not a quote/.test(text)), 'material is separate and the rates are starting rates, not a quote');
+assert.ok(publicPricing ? /siding itself is a separate cost/.test(text) && /not a quote/.test(text) : /We price the job by the square foot\. The materials and labor are included in the quote\./.test(text), 'public rates are labor-only starting rates with material separate; without public pricing the job is priced by the square foot, materials and labor included');
 assert.ok(!/\$\d+[^.]*\binstalled\b/i.test(text.replace(/installed to the manufacturer/g, '')), 'rates are never called installed prices');
 
 // Warranty: the manufacturer's. The only length on the page is James Hardie's own 30 years (a year count
