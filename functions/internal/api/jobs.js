@@ -39,7 +39,7 @@ export async function onRequestGet(context){const{env}=context;await ensureSchem
   const total=Number(totalRow?.total||0);
   return json({jobs:rows.results||[],page,pageSize:limit,total,totalPages:Math.ceil(total/limit),activeTotal:Number(activeRow?.total||0)});
 }
-export async function onRequestPost(context){const{env,request}=context;await ensureSchema(env.QUOTES_DB);let body;try{body=await request.json();}catch{return json({error:'Invalid JSON.'},400);}
+export async function onRequestPost(context){const{env,request}=context;await ensureSchema(env.QUOTES_DB);let body;try{body=await request.json();}catch{return json({error:'Invalid JSON.'},400);}if(body===null||typeof body!=='object')return json({error:'Body must be a JSON object.'},400);
   if(body&&body.workType==='general'){
     const checked=validateNewGeneralJob(body);if(checked.errors)return json({error:checked.errors[0],errors:checked.errors},400);
     const v=checked.value;

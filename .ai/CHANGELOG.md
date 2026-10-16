@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-16 - Repo-wide bug sweep (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith: "Can you do a repo-wide bug sweep and repair?" Baseline `test:all` green (59 steps), `npm audit --omit=dev` clean. Angles not used by earlier rounds, and what each found:
+
+Fixed, each with a test that failed first (`test:internal-audit` groups 7 and 8):
+1. **A quote accepted amounts that cannot be real.** Quantity 1e308 x price 1e308 saved a quote with a NULL total; 1e15 x $900 saved an imprecise float (9e19 cents); a phone number pasted into the price box saved a $3.6 billion quote. `parseQuoteBody` (`functions/internal/_lib/quotes.mjs`) now refuses a quantity over 1,000,000, a line or total over $5,000,000 (`MAX_QUOTE_CENTS`, the same typo guard a general job's agreed amount already had) with "the amount looks too large. Check the quantity and price." The builder already shows the server's message. Create and edit share the check.
+2. **A JSON `null` body crashed three handlers** (`build-plan.js`, `build-plan-state.js`, `jobs.js` POST: "Cannot read properties of null", an unhandled 500). They answer 400 "Body must be a JSON object." Found by sending bad JSON, `null`, arrays, strings, numbers and odd query strings to every method of all 30 internal handlers.
+3. `scripts/run-all-tests.mjs` header said GitHub Actions cannot run; corrected (comment only).
+
+Checked and clean: the whole pen-signing lifecycle on the real handlers (second Confirm answers 409, a signed quote cannot be edited or deleted, a second Create job returns the same job, an empty signer name is refused); `audit-command-center.mjs` (232 page views, 0 problems) and `audit-a11y.mjs` (152 page-views, no violations) on current main; every local link and image in `dist/` (4,838 refs, only `/internal/` and two API links "missing", all expected) including the five new full-size diagram links; `email_off` markers survive into the built HTML; the image-prune step leaves 0 unreferenced originals and nothing outside the built text references `_astro/` files; `_redirects` (6 rules, no loop or missing target); syntax of 168 function, worker and script files; CI runs all 57 `test:*` scripts; real-browser client navigation (home, siding, replacement, Back) keeps the estimate buttons' target right and the siding service reaches the form; a type check (`astro check`, installed with `--no-save`) gave 202 strict-mode errors, none a bug (DOM `Element` typing, literal-typed constants, values already guarded earlier in the page).
+
+Not changed: `copilot-summary.js` throws "no such table: follow_up_tasks" on a database the dashboard has never loaded (the dashboard creates the table; production has it); quote, invoice and job IDs carry the UTC date (cosmetic, noted 2026-10-12); the server still accepts fractional quantities (an owner decision, noted 2026-10-08). `test:all` is 59 steps.
+
 ## 2026-10-16 - Home hero and footer line reworded (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith: the hero line "Window installation to replace old windows and sliding glass doors, or to set new construction — quoted in person, installed on a scheduled date." sounds weird. Now (his wording): "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." The footer blurb carries the same sentence plus the service area. Title, H1 and meta description are unchanged, so "installation" is still in the home title (`test:seo`). The old line's "quoted in person" and "scheduled date" are no longer on the home page. "Done right" is the owner's wording, not a measurable claim; no guarantee is implied. `test:all` passes (59 steps).

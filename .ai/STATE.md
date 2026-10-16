@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - Repo-wide bug sweep
+
+Two real bugs fixed (a quote accepted nonsense amounts and saved a NULL or imprecise total; a JSON `null` body crashed the build-plan, build-plan-state and jobs handlers), both with failing-first tests in `test:internal-audit`. Everything else swept was clean (Command Center audit 232 views, axe 152 views, links, redirects, prune step, client navigation, CI coverage). Detail and the list of what was checked: `.ai/CHANGELOG.md`.
+
 ## 2026-10-16 - Home hero and footer line reworded
 
 Hero lede (`VideoHero.astro`) and footer blurb (`Footer.astro`) now read "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." (footer adds "in Vancouver, WA and surrounding Clark County"). Title, H1 and description untouched. Detail: `.ai/CHANGELOG.md`.

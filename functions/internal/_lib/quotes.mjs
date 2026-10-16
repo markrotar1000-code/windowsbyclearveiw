@@ -14,6 +14,12 @@ export function json(data, status = 200) {
   });
 }
 
+// A typo guard, not a business rule: the same $5,000,000 ceiling a general job's agreed amount has
+// (`GENERAL_LIMITS.maxAgreedCents`). Without it a pasted phone number or an overflow was saved as a quote
+// with a NULL or imprecise total, which then flows into the contract, invoice and payment limits.
+export const MAX_QUOTE_CENTS = 500_000_000;
+const MAX_QUANTITY = 1_000_000;
+
 export const clean = (v, max = 500) => String(v ?? '').trim().slice(0, max);
 
 /**
@@ -50,6 +56,9 @@ export function parseQuoteBody(body) {
     if (!Number.isFinite(unitPriceCents) || unitPriceCents < 0) {
       return { error: `Line ${index + 1}: unit price is invalid.` };
     }
+    if (quantity > MAX_QUANTITY || unitPriceCents > MAX_QUOTE_CENTS || !(Math.round(quantity * unitPriceCents) <= MAX_QUOTE_CENTS)) {
+      return { error: `Line ${index + 1}: the amount looks too large. Check the quantity and price.` };
+    }
     cleanItems.push({
       label,
       description: clean(raw?.description, 500),
@@ -62,6 +71,9 @@ export function parseQuoteBody(body) {
   }
 
   const subtotalCents = cleanItems.reduce((sum, item) => sum + item.lineTotalCents, 0);
+  if (subtotalCents > MAX_QUOTE_CENTS) {
+    return { error: 'The quote total looks too large. Check the digits.' };
+  }
   const discountCents = Math.max(0, Math.min(subtotalCents, Math.round(Number(body.discountCents) || 0)));
   const totalCents = subtotalCents - discountCents;
 

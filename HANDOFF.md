@@ -1,5 +1,9 @@
 # Project context — Clearview Windows
 
+## 2026-10-16 - Repo-wide bug sweep
+
+Details: `.ai/CHANGELOG.md` (2026-10-16, "Repo-wide bug sweep"). A quote now refuses an amount over $5,000,000 or a quantity over 1,000,000 ("looks too large, check the digits"); three internal handlers answer 400 to a `null` body. **VERIFY with Mark:** that $5,000,000 is a comfortable ceiling for his largest builder quote (it is the same limit a general job already has). Still open from earlier: fractional quantities are accepted by the server; quote IDs carry the UTC date.
+
 ## 2026-10-15 - One-window job, pen signature (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith asked for a copy-paste walkthrough for Mark and a full-flow bug pass. Details: `.ai/CHANGELOG.md` (2026-10-15). Steps for Mark: `internal/README.md`, "One job, signed in pen".

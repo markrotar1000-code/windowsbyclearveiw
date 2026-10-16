@@ -73,6 +73,7 @@ export async function onRequestPost({ env, request }) {
   await ensureSchema(env.QUOTES_DB);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
+  if (body === null || typeof body !== 'object') return json({ error: 'Body must be a JSON object.' }, 400);
   const quoteId = clean(body.quoteId);
   const action = clean(body.action);
   const actor = clean(body.actor, 80) || 'mark';
