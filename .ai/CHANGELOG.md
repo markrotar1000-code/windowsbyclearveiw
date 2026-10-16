@@ -1,5 +1,14 @@
 # ICM Changelog
 
+## 2026-10-16 - Correction: fin is a name, not a price
+
+Keith: "Fin is not a price. It's replacing the term for full-frame replacement internally." PR #248 had treated it as a price (`finPrice`, a frame allowance fallback, and a request for per-opening fin numbers). Reverted that reading:
+
+- The install method (insert or fin) is a label on the quote line only and never changes the suggested price. `finPrice` and the $800-$2,000 frame allowance are gone from the builder (`src/lib/quote-pricing.ts`).
+- The $850 is the slider's own price: `quotePrice: 850` on the `slider` opening in `src/data/pricing.ts` (vinyl, Cascade), used instead of the $1,000 range midpoint. Milgard adds $100, fiberglass x1.4, as before. Openings without a `quotePrice` start at the range midpoint; none invented.
+- Naming, editable prices, and the Build Plan-stays-approved-on-price-change behaviour from PR #248 are unchanged.
+- `pricing.fullFrame` stays in the data file only because the pricing health check and schema reference it; no quote path uses it.
+
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits after Build Plan approval
 
 Keith (from Mark's quote screen): internal quoting must say **fin**, not full-frame; a vinyl Cascade slider fin was suggesting $2,400 and should be $850; Mark must be able to change any line's price until the quote is finalized.

@@ -2,7 +2,7 @@
 
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits
 
-Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) fin suggests $850 via `finPrice` in `src/data/pricing.ts`. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a fin price; every other opening still suggests insert + the $800-$2,000 frame allowance until he gives a fin number.
+Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) starts at $850 via `quotePrice` in `src/data/pricing.ts`; fin is only the method label and never changes a price. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a `quotePrice`; other openings start at their range midpoint until he gives his number.
 
 ## 2026-10-16 - Home hero and footer line reworded
 

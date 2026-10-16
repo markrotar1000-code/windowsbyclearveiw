@@ -2,7 +2,7 @@
 
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits (branch `claude/fin-install-price-edit`)
 
-See `.ai/CHANGELOG.md` (2026-10-16). Next agent: ask Mark for his fin price on each other opening (`finPrice` in `src/data/pricing.ts`, one number each, vinyl Cascade); until then those suggest the old $1,400-style fallback and he edits the line. Prices are editable on the draft quote form (Edit quote) until it is signed; the Build Plan no longer goes stale on a price change.
+See `.ai/CHANGELOG.md` (2026-10-16). Fin is only Mark's internal name for a full-frame install, never a price (corrected the same day). Next agent: ask Mark for his starting price on each other opening (`quotePrice` in `src/data/pricing.ts`, vinyl Cascade); until then they start at the range midpoint and he edits the line. Prices are editable on the draft quote form (Edit quote) until it is signed; the Build Plan no longer goes stale on a price change.
 
 ## 2026-10-15 - One-window job, pen signature (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
