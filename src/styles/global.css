@@ -879,7 +879,16 @@ html.reveal-ready [data-reveal].is-revealed {
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* Five portrait photos of one job: three across, two on a phone (matches SLOT_SIZES.threeAcross). */
+.work-grid-gable {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 @media (max-width: 800px) {
+  .work-grid-gable {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .work-grid-home {
     grid-template-columns: 1fr 1fr;
   }

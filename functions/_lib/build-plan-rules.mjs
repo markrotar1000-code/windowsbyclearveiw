@@ -32,7 +32,7 @@ export const MATERIAL_RULES = [
 
 export const INSTALL_RULES = [
   { id:'I-01', phase:'PRECHECK', text:'Confirm the ordered unit, configuration, size, handing and opening assignment before removal or setting.' },
-  { id:'I-02', phase:'PRECHECK', text:'Confirm the installation path: insert/retrofit, full-frame, or new construction. Do not infer the method from window type alone.' },
+  { id:'I-02', phase:'PRECHECK', text:'Confirm the installation path: insert/retrofit, fin, or new construction. Do not infer the method from window type alone.' },
   { id:'I-03', phase:'PROTECT', text:'Protect interior and exterior finished surfaces and establish a controlled removal/cleanup area.' },
   { id:'I-04', phase:'OPENING', text:'After removal where applicable, inspect the opening, sill, framing and water-management layers for damage or incompatible conditions.' },
   { id:'I-05', phase:'OPENING', text:'Stop and document concealed damage, rot, framing problems, unexpected substrate conditions, or water-management defects before proceeding.' },
@@ -67,4 +67,8 @@ export function lintPlan(plan,items=[]) {
   if(items.length&&openings.length){const quotedQty=items.reduce((n,i)=>n+Math.min(50,Math.max(1,Number(i.quantity)||1)),0);if(quotedQty!==openings.length)warnings.push(`Quote quantity (${quotedQty}) and opening schedule (${openings.length}) do not match; reconcile before ordering.`);}
   return{blockers,warnings,knowledgeVersion:BUILD_PLAN_KNOWLEDGE_VERSION};
 }
-export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||''),lineTotalCents:Number(item.line_total_cents)||0}));}
+// A price is not a build fact: Mark can change what a line costs at any time before the quote is signed
+// without invalidating an approved Build Plan. Only what is installed (label, quantity, description) counts.
+export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||'')}));}
+const withoutPrice=(rows)=>(rows||[]).map(({lineTotalCents,...rest})=>rest); // snapshots saved before 2026-10-16 carried the line total
+export function sameSource(a,b){return JSON.stringify(withoutPrice(a))===JSON.stringify(withoutPrice(b));}

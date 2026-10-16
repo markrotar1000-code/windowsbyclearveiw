@@ -15,7 +15,7 @@
  *
  * Every opening figure is INSTALLED cost per opening: unit, labour, and a
  * block install (no trim, just re-caulk), for a standard-size ground-floor
- * opening, in vinyl, as an insert. Fiberglass, full-frame, upper-floor access,
+ * opening, in vinyl, as an insert. Fiberglass, fin installs, upper-floor access,
  * custom shapes, and trim are modifiers further down — never bake them into
  * the baseline or they double-count.
  */
@@ -50,6 +50,11 @@ export type OpeningType = {
   /** True for door-type openings (patio, French). The window-brand choice
    *  below does not apply to these — Cascade/Milgard is a window line. */
   isDoor?: boolean;
+  /** Mark's own installed price for this opening (vinyl, Cascade), used by the internal quote builder
+   *  as the starting price instead of the midpoint of the range. The same for an insert and a fin install:
+   *  fin is only Mark's internal name for a full-frame install, never a price. Openings without one
+   *  start at the midpoint of the range and Mark edits the line. */
+  quotePrice?: number;
 };
 
 export type WindowBrand = {
@@ -82,6 +87,7 @@ export const pricing = {
       blurb: 'Two sashes, one slides sideways past the other.',
       low: 600,
       high: 1400,
+      quotePrice: 850,
     },
     {
       id: 'double-hung',
@@ -182,8 +188,8 @@ export const pricing = {
   fullFrame: {
     label: 'Extra frame-level work',
     blurb:
-      'Used only by the internal quote builder when that method is chosen. The public ' +
-      'calculator and Ask do not add it (owner direction, 2026-10-02): their range is the base ' +
+      'Not used by the internal quote builder (the install method never changes a price) and not ' +
+      'added by the public calculator or Ask (owner direction, 2026-10-02): their range is the base ' +
       'opening prices plus the modifiers a visitor ticks.',
     low: 800,
     high: 2000,

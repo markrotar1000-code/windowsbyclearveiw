@@ -1,5 +1,5 @@
 import { BUILD_PLAN_STATES, transitionPlanState, assertJobEligible } from '../../_lib/build-plan-state.mjs';
-import { lintPlan, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
+import { lintPlan, sameSource, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
 import { isSidingQuoteId, SIDING_NO_PLAN } from '../_lib/work-types.mjs';
 
 function json(data, status = 200) {
@@ -15,10 +15,6 @@ function clean(value, max = 100) {
 
 function parseJson(value, fallback) {
   try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
-}
-
-function sameSource(a, b) {
-  return JSON.stringify(a || []) === JSON.stringify(b || []);
 }
 
 async function ensureSchema(db) {
