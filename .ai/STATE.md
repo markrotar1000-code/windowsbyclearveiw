@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - Home hero and footer line reworded
+
+Hero lede (`VideoHero.astro`) and footer blurb (`Footer.astro`) now read "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." (footer adds "in Vancouver, WA and surrounding Clark County"). Title, H1 and description untouched. Detail: `.ai/CHANGELOG.md`.
+
 ## 2026-10-16 - ClearView audit and repairs
 
 Audit branch `codex/clearview-audit-2026-10-16`: all shared siding estimate links preserve service, URL cleanup retains service through refresh, diagrams offer their largest optimized file, and the build prunes only unreferenced originals with optimized variants. Cold-build reproduction left 50–56 unused originals (64.5–78.1 MiB); warm builds could pass and hide it. Production Pages inspection confirmed `INTERNAL_SESSION_SECRE` exists but `INTERNAL_SESSION_SECRET` does not; session signing and verification now share a resolver that accepts the existing binding and prefers the canonical name. No secret read, rotation, Access-policy change, or production business-data mutation. Final local full suite passed all 59 steps, including login/access and abuse suites. Additional fixes keep footer/estimate mailto links independent of the edge decoder, constrain the 320px chat welcome grid, and clarify the home service label. See `docs/AUDIT-2026-10-16.md` for final validation, deployment state, and limitations.
