@@ -16,6 +16,10 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   </div>
   <p class="qv-error" data-delete-error hidden role="alert"></p>
   <p class="qv-error" data-job-error hidden role="alert"></p>
+  <section class="qv-next no-print" data-next-panel hidden aria-label="Next step">
+    <p class="qv-lead-line" data-next-line></p>
+    <div class="qv-lead-actions" data-next-actions></div>
+  </section>
   <section class="qv-share no-print" data-share-panel hidden aria-label="Customer signing link">
     <div class="qv-share-head">
       <p class="qv-lead-line" data-share-line></p>
@@ -97,15 +101,22 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
     <section class="contract-section contract-signature">
       <h2>Signature</h2>
+      <p class="sig-print-id">
+        Quote <span data-sig-quote-id></span> &middot; <span data-sig-customer></span> &middot; Total <span data-sig-total></span>
+      </p>
 
       <div data-sig-pen hidden>
         <div class="sig-line-block">
           <div class="sig-line"></div>
-          <p class="sig-caption">Customer signature</p>
+          <p class="sig-caption">Customer signature (print name below)</p>
         </div>
         <div class="sig-line-block">
           <div class="sig-line"></div>
           <p class="sig-caption">Date</p>
+        </div>
+        <div class="sig-line-block">
+          <div class="sig-line"></div>
+          <p class="sig-caption">For {site.legalName} (signature, printed name, date)</p>
         </div>
       </div>
 
@@ -297,9 +308,12 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
           revoked: 'The last signing link was revoked.',
           expired: `The last signing link expired ${fmt(link.expiresAt)}.`,
         };
-        line.textContent = data.canCreate
-          ? states[link.state] || states.none
-          : `Approve the Build Plan before sending a signing link. ${data.blockedBy?.error || ''}`.trim();
+        if (!data.canCreate) {
+          // The "Next step" panel already says what is blocking and links to it.
+          panel.hidden = true;
+          return;
+        }
+        line.textContent = states[link.state] || states.none;
         if (data.canCreate) {
           const live = link.state === 'sent' || link.state === 'viewed';
           actions.append(button(live ? 'New link' : 'Create signing link', () => request('POST'), !live));
@@ -316,6 +330,47 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         }
       } catch {
         panel.hidden = true;
+      }
+    }
+
+    // "What do I do now?" for a draft quote: window quotes need an approved Build Plan before they can be
+    // signed (on paper or on screen), and nothing on this page used to link to it.
+    async function loadNextStep(quote: any) {
+      const panel = document.querySelector('[data-next-panel]');
+      const line = document.querySelector('[data-next-line]');
+      const actions = document.querySelector('[data-next-actions]');
+      if (!(panel instanceof HTMLElement) || !(line instanceof HTMLElement) || !(actions instanceof HTMLElement)) return;
+      actions.replaceChildren();
+      if (quote.status !== 'draft') { panel.hidden = true; return; }
+      const how = quote.signature_method === 'digital' ? 'sign it on screen below' : 'print it, get it signed in pen, then tap "Confirm it\'s signed" at the bottom';
+      const anchor = (label: string, href: string, primary = false) => {
+        const a = document.createElement('a');
+        a.className = primary ? 'btn btn-primary' : 'btn btn-ghost';
+        a.href = href;
+        a.textContent = label;
+        return a;
+      };
+      panel.hidden = false;
+      if (quote.work_type === 'siding') {
+        line.textContent = `Siding quotes skip the Build Plan. Check the price, then ${how}.`;
+        return;
+      }
+      const planHref = `/internal/quotes/build-plan?quoteId=${encodeURIComponent(quote.id)}`;
+      const approveHref = `/internal/quotes/build-plan-approval?quoteId=${encodeURIComponent(quote.id)}`;
+      let status = '';
+      try {
+        const r = await fetch(`/internal/api/build-plan-state?quoteId=${encodeURIComponent(quote.id)}`);
+        if (r.ok) { const d = await r.json(); status = d.stale ? 'stale' : String(d.status || ''); }
+      } catch { /* fall through to the generic prompt */ }
+      if (status === 'approved') {
+        line.textContent = `Build Plan approved. Check the price, then ${how}.`;
+        actions.append(anchor('View Build Plan', planHref));
+      } else if (status === 'stale') {
+        line.textContent = 'The quote changed after its Build Plan was saved. Open the Build Plan, save it again, then approve it. You cannot sign this quote until then.';
+        actions.append(anchor('Open Build Plan', planHref, true));
+      } else {
+        line.textContent = 'Next: finish the Build Plan and approve it. This quote cannot be signed until the plan is approved.';
+        actions.append(anchor('Open Build Plan', planHref, true), anchor('Review & approve', approveHref));
       }
     }
 
@@ -368,6 +423,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
       loadLeadLink(quote.id);
       loadShareLink(quote.id);
+      loadNextStep(quote);
 
       set('[data-quote-id]', quote.id);
       set('[data-quote-type]', workTypeLabel(quote.work_type));
@@ -389,6 +445,9 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
       set('[data-t-subtotal]', money(quote.subtotal_cents));
       set('[data-t-total]', money(quote.total_cents));
+      set('[data-sig-quote-id]', quote.id);
+      set('[data-sig-customer]', quote.customer_name || '');
+      set('[data-sig-total]', money(quote.total_cents));
       if (quote.discount_cents > 0) {
         const row = root.querySelector('[data-discount-row]');
         if (row instanceof HTMLElement) row.hidden = false;
@@ -829,6 +888,21 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     border-bottom: 1px solid var(--line);
   }
 
+  /* Qty, unit and total never split ("$1,00 / 0" on a phone); the line description takes the squeeze. */
+  :global(.contract-items td:not(:first-child)),
+  .contract-items th:not(:first-child) {
+    white-space: nowrap;
+  }
+
+  .contract-dl dd {
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 480px) {
+    .contract-dl {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
   .contract-totals {
     margin-top: var(--space-s);
     display: grid;
@@ -863,6 +937,12 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   .contract-ack {
     font-weight: 500;
     color: var(--ink) !important;
+  }
+
+  .sig-print-id {
+    display: none;
+    margin: 0 0 var(--space-s);
+    font-size: var(--step--1);
   }
 
   .sig-line-block {
@@ -935,6 +1015,15 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     text-align: center;
   }
 
+  .qv-next {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent, var(--ink));
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    padding: var(--space-s);
+    margin-bottom: var(--space-s);
+  }
+
   @media print {
     .contract {
       border: 0;
@@ -945,6 +1034,22 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     .no-print,
     .qv-toolbar {
       display: none !important;
+    }
+
+    /* The signature must never land on a page without the price and cancellation notice above it. */
+    .contract-terms h3,
+    .contract-terms h3 ~ p {
+      break-inside: avoid;
+      break-after: avoid;
+    }
+    .contract-ack {
+      break-after: avoid;
+    }
+    .contract-signature {
+      break-inside: avoid;
+    }
+    .sig-print-id {
+      display: block !important;
     }
   }
 </style>

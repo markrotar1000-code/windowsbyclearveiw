@@ -533,6 +533,18 @@ There's no migration runner — this is a two-table schema for one internal
 user, and a migration framework would be more code than the thing it's
 guarding.
 
+## One job, signed in pen
+
+A single-window job needs no special mode: a quote with one line (quantity 1) goes through the same gates as any window quote.
+
+1. **Quotes > New** (or **Start quote** on a lead). Work type Windows, customer, one price-book line, then type your real unit price: the price book fills the middle of its range. Signature: **Print, sign by hand**. **Save & continue**.
+2. On the saved quote, the **Next step** box links to the **Build Plan**. Fill in the opening (real product, dimensions; anything marked VERIFY is checked before ordering), **Save verified plan**, **Review & approve**, **Move to review**, **Approve for Job**. Editing the quote afterwards makes the plan stale: save and approve it again.
+3. Back on the quote, check the price, tap **Print**. The printout is the contract: terms, the notice of right to cancel, then the signature page with quote number, customer, total, and lines for the customer and for Clearview. The customer signs and dates in pen and keeps a copy.
+4. On the quote, enter the signer's printed name and tap **Confirm it's signed**. This finalizes it (no more edits) and is refused until the plan is approved.
+5. **Create job**. Photograph or scan the signed paper and keep it with the job: the system records that it was signed, not the paper.
+
+The right to cancel runs three business days from the signing date. No deposit is collected by this document. Terms: `src/data/contractTerms.ts`.
+
 ## Known gaps, on purpose
 
 - **No attorney review.** `src/data/contractTerms.ts` has a warning at the

@@ -1,5 +1,18 @@
 # ICM Changelog
 
+## 2026-10-15 - One-window job, signed in pen: flow audit (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith: run the whole flow and make sure there are no missed bugs and it is as easy as possible for Mark (one window, printed and signed in pen).
+
+Method: built the site, served `dist/` with the real `/internal/api` handlers over seeded SQLite (`scripts/audit-command-center.mjs --serve`), and drove the pen path in Chromium at 390 px, then printed the quote to PDF.
+
+Found and fixed, in `src/pages/internal/quotes/view.astro`:
+1. **No way from a saved quote to its Build Plan.** New "Next step" panel (draft quotes): no plan yet -> "Open Build Plan" and "Review & approve"; plan changed after saving -> says to save and approve again; approved -> says to check the price and sign; siding -> says it has no plan. The share-link panel no longer prints its own "approve the Build Plan" line (it hides while blocked).
+2. **Phone layout.** Quantity, unit and total no longer wrap; the customer grid is one column under 480 px and long emails break only when they must.
+3. **Printed pen copy.** Notice of right to cancel, acknowledgement and signature stay on one page; the signature block prints quote number, customer and total; a signature/date line for Clearview was added. The contract text is untouched, so `TERMS_VERSION` and its hash guard are unchanged.
+
+Test: `test:internal-audit` group 6 (source-level; mutation-checked against the previous page). Not changed, noted for Mark: the price book pre-fills a range midpoint as an editable price; Build Plan needs "Move to review" then "Approve for Job" (two taps); dimensions remain a VERIFY warning. Not verified: a real phone, a real printer's margins, the live Access sign-in.
+
 ## 2026-10-12 - README brought up to date (branch `claude/bug-sweep-repair-ub27ah`)
 
 Keith: "Update read me please." The README still described the pre-October platform. Corrected against the repo: no public pricing (`publicPricing = false`; the pricing Worker was deleted), durable rate limits and Turnstile (the "no durable rate limiter" gap is closed), CI works again, `test:all` is 59 steps, the Command Center's current tool list, optional Access / R2 / ops-cron, the owner-supplied guide graphics (new "Adding or replacing a guide graphic" steps, including why AI upscaling is not used), the real project layout, and a short ICM pointer. Docs only; no code or test changes.

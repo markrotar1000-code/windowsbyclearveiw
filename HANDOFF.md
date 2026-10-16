@@ -1,5 +1,12 @@
 # Project context — Clearview Windows
 
+## 2026-10-15 - One-window job, pen signature (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith asked for a copy-paste walkthrough for Mark and a full-flow bug pass. Details: `.ai/CHANGELOG.md` (2026-10-15). Steps for Mark: `internal/README.md`, "One job, signed in pen".
+
+- Fixed: the saved quote had no link to the Build Plan (now a "Next step" panel), phone money columns wrapped, the printed signature sat alone on page 2.
+- **VERIFY with Mark:** he types his own price (the price book pre-fills a midpoint); the contract says no deposit is collected; a lawyer has not reviewed `contractTerms.ts` (nothing customer-facing says so, by Keith's decision); the 3-day right to cancel runs from the signing date, so do not order or start before it passes unless he accepts the risk; keep a photo or scan of the signed paper, the system records only that it was signed.
+
 ## 2026-10-11 - Home "Recent work" shows the newer photos (branch `claude/recent-work-newer-photos-2026-10-11`)
 
 Keith: "We should be displaying the newer images on 'our recent work'". Details: `.ai/CHANGELOG.md` (2026-10-11).
