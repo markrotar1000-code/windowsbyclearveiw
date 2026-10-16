@@ -114,3 +114,35 @@ const planStatus = (id) => call(planState.onRequestGet, { path: `/internal/api/b
   assert.equal(blocked.status, 409);
   pass('a finalized quote cannot be repriced');
 }
+
+// ── The quote screen itself can reprice a draft (not only the edit form) ────────────────────────────────
+{
+  const viewPage = read('src/pages/internal/quotes/view.astro');
+  assert.match(viewPage, /data-price-panel/, 'the quote screen has a Prices panel');
+  assert.match(viewPage, /renderPricePanel\(quote, items\)/);
+  assert.match(viewPage, /panel\.hidden = quote\.status !== 'draft'/, 'only an unsigned quote can be repriced');
+  assert.match(viewPage, /qv-prices[\s\S]*no-print|no-print[\s\S]*data-price-panel|class="qv-prices no-print"/, 'the panel never prints');
+
+  // The panel PUTs the quote it just loaded with new prices. Do exactly that against the real handlers.
+  const customer = { name: 'Joey Padilla', phone: '(360) 555-0100', email: '', address: '9407 NE 105th Ave', city: 'Vancouver', role: 'Homeowner' };
+  const created = await call(quotesIndex.onRequestPost, { method: 'POST', body: { customer, items: [{ label: 'Slider — Vinyl — Cascade — fin', quantity: 2, unitPriceCents: 240000 }], discountCents: 5000, discountReason: 'Repeat customer', notes: 'keep me', signatureMethod: 'pen' } });
+  const id = created.body.id;
+  const { quote, items } = (await call(quoteById.onRequestGet, { params: { id } })).body;
+  const saved = await call(quoteById.onRequestPut, { method: 'PUT', params: { id }, body: {
+    customer: { name: quote.customer_name, phone: quote.customer_phone, email: quote.customer_email, address: quote.customer_address, city: quote.customer_city, role: quote.customer_role },
+    notes: quote.notes,
+    workType: quote.work_type,
+    items: items.map((item) => ({ label: item.label, description: item.description || '', quantity: item.quantity, unitPriceCents: 85000 })),
+    discountCents: quote.discount_cents || 0,
+    discountReason: quote.discount_reason || '',
+    signatureMethod: quote.signature_method,
+  } });
+  assert.equal(saved.status, 200);
+  const after = (await call(quoteById.onRequestGet, { params: { id } })).body;
+  assert.equal(after.items[0].unit_price_cents, 85000);
+  assert.equal(after.quote.subtotal_cents, 170000);
+  assert.equal(after.quote.total_cents, 165000, 'the discount survives a price change');
+  assert.equal(after.quote.notes, 'keep me');
+  assert.equal(after.quote.customer_name, 'Joey Padilla');
+  pass('the quote screen reprices a draft with the same request the edit form sends; discount and notes are kept');
+}
