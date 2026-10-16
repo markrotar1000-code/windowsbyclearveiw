@@ -230,7 +230,6 @@ ok('the home hero photo is offered up to 2560 px', () => {
 const SOURCE_LIMITED_GRAPHICS = new Map([
   ['guides/vinyl-vs-fiberglass-pacific-northwest', 'src/assets/guides/vinyl-fiberglass-sightlines.png'],
   ['guides/fogged-windows', 'src/assets/guides/double-pane-glass-how-it-works.png'],
-  ['guides/what-your-openings-need', 'src/assets/guides/window-flashing-water-way-out.png'],
   ['window-features', 'src/assets/guides/window-energy-ratings-explained.png'],
 ]);
 const pngWidth = (path) => readFileSync(new URL(`../${path}`, import.meta.url)).readUInt32BE(16);
