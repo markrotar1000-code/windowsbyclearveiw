@@ -1,5 +1,9 @@
 # Project context — Clearview Windows
 
+## 2026-10-16 - /new-construction flashing diagram removed
+
+Per Keith. See `.ai/CHANGELOG.md` (2026-10-16). The diagram component still exists and is used on the guides.
+
 ## 2026-10-16 - Fin naming, $850 fin slider, price edits (branch `claude/fin-install-price-edit`)
 
 See `.ai/CHANGELOG.md` (2026-10-16). Fin is only Mark's internal name for a full-frame install, never a price (corrected the same day). Next agent: ask Mark for his starting price on each other opening (`quotePrice` in `src/data/pricing.ts`, vinyl Cascade); until then they start at the range midpoint and he edits the line. Prices are editable on the draft quote form (Edit quote) until it is signed; the Build Plan no longer goes stale on a price change.

@@ -2,7 +2,6 @@
 import { getHeroBg } from '../lib/hero-bg';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
-import FlashingOrder from '../components/diagrams/FlashingOrder.astro';
 import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES, frameForGroup } from '../lib/image-sizes';
 import { newBuildWork, findWork, workKindLabel } from '../data/work';
@@ -191,7 +190,6 @@ const projectInquiryMailto = site.email
           </p>
         </article>
       </div>
-      <FlashingOrder heading="Flashing sequence" />
     </div>
   </section>
 
@@ -344,14 +342,12 @@ const projectInquiryMailto = site.email
     color: var(--accent-bright);
   }
 
-  /* Two short notes beside the flashing diagram — framing tolerance and wall
-     sequence — read better as a pair of cards than as more paragraph text
-     competing with the diagram's own callouts below. */
+  /* Two short notes — framing tolerance and wall sequence — read better as a pair of cards than as more paragraph text. */
   .ro-notes {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--space-m);
-    margin: var(--space-l) 0 var(--space-xl);
+    margin: var(--space-l) 0 0;
   }
 
   .ro-notes article {

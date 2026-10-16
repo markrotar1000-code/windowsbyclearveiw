@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-16 - Flashing diagram removed from /new-construction
+
+Keith: remove the diagram on the new-construction page. Dropped the `FlashingOrder` diagram (and its "Flashing sequence" heading) from `src/pages/new-construction.astro`; the "Prep and flashing" section keeps its two note cards. The component and `/guides/what-your-openings-need` are unchanged. `test-image-delivery` no longer lists `/new-construction` among pages carrying the flashing graphic. `npm run test:all` 60/60.
+
 ## 2026-10-16 - Correction: fin is a name, not a price
 
 Keith: "Fin is not a price. It's replacing the term for full-frame replacement internally." PR #248 had treated it as a price (`finPrice`, a frame allowance fallback, and a request for per-opening fin numbers). Reverted that reading:
