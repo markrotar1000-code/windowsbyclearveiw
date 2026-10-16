@@ -14,6 +14,12 @@ export function json(data, status = 200) {
   });
 }
 
+// Sanity ceiling on any one line and on a whole quote: $5,000,000. Far above any real job, far below
+// the point where cents stop being exact integers (2^53). It exists to catch a typo (an extra run of
+// zeros, a pasted number) before it reaches a contract; it is not a pricing rule.
+export const MAX_QUOTE_CENTS = 500_000_000;
+const MAX_QUOTE_TEXT = '$5,000,000';
+
 export const clean = (v, max = 500) => String(v ?? '').trim().slice(0, max);
 
 /**
@@ -50,6 +56,10 @@ export function parseQuoteBody(body) {
     if (!Number.isFinite(unitPriceCents) || unitPriceCents < 0) {
       return { error: `Line ${index + 1}: unit price is invalid.` };
     }
+    const lineTotalCents = Math.round(quantity * unitPriceCents);
+    if (!(lineTotalCents <= MAX_QUOTE_CENTS)) {
+      return { error: `Line ${index + 1}: that comes to more than ${MAX_QUOTE_TEXT}, which looks like a typo. Check the price and the quantity.` };
+    }
     cleanItems.push({
       label,
       description: clean(raw?.description, 500),
@@ -57,11 +67,14 @@ export function parseQuoteBody(body) {
       unitPriceCents,
       // Rounded to whole cents: fractional quantities (linear feet of trim) must
       // never put half-cents on a signed contract or invoice.
-      lineTotalCents: Math.round(quantity * unitPriceCents),
+      lineTotalCents,
     });
   }
 
   const subtotalCents = cleanItems.reduce((sum, item) => sum + item.lineTotalCents, 0);
+  if (subtotalCents > MAX_QUOTE_CENTS) {
+    return { error: `The quote total comes to more than ${MAX_QUOTE_TEXT}, which looks like a typo. Check the line prices and quantities.` };
+  }
   const discountCents = Math.max(0, Math.min(subtotalCents, Math.round(Number(body.discountCents) || 0)));
   const totalCents = subtotalCents - discountCents;
 
