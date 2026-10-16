@@ -16,30 +16,27 @@ const root = new URL('../', import.meta.url);
 const pass = (m) => console.log(`PASS: ${m}`);
 const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
 
-// ── Mark's fin price for a vinyl Cascade slider is $850, not insert + a frame allowance ($2,400) ─────────
+// ── A vinyl Cascade slider starts at $850 whether it is an insert or a fin install ──────────────────────
 {
   const { pricing } = await import(pathToFileURL(`${root.pathname}src/data/pricing.ts`).href);
   const { suggestedUnitPrice } = await import(pathToFileURL(`${root.pathname}src/lib/quote-pricing.ts`).href);
   const slider = pricing.openings.find((o) => o.id === 'slider');
+  const casement = pricing.openings.find((o) => o.id === 'casement');
   const cascade = pricing.brands.find((b) => b.id === 'cascade');
   const milgard = pricing.brands.find((b) => b.id === 'milgard');
   const fiberglass = pricing.materials.find((m) => m.id === 'fiberglass');
-  const finAllowance = pricing.fullFrame;
-  const base = { opening: slider, materialMultiplier: 1, finAllowance };
 
-  assert.equal(slider.finPrice, 850);
-  assert.deepEqual(suggestedUnitPrice({ ...base, brand: cascade, method: 'fin' }), { unitPrice: 850, ownFinPrice: true });
-  assert.equal(suggestedUnitPrice({ ...base, brand: cascade, method: 'insert' }).unitPrice, 1000, 'insert price is unchanged');
-  assert.equal(suggestedUnitPrice({ ...base, brand: milgard, method: 'fin' }).unitPrice, 950, 'brand step-up still adds on top');
-  assert.equal(suggestedUnitPrice({ ...base, materialMultiplier: fiberglass.multiplier, brand: cascade, method: 'fin' }).unitPrice, 1190, 'material multiplier still applies to the fin price');
+  assert.equal(slider.quotePrice, 850);
+  assert.equal(suggestedUnitPrice({ opening: slider, materialMultiplier: 1, brand: cascade }), 850);
+  assert.equal(suggestedUnitPrice({ opening: slider, materialMultiplier: 1, brand: milgard }), 950, 'brand step-up still adds on top');
+  assert.equal(suggestedUnitPrice({ opening: slider, materialMultiplier: fiberglass.multiplier, brand: cascade }), 1190, 'material multiplier still applies');
+  assert.equal(casement.quotePrice, undefined, 'no invented prices for openings Mark has not given');
+  assert.equal(suggestedUnitPrice({ opening: casement, materialMultiplier: 1, brand: cascade }), 1100, 'other openings keep the range midpoint');
 
-  // An opening Mark has not given a fin price for keeps the old fallback, and says so.
-  const casement = pricing.openings.find((o) => o.id === 'casement');
-  assert.equal(casement.finPrice, undefined, 'no invented fin prices for openings Mark has not priced');
-  const fallback = suggestedUnitPrice({ opening: casement, materialMultiplier: 1, brand: cascade, method: 'fin', finAllowance });
-  assert.equal(fallback.ownFinPrice, false);
-  assert.equal(fallback.unitPrice, 2500);
-  pass('a fin slider (vinyl, Cascade) suggests $850; unpriced openings fall back and are flagged');
+  // Fin is a name, not a price: the builder never adds a frame allowance for it.
+  const builder = read('src/pages/internal/quotes/new.astro');
+  assert.ok(!/fullFrame|finAllowance|finPrice/.test(builder + read('src/lib/quote-pricing.ts')), 'the method never reaches the price math');
+  pass('a vinyl Cascade slider suggests $850 for any install method; fin does not change the price');
 }
 
 // ── "Fin" everywhere Mark looks ─────────────────────────────────────────────────────────────────────────
