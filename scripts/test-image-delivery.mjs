@@ -192,11 +192,14 @@ ok('every image has alt text, and tiles have srcset + sizes', () => {
 });
 
 ok('all-landscape groups use the landscape frame, and hard-cropped photos get large candidates', () => {
-  for (const page of ['siding', 'new-construction']) {
-    const frames = [...pages.get(page).matchAll(/<figure class="work-card[^"]*"[^>]*data-frame="(\w+)"/g)].map((m) => m[1]);
-    assert.ok(frames.length > 0, `${page}: no work cards found`);
-    assert.ok(frames.every((frame) => frame === 'landscape'), `${page}: expected every tile landscape, got ${frames.join(',')}`);
-  }
+  const framesOf = (page) => [...pages.get(page).matchAll(/<figure class="work-card[^"]*"[^>]*data-frame="(\w+)"/g)].map((m) => m[1]);
+  const sidingFrames = framesOf('siding');
+  assert.ok(sidingFrames.length > 0, 'siding: no work cards found');
+  assert.ok(sidingFrames.every((frame) => frame === 'landscape'), `siding: expected every tile landscape, got ${sidingFrames.join(',')}`);
+  // /new-construction: the two landscape "Completed work" shots keep a landscape frame; the five portrait
+  // photos of the gable-windows job are their own block and keep the portrait frame.
+  const newBuildFrames = framesOf('new-construction');
+  assert.deepEqual(newBuildFrames, ['landscape', 'landscape', 'portrait', 'portrait', 'portrait', 'portrait', 'portrait'], `new-construction: frames were ${newBuildFrames.join(',')}`);
   const gallery = pages.get('gallery');
   const siding = /id="siding"[\s\S]*?<\/section>/.exec(gallery)?.[0] ?? '';
   assert.ok(/data-frame="landscape"/.test(siding) && !/data-frame="portrait"/.test(siding), 'the gallery siding group should be all landscape');
