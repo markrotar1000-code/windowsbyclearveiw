@@ -1,5 +1,17 @@
 # Project context — Clearview Windows
 
+## 2026-10-16 - /new-construction flashing diagram removed
+
+Per Keith. See `.ai/CHANGELOG.md` (2026-10-16). The diagram component still exists and is used on the guides.
+
+## 2026-10-16 - Fin naming, $850 fin slider, price edits (branch `claude/fin-install-price-edit`)
+
+See `.ai/CHANGELOG.md` (2026-10-16). Fin is only Mark's internal name for a full-frame install, never a price (corrected the same day). Next agent: ask Mark for his starting price on each other opening (`quotePrice` in `src/data/pricing.ts`, vinyl Cascade); until then they start at the range midpoint and he edits the line. Prices are editable on the draft quote form (Edit quote) until it is signed; the Build Plan no longer goes stale on a price change.
+
+## 2026-10-16 - Repo-wide bug sweep
+
+Details: `.ai/CHANGELOG.md` (2026-10-16, "Repo-wide bug sweep"). A quote now refuses an amount over $5,000,000 or a quantity over 1,000,000 ("looks too large, check the digits"); three internal handlers answer 400 to a `null` body. **VERIFY with Mark:** that $5,000,000 is a comfortable ceiling for his largest builder quote (it is the same limit a general job already has). Still open from earlier: fractional quantities are accepted by the server; quote IDs carry the UTC date.
+
 ## 2026-10-15 - One-window job, pen signature (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith asked for a copy-paste walkthrough for Mark and a full-flow bug pass. Details: `.ai/CHANGELOG.md` (2026-10-15). Steps for Mark: `internal/README.md`, "One job, signed in pen".
@@ -688,7 +700,7 @@ Shipped via PRs #110–#113. What changed and the rules that came out of it:
 - **What changed:** `/replacement` (method diagram + four-question card replaced by "What we can do for you"); guide `full-frame-vs-insert` rewritten as `/guides/what-your-openings-need` with a 301 in `public/_redirects`; diagram component renamed `OpeningScope` (`diagram: opening-scope`); city pages, other guides, home, tools index, estimate-sent, terms, `JsonLd`, Ask suggestion chips.
 - **Calculator:** the "how much comes out" step is gone. One range for every house, using the old "mixed" assumption (34% of openings get the extra frame-level amount in `pricing.fullFrame`). Numbers in `src/data/pricing.ts` are unchanged, so ranges for a "mixed" house are identical to before; ranges for someone who used to pick "insert" only are now higher, and "full-frame" only lower. `functions/ask/_lib/pricing.mjs` mirrors this (its `method` parameter is removed).
 - **Ask assistant:** system prompt has a TERMINOLOGY rule; `compare_installation_paths` returns `simplerScope` / `moreWork` and a note not to name methods.
-- **Unchanged on purpose:** Command Center, Build Plan and stored quote data still use insert/full-frame internally (`pages/internal/*`, `build-plan-rules.mjs`). Mark picks the method there; renaming stored values would risk saved quotes and jobs.
+- **Unchanged on purpose:** Command Center, Build Plan and stored quote data used insert/full-frame internally (renamed to insert/fin on 2026-10-16; old stored plans still read) (`pages/internal/*`, `build-plan-rules.mjs`). Mark picks the method there; renaming stored values would risk saved quotes and jobs.
 - **`VERIFY` / outstanding:** `functions/ask/_data/guides-index.json` was patched by hand (old guide's 5 chunks removed, link text fixed) because embeddings need `GEMINI_API_KEY`. Run `GEMINI_API_KEY=... npm run build:guides-index` to re-embed `what-your-openings-need` so Ask can retrieve it. The `estimate_price` mismatch noted here was fixed later the same day (see the Ask price tool entry).
 
 ### 2026-09-29 — SEO striking-distance titles and descriptions

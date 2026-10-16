@@ -6,6 +6,8 @@
 //   4. the quote builder must refuse a bad quantity out loud instead of blocking the save in silence
 //   5. the Mail pilot break-even box must only name a problem with something that was typed
 //   6. a saved quote must say what to do next and link to the Build Plan; the pen copy must be printable as a contract
+//   8. the quote, plan and job handlers answer a literal JSON null body with a 400, not an unhandled 500
+//   7. a quote must refuse an amount that cannot be a real price (a pasted phone number, an overflow) instead of saving a NULL or imprecise total
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -36,7 +38,7 @@ async function call(handler, env, { method = 'GET', path = '/', body, params = {
 }
 const freshEnv = () => ({ QUOTES_DB: createD1({ schemaFiles: ['functions/api/_data/schema.sql', 'internal/db/schema.sql'] }) });
 const customer = { name: 'Pat Doe', phone: '(360) 555-0100', email: 'pat@example.com', address: '1 Main St', city: 'Camas' };
-const windowItems = [{ label: 'Milgard vinyl slider, full-frame', quantity: 1, unitPriceCents: 90000 }];
+const windowItems = [{ label: 'Milgard vinyl slider, fin', quantity: 1, unitPriceCents: 90000 }];
 
 async function draftQuote(env) {
   const created = await call(quotesIndex.onRequestPost, env, { method: 'POST', body: { customer, items: windowItems, signatureMethod: 'pen' } });
@@ -226,6 +228,37 @@ const planRow = (env, id) => env.QUOTES_DB.prepare('SELECT * FROM quote_build_pl
   assert.ok(/\.contract-signature\s*\{\s*break-inside: avoid/.test(view) && /contract-terms h3 ~ p/.test(view), 'the notice of right to cancel and the signature are not split across pages');
   assert.ok(view.includes('For {site.legalName} (signature, printed name, date)'), 'the pen copy has a line for Clearview');
   pass('saved quote: next step links to the Build Plan, money does not wrap on a phone, the pen copy prints as a signable contract');
+}
+
+// ── 7. Quote amounts that cannot be real ───────────────────────────────────
+{
+  const env = freshEnv();
+  const post = (items) => call(quotesIndex.onRequestPost, env, { method: 'POST', body: { customer, items, signatureMethod: 'pen' } });
+  const overflow = await post([{ label: 'x', quantity: 1e308, unitPriceCents: 1e308 }]);
+  assert.equal(overflow.status, 400, 'quantity x price that overflows to Infinity used to save a quote with a NULL total');
+  const imprecise = await post([{ label: 'x', quantity: 1e15, unitPriceCents: 90000 }]);
+  assert.equal(imprecise.status, 400, 'a total past the safe-integer range used to be saved as an imprecise float');
+  const phone = await post([{ label: 'Slider', quantity: 1, unitPriceCents: 360555010000 }]);
+  assert.equal(phone.status, 400, 'a phone number pasted into the price box ($3,605,550,100) is refused');
+  assert.match(phone.body.error, /too large/i, 'and the message says why');
+  const sum = await post(Array.from({ length: 6 }, (_, i) => ({ label: `L${i}`, quantity: 1, unitPriceCents: 100_000_000 })));
+  assert.equal(sum.status, 400, 'lines that are each fine but add up past the ceiling are refused');
+  const ok = await post([{ label: 'Slider', quantity: 1, unitPriceCents: 90000 }, { label: 'Siding labor', quantity: 2400, unitPriceCents: 300 }]);
+  assert.equal(ok.status, 201, 'ordinary quotes (including 2,400 sq ft of siding) are unaffected');
+  const edit = await call(quoteById.onRequestPut ?? quoteById.onRequestPatch, env, { method: 'PUT', params: { id: ok.body.id }, body: { customer, items: [{ label: 'x', quantity: 1e15, unitPriceCents: 90000 }], signatureMethod: 'pen' } });
+  assert.ok(edit.status >= 400 && edit.status < 500, 'editing a draft goes through the same check');
+  pass('quote amounts: overflow, imprecise totals and a pasted phone number are refused with a clear message');
+}
+
+// ── 8. A JSON `null` body ──────────────────────────────────────────────────
+{
+  const env = freshEnv();
+  for (const [name, handler] of [['build plan', buildPlan.onRequestPost], ['build plan state', planState.onRequestPost], ['jobs', jobsApi.onRequestPost]]) {
+    let result;
+    try { result = await call(handler, env, { method: 'POST', body: null }); } catch (error) { assert.fail(`${name}: a null body threw ${error.message} instead of answering 400`); }
+    assert.equal(result.status, 400, `${name}: a null body is a client mistake, not a server error`);
+  }
+  pass('build plan, build plan state and jobs: a JSON null body answers 400 instead of an unhandled error');
 }
 
 console.log('\nAll internal audit regression tests passed.');

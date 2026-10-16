@@ -14,7 +14,6 @@ faq:
   - question: Can you quote from a photo?
     answer: A photo helps us prepare, but it cannot show a soft sill or an opening that has moved. The number comes after we measure and look at the opening in person.
 diagram: opening-scope
-secondaryDiagram: flashing-order
 heroImage: ../../assets/work/new-unit-interior.jpg
 heroImageAlt: New white double-hung set into an existing finished wood-trim opening, seen from inside the room.
 heroImageCredit: Clearview job photo — new unit in the existing opening

@@ -1,5 +1,17 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-16 - /new-construction: diagram out, gable-windows photos in
+
+The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is removed everywhere as inaccurate: `/new-construction`, the `what-your-openings-need` guide, its component and image file, and the `flashing-order` diagram options. Do not reinstate it without Mark's say-so. Also on `/new-construction`: five photos of one gable-windows job are in as their own block (`newBuildGableWork` in `src/data/work.ts`) and in the gallery's New construction group. Details: `.ai/CHANGELOG.md` (2026-10-16).
+
+## 2026-10-16 - Fin naming, $850 fin slider, price edits
+
+Internal quoting says "fin" everywhere (builder, saved line labels, Build Plan, job view). Slider (vinyl, Cascade) starts at $850 via `quotePrice` in `src/data/pricing.ts`; fin is only the method label and never changes a price. A line's price can be changed on any draft quote, including after Build Plan approval, without making the plan stale. Details: `.ai/CHANGELOG.md` (2026-10-16). **VERIFY with Mark:** only the slider has a `quotePrice`; other openings start at their range midpoint until he gives his number.
+
+## 2026-10-16 - Repo-wide bug sweep
+
+Two real bugs fixed (a quote accepted nonsense amounts and saved a NULL or imprecise total; a JSON `null` body crashed the build-plan, build-plan-state and jobs handlers), both with failing-first tests in `test:internal-audit`. Everything else swept was clean (Command Center audit 232 views, axe 152 views, links, redirects, prune step, client navigation, CI coverage). Detail and the list of what was checked: `.ai/CHANGELOG.md`.
+
 ## 2026-10-16 - Home hero and footer line reworded
 
 Hero lede (`VideoHero.astro`) and footer blurb (`Footer.astro`) now read "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." (footer adds "in Vancouver, WA and surrounding Clark County"). Title, H1 and description untouched. Detail: `.ai/CHANGELOG.md`.
@@ -22,7 +34,7 @@ Keith supplied "Window Trouble: Know the Signs" (4096 px, `src/assets/guides/win
 
 ## 2026-10-12 - Double-pane and flashing graphics replaced (branch `claude/bug-sweep-repair-ub27ah`)
 
-Keith supplied two new owner graphics. "Double-Pane Glass: How It Works" (`src/assets/guides/double-pane-glass-how-it-works.png`) replaces the Canva desktop and mobile pair on `/guides/fogged-windows`; "Window Flashing: Give Water a Way Out" (`src/assets/guides/window-flashing-water-way-out.png`) replaces the stock-photo flashing guide, so `FlashingOrder.astro` now renders it through `CanvaGuideEmbed` on `/new-construction` and as the secondary diagram on `/guides/what-your-openings-need`. Both are 1536 x 1024 RGB with metadata stripped, shown with full alt text and the graphic's own footnote as the visible caption. The old desktop/mobile pair is deleted (the double-pane graphic is one image at every width, so phone text is small). The `flashing` type is removed from `PhotoGuide.astro`. A third graphic, "Window Energy Ratings, Explained" (`window-energy-ratings-explained.png`), replaces the coded U-factor/SHGC gauge on `/window-features`; the gauge's unsourced "0.27 typical Clearview install" and rebate-range numbers are gone. Open: the supplied double-pane graphic has a washed-out subtitle ("Two panes. A sealed insulating space. Layers that work together."), so a clean re-export is wanted; the flashing graphic's "Overlapping layers..." line starts with a clipped "O".
+Keith supplied two new owner graphics. "Double-Pane Glass: How It Works" (`src/assets/guides/double-pane-glass-how-it-works.png`) replaces the Canva desktop and mobile pair on `/guides/fogged-windows`; "Window Flashing: Give Water a Way Out" replaced the stock-photo flashing guide (since removed everywhere as inaccurate, 2026-10-16: see the top entry; the file and `FlashingOrder.astro` are deleted). Both are 1536 x 1024 RGB with metadata stripped, shown with full alt text and the graphic's own footnote as the visible caption. The old desktop/mobile pair is deleted (the double-pane graphic is one image at every width, so phone text is small). The `flashing` type is removed from `PhotoGuide.astro`. A third graphic, "Window Energy Ratings, Explained" (`window-energy-ratings-explained.png`), replaces the coded U-factor/SHGC gauge on `/window-features`; the gauge's unsourced "0.27 typical Clearview install" and rebate-range numbers are gone. Open: the supplied double-pane graphic has a washed-out subtitle ("Two panes. A sealed insulating space. Layers that work together."), so a clean re-export is wanted; the flashing graphic's "Overlapping layers..." line starts with a clipped "O".
 
 ## 2026-10-12 - Guide page diagram replaced (branch `claude/bug-sweep-repair-ub27ah`)
 

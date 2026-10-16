@@ -1,5 +1,48 @@
 # ICM Changelog
 
+## 2026-10-16 - Gable-windows photos added to /new-construction
+
+Keith sent five photos of one job (gable-end triangular windows, flashing tape and house wrap, gridded windows below, tan trim and lap siding going up) for the new-construction page. Added to `src/data/work.ts` as kind `new construction` (orders 52-56; metadata stripped, 1200x1600, no GPS, no people, no address or house number legible). `/new-construction` shows them as their own "Flashing on a recent job" block (three across, two on a phone) via the new `newBuildGableWork` export; the two older landscape shots keep the "Completed work" band (`newBuildWork` now excludes the gable set). The gallery's "New construction" group picks all seven up automatically. Home "Recent work" is untouched (it reads `gallery-additions.ts`). `test-image-delivery` now expects landscape, landscape, then five portrait tiles on that page. Captions and alt text describe only what is visible; the job's scope is not known. `npm run test:all` 60/60; checked in a browser at 1280 and 390 px.
+
+## 2026-10-16 - Flashing diagram removed everywhere (inaccurate)
+
+Keith: the flashing diagram is inaccurate, remove it everywhere. Deleted the FlashingOrder diagram component and its window-flashing-water-way-out image (both under src/); dropped its use from `src/pages/guides/[slug].astro` (diagram note, both render slots), the `secondaryDiagram: flashing-order` line in `what-your-openings-need.md`, and the `flashing-order` options in `src/content.config.ts`; removed the matching `test-image-delivery` entry and updated `public-copy-positioning.md` and STATE. The `/guides/what-your-openings-need` page now ends without the "More detail" block. Nothing else used it. `npm run test:all` 60/60.
+
+## 2026-10-16 - Flashing diagram removed from /new-construction (superseded: now removed everywhere)
+
+Keith: remove the diagram on the new-construction page. Dropped the `FlashingOrder` diagram (and its "Flashing sequence" heading) from `src/pages/new-construction.astro`; the "Prep and flashing" section keeps its two note cards. The component and `/guides/what-your-openings-need` are unchanged. `test-image-delivery` no longer lists `/new-construction` among pages carrying the flashing graphic. `npm run test:all` 60/60.
+
+## 2026-10-16 - Correction: fin is a name, not a price
+
+Keith: "Fin is not a price. It's replacing the term for full-frame replacement internally." PR #248 had treated it as a price (`finPrice`, a frame allowance fallback, and a request for per-opening fin numbers). Reverted that reading:
+
+- The install method (insert or fin) is a label on the quote line only and never changes the suggested price. `finPrice` and the $800-$2,000 frame allowance are gone from the builder (`src/lib/quote-pricing.ts`).
+- The $850 is the slider's own price: `quotePrice: 850` on the `slider` opening in `src/data/pricing.ts` (vinyl, Cascade), used instead of the $1,000 range midpoint. Milgard adds $100, fiberglass x1.4, as before. Openings without a `quotePrice` start at the range midpoint; none invented.
+- Naming, editable prices, and the Build Plan-stays-approved-on-price-change behaviour from PR #248 are unchanged.
+- `pricing.fullFrame` stays in the data file only because the pricing health check and schema reference it; no quote path uses it.
+
+## 2026-10-16 - Fin naming, $850 fin slider, price edits after Build Plan approval
+
+Keith (from Mark's quote screen): internal quoting must say **fin**, not full-frame; a vinyl Cascade slider fin was suggesting $2,400 and should be $850; Mark must be able to change any line's price until the quote is finalized.
+
+- **Fin naming (internal only).** Quote builder method is "Fin"; saved line labels read "Slider — Vinyl — Cascade — fin"; the Build Plan method list, plan generation (`inferPlanItem`, which reads both "fin" and legacy "full-frame" labels as `fin`), install rule I-02 and the job view say fin. Stored plans with `installationMethod: 'full-frame'` still display as Fin. Public pages are unchanged (they must not name install methods; `test:public-terminology`).
+- **$850 fin slider.** New optional `finPrice` per opening in `src/data/pricing.ts`; only `slider` has one (850, vinyl Cascade). Math moved to `src/lib/quote-pricing.ts` (fin price x material multiplier + brand step-up; Milgard slider fin suggests $950). Before: insert midpoint $1,000 + $1,400 frame allowance = $2,400. Openings without a `finPrice` keep the old fallback (insert + `pricing.fullFrame` allowance).
+- **Price edits never strand an approved plan.** `sourceSnapshot` no longer carries `lineTotalCents`, so a price change does not mark the Build Plan stale or block signing/job creation. One shared `sameSource` (in `build-plan-rules.mjs`, replacing four copies) ignores the price on snapshots saved before this change. Quantity, label or description changes still require re-approval. A finalized (signed) quote still cannot be repriced; editing a draft still revokes unsigned customer links.
+- Tests: new `test:quote-price-edit` (in `build.yml`); `test-quote-signing` now asserts a price-only edit keeps the plan approved and a quantity edit makes it stale. `npm run test:all` 60/60 and `npm run build` pass locally.
+
+## 2026-10-16 - Repo-wide bug sweep (branch `claude/1-window-job-quote-contract-8fl5yx`)
+
+Keith: "Can you do a repo-wide bug sweep and repair?" Baseline `test:all` green (59 steps), `npm audit --omit=dev` clean. Angles not used by earlier rounds, and what each found:
+
+Fixed, each with a test that failed first (`test:internal-audit` groups 7 and 8):
+1. **A quote accepted amounts that cannot be real.** Quantity 1e308 x price 1e308 saved a quote with a NULL total; 1e15 x $900 saved an imprecise float (9e19 cents); a phone number pasted into the price box saved a $3.6 billion quote. `parseQuoteBody` (`functions/internal/_lib/quotes.mjs`) now refuses a quantity over 1,000,000, a line or total over $5,000,000 (`MAX_QUOTE_CENTS`, the same typo guard a general job's agreed amount already had) with "the amount looks too large. Check the quantity and price." The builder already shows the server's message. Create and edit share the check.
+2. **A JSON `null` body crashed three handlers** (`build-plan.js`, `build-plan-state.js`, `jobs.js` POST: "Cannot read properties of null", an unhandled 500). They answer 400 "Body must be a JSON object." Found by sending bad JSON, `null`, arrays, strings, numbers and odd query strings to every method of all 30 internal handlers.
+3. `scripts/run-all-tests.mjs` header said GitHub Actions cannot run; corrected (comment only).
+
+Checked and clean: the whole pen-signing lifecycle on the real handlers (second Confirm answers 409, a signed quote cannot be edited or deleted, a second Create job returns the same job, an empty signer name is refused); `audit-command-center.mjs` (232 page views, 0 problems) and `audit-a11y.mjs` (152 page-views, no violations) on current main; every local link and image in `dist/` (4,838 refs, only `/internal/` and two API links "missing", all expected) including the five new full-size diagram links; `email_off` markers survive into the built HTML; the image-prune step leaves 0 unreferenced originals and nothing outside the built text references `_astro/` files; `_redirects` (6 rules, no loop or missing target); syntax of 168 function, worker and script files; CI runs all 57 `test:*` scripts; real-browser client navigation (home, siding, replacement, Back) keeps the estimate buttons' target right and the siding service reaches the form; a type check (`astro check`, installed with `--no-save`) gave 202 strict-mode errors, none a bug (DOM `Element` typing, literal-typed constants, values already guarded earlier in the page).
+
+Not changed: `copilot-summary.js` throws "no such table: follow_up_tasks" on a database the dashboard has never loaded (the dashboard creates the table; production has it); quote, invoice and job IDs carry the UTC date (cosmetic, noted 2026-10-12); the server still accepts fractional quantities (an owner decision, noted 2026-10-08). `test:all` is 59 steps.
+
 ## 2026-10-16 - Home hero and footer line reworded (branch `claude/1-window-job-quote-contract-8fl5yx`)
 
 Keith: the hero line "Window installation to replace old windows and sliding glass doors, or to set new construction — quoted in person, installed on a scheduled date." sounds weird. Now (his wording): "Replacement windows, sliding glass doors, and new construction. Window installation and siding done right." The footer blurb carries the same sentence plus the service area. Title, H1 and meta description are unchanged, so "installation" is still in the home title (`test:seo`). The old line's "quoted in person" and "scheduled date" are no longer on the home page. "Done right" is the owner's wording, not a measurable claim; no guarantee is implied. `test:all` passes (59 steps).

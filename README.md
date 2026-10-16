@@ -357,7 +357,7 @@ npm run test:all   # runs every CI test step in CI order (scripts/run-all-tests.
 npm run build
 ```
 
-`test:all` has 60 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
+`test:all` has 61 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
 
 Notable guards:
 

@@ -1,5 +1,5 @@
 import { BUILD_PLAN_STATES, transitionPlanState, assertJobEligible } from '../../_lib/build-plan-state.mjs';
-import { lintPlan, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
+import { lintPlan, sameSource, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
 import { isSidingQuoteId, SIDING_NO_PLAN } from '../_lib/work-types.mjs';
 
 function json(data, status = 200) {
@@ -15,10 +15,6 @@ function clean(value, max = 100) {
 
 function parseJson(value, fallback) {
   try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
-}
-
-function sameSource(a, b) {
-  return JSON.stringify(a || []) === JSON.stringify(b || []);
 }
 
 async function ensureSchema(db) {
@@ -73,6 +69,7 @@ export async function onRequestPost({ env, request }) {
   await ensureSchema(env.QUOTES_DB);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
+  if (body === null || typeof body !== 'object') return json({ error: 'Body must be a JSON object.' }, 400);
   const quoteId = clean(body.quoteId);
   const action = clean(body.action);
   const actor = clean(body.actor, 80) || 'mark';
