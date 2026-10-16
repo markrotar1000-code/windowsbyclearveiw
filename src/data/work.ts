@@ -62,6 +62,11 @@ import tanTrimSliderPorch from '../assets/work/tan-trim-slider-porch.jpg';
 import caulkGunInteriorSill from '../assets/work/caulk-gun-interior-sill.jpg';
 import charcoalTrimHungLadder from '../assets/work/charcoal-trim-hung-ladder.jpg';
 import newBuildTanCorner from '../assets/work/new-build-tan-corner.jpg';
+import newBuildGableRoofline from '../assets/work/new-build-gable-windows-roofline.jpg';
+import newBuildGableGridPicture from '../assets/work/new-build-gable-windows-grid-picture-window.jpg';
+import newBuildGableOverTrimmedGrid from '../assets/work/new-build-gable-windows-over-trimmed-grid.jpg';
+import newBuildFlashingTapeLadder from '../assets/work/new-build-flashing-tape-grid-window-ladder.jpg';
+import newBuildGableFlashingLadder from '../assets/work/new-build-gable-windows-flashing-ladder.jpg';
 
 // First real sliding glass door installs, added 2026-09-27 — replaces the
 // AI-generated concept imagery sliding-glass-doors.astro and the homepage
@@ -531,6 +536,53 @@ export const workPhotos: WorkPhoto[] = [
     featured: false,
     order: 51,
   },
+  // Gable-end windows on one job, added 2026-10-16 (Keith: add to the new construction page). Captions and alt
+  // text describe only what is visible; the scope of the job is not known.
+  {
+    id: 'new-build-gable-windows-roofline',
+    image: newBuildGableRoofline,
+    alt: 'Looking up at two large triangular gable-end windows with white frames, taped with blue flashing around the openings, under a dark red roof edge',
+    caption: 'Gable windows set and taped',
+    kind: 'new construction',
+    featured: false,
+    order: 52,
+  },
+  {
+    id: 'new-build-gable-windows-grid-picture-window',
+    image: newBuildGableGridPicture,
+    alt: 'Triangular gable windows with blue flashing tape above a large white window with grid bars and tan trim, house wrap still exposed beside the lap siding',
+    caption: 'Gable windows above a gridded picture window',
+    kind: 'new construction',
+    featured: false,
+    order: 53,
+  },
+  {
+    id: 'new-build-gable-windows-over-trimmed-grid',
+    image: newBuildGableOverTrimmedGrid,
+    alt: 'Two triangular gable windows with flashing tape above two large gridded windows with tan trim, on a house with tan lap siding going up',
+    caption: 'Flashed gable windows, siding going on below',
+    kind: 'new construction',
+    featured: false,
+    order: 54,
+  },
+  {
+    id: 'new-build-flashing-tape-grid-window-ladder',
+    image: newBuildFlashingTapeLadder,
+    alt: 'Wall wrapped in house wrap with wide flashing tape around a triangular gable window and a large gridded window, a ladder and a shrub in front',
+    caption: 'Flashing tape around every opening before siding',
+    kind: 'new construction',
+    featured: false,
+    order: 55,
+  },
+  {
+    id: 'new-build-gable-windows-flashing-ladder',
+    image: newBuildGableFlashingLadder,
+    alt: 'Gable end of a house with two triangular windows and gridded windows below, all taped with flashing over house wrap, a ladder against the wall',
+    caption: 'Gable end, windows set and flashed',
+    kind: 'new construction',
+    featured: false,
+    order: 56,
+  },
 ];
 
 const byOrder = (a: WorkPhoto, b: WorkPhoto) => a.order - b.order;
@@ -544,8 +596,23 @@ export const sidingWork = workPhotos.filter((photo) => photo.kind === 'siding').
 
 export const processWork = workPhotos.filter((photo) => photo.kind === 'process').sort(byOrder);
 
+// The gable-windows job (2026-10-16) is five portrait photos of one house, shown as its own block on
+// /new-construction; the two landscape new-build shots keep the "Completed work" band there. The gallery
+// groups every 'new construction' photo together, so all seven appear there.
+const gableJobIds = new Set([
+  'new-build-gable-windows-roofline',
+  'new-build-gable-windows-grid-picture-window',
+  'new-build-gable-windows-over-trimmed-grid',
+  'new-build-flashing-tape-grid-window-ladder',
+  'new-build-gable-windows-flashing-ladder',
+]);
+
 export const newBuildWork = workPhotos
-  .filter((photo) => photo.kind === 'new construction')
+  .filter((photo) => photo.kind === 'new construction' && !gableJobIds.has(photo.id))
+  .sort(byOrder);
+
+export const newBuildGableWork = workPhotos
+  .filter((photo) => gableJobIds.has(photo.id))
   .sort(byOrder);
 
 /** Finished replacement work — the service page shows these, not the framing shots. */

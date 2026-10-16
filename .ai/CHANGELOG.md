@@ -1,5 +1,17 @@
 # ICM Changelog
 
+## 2026-10-16 - Gable-windows photos added to /new-construction
+
+Keith sent five photos of one job (gable-end triangular windows, flashing tape and house wrap, gridded windows below, tan trim and lap siding going up) for the new-construction page. Added to `src/data/work.ts` as kind `new construction` (orders 52-56; metadata stripped, 1200x1600, no GPS, no people, no address or house number legible). `/new-construction` shows them as their own "Flashing on a recent job" block (three across, two on a phone) via the new `newBuildGableWork` export; the two older landscape shots keep the "Completed work" band (`newBuildWork` now excludes the gable set). The gallery's "New construction" group picks all seven up automatically. Home "Recent work" is untouched (it reads `gallery-additions.ts`). `test-image-delivery` now expects landscape, landscape, then five portrait tiles on that page. Captions and alt text describe only what is visible; the job's scope is not known. `npm run test:all` 60/60; checked in a browser at 1280 and 390 px.
+
+## 2026-10-16 - Flashing diagram removed everywhere (inaccurate)
+
+Keith: the flashing diagram is inaccurate, remove it everywhere. Deleted the FlashingOrder diagram component and its window-flashing-water-way-out image (both under src/); dropped its use from `src/pages/guides/[slug].astro` (diagram note, both render slots), the `secondaryDiagram: flashing-order` line in `what-your-openings-need.md`, and the `flashing-order` options in `src/content.config.ts`; removed the matching `test-image-delivery` entry and updated `public-copy-positioning.md` and STATE. The `/guides/what-your-openings-need` page now ends without the "More detail" block. Nothing else used it. `npm run test:all` 60/60.
+
+## 2026-10-16 - Flashing diagram removed from /new-construction (superseded: now removed everywhere)
+
+Keith: remove the diagram on the new-construction page. Dropped the `FlashingOrder` diagram (and its "Flashing sequence" heading) from `src/pages/new-construction.astro`; the "Prep and flashing" section keeps its two note cards. The component and `/guides/what-your-openings-need` are unchanged. `test-image-delivery` no longer lists `/new-construction` among pages carrying the flashing graphic. `npm run test:all` 60/60.
+
 ## 2026-10-16 - Correction: fin is a name, not a price
 
 Keith: "Fin is not a price. It's replacing the term for full-frame replacement internally." PR #248 had treated it as a price (`finPrice`, a frame allowance fallback, and a request for per-opening fin numbers). Reverted that reading:
