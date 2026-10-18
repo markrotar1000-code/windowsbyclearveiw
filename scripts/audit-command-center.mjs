@@ -144,8 +144,19 @@ for (const mode of ['500', 'no signal']) {
       const visible = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
       return [...document.querySelectorAll('.internal-main *')].filter((e) => e.children.length === 0 && visible(e) && re.test(e.textContent || '') && !/Checking this phone/.test(e.textContent || '')).map((e) => (e.textContent || '').trim().slice(0, 40));
     }, STILL_LOADING.source).catch(() => []);
+    // A screen that says it could not load also needs a way to try again, and must not show the browser's own words.
+    const verdict = await page.evaluate(() => {
+      const visible = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+      const messages = [...document.querySelectorAll('[role=alert], .error, [data-error], .status, [data-status], [role=status]')].filter(visible).map((e) => (e.textContent || '').trim());
+      const failed = messages.some((m) => /could not (load|check|reach)|failed to fetch|load failed/i.test(m));
+      const raw = messages.find((m) => /^(failed to fetch|load failed|networkerror)/i.test(m));
+      const retry = [...document.querySelectorAll('.internal-main button, .internal-main a')].some((e) => visible(e) && /try again|retry|reload|refresh/i.test(e.textContent || ''));
+      return { failed, raw, retry };
+    }).catch(() => ({ failed: false }));
+    if (verdict.raw) stuck.push(`shows the browser's own wording: ${verdict.raw.slice(0, 30)}`);
+    if (verdict.failed && !verdict.retry) stuck.push('says it could not load, but offers no way to try again');
     views += 1;
-    if (stuck.length) findings.push(`failed API (${mode}) / ${url}\n    still says: ${[...new Set(stuck)].slice(0, 3).join(' | ')}`);
+    if (stuck.length) findings.push(`failed API (${mode}) / ${url}\n    ${[...new Set(stuck)].slice(0, 3).join(' | ')}`);
     await page.close();
   }
   await ctx.close();
