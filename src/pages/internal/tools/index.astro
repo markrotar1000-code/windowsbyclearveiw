@@ -4,13 +4,29 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
 <InternalLayout title="Internal tools">
   <div class="tools-head"><div><p class="kicker">Clearview internal</p><h1>Tools</h1><p class="lede">Field, sales, CRM, and operations utilities built around the way Clearview actually works.</p></div><a class="btn btn-primary" href="/internal/quotes/new">New quote</a></div>
 
-  <section class="mail-test panel" aria-labelledby="mail-test-title">
-    <div class="mail-test-copy"><p class="kicker">Production check</p><h2 id="mail-test-title">Estimate email delivery</h2><p>Run a controlled message through the same Resend configuration used by the public estimate form. This does not create a customer lead.</p></div>
-    <div class="mail-test-action"><div class="mail-test-buttons"><button class="btn btn-primary" type="button" data-mail-test>Send production test</button><button class="btn btn-ghost" type="button" data-mail-check>Check Resend activity</button></div><p class="mail-test-status" data-mail-status role="status">No test run yet.</p></div>
-    <div class="mail-test-results" data-mail-results hidden><div class="mail-result-block"><p class="kicker">Recent Resend sends</p><div data-mail-sends></div></div><div class="mail-result-block"><p class="kicker">Sending domains</p><div data-mail-domains></div></div></div>
+  <nav class="tools-jumps" aria-label="Setup and checks">
+    <a href="#phone-setup">Install &amp; offline</a>
+    <a href="#email-checks">Email checks</a>
+  </nav>
+
+  <section class="tool-grid" id="work-tools" aria-label="Internal tools">
+    <a class="tool-card tool-primary" href="/internal/tools/measurements"><span class="tool-icon">⌗</span><div><p class="kicker">Field</p><h2>Window measurements</h2><p>Capture openings, dimensions, quantities, rooms, replacement method, and notes from the job site.</p></div><span class="tool-arrow">Open tool →</span></a>
+    <a class="tool-card" href="/internal/tools/photos"><span class="tool-icon">▧</span><div><p class="kicker">Field</p><h2>Installation photos</h2><p>Capture before, during, after, and issue photos with job IDs, timestamps, and field notes.</p></div><span class="tool-arrow">Open photo log →</span></a>
+    <a class="tool-card tool-primary field-mode-card" href="/internal/jobs"><span class="tool-icon">▶</span><div><p class="kicker">Field execution</p><h2>Opening field mode</h2><p>Open a job and execute one opening at a time through Verify, Remove, Prep, Install, Flash / Seal, Operate, Photograph, and Complete.</p></div><span class="tool-arrow">Choose a job →</span></a>
+    <a class="tool-card" href="/internal/google-tools"><span class="tool-icon">G</span><div><p class="kicker">Connected operations</p><h2>Google tools</h2><p>Search visibility, business reviews, address checks, receipt capture, calendars, routes and weather.</p></div><span class="tool-arrow">Open Google tools →</span></a>
+    <a class="tool-card tool-primary visualizer-card" href="/internal/quotes"><span class="tool-icon">◈</span><div><p class="kicker">Production</p><h2>Build plan + visualizer</h2><p>Build the plan opening-by-opening, then switch to a visual field map that walks Mark through scope, openings, materials, installation, and QC.</p></div><span class="tool-arrow">Open quotes →</span></a>
+    <a class="tool-card" href="/internal/quotes/new"><span class="tool-icon">$</span><div><p class="kicker">Sales</p><h2>Smart quote builder</h2><p>Build an editable quote from the price book, add custom work, and finalize or print.</p></div><span class="tool-arrow">Open quote builder →</span></a>
+    <a class="tool-card" href="/internal/follow-up"><span class="tool-icon">↗</span><div><p class="kicker">CRM</p><h2>Lead follow-up</h2><p>Turn a lead into a concrete next action with due dates, contact shortcuts, notes, and completion tracking.</p></div><span class="tool-arrow">Open follow-up →</span></a>
+    <a class="tool-card" href="/internal/jobs"><span class="tool-icon">✓</span><div><p class="kicker">Operations</p><h2>Job workspace</h2><p>Turn finalized quotes into projects, schedule installation, track progress, and keep crew notes with the job.</p></div><span class="tool-arrow">Open jobs →</span></a>
+    <a class="tool-card" href="/internal/jobs"><span class="tool-icon">▣</span><div><p class="kicker">Operations</p><h2>Job prep & closeout</h2><p>Open a job first, then launch its field checklist, quote-material review, staging notes, and closeout workflow.</p></div><span class="tool-arrow">Choose a job →</span></a>
+    <a class="tool-card" href="/internal/payments"><span class="tool-icon">◫</span><div><p class="kicker">Closeout</p><h2>Payments & balances</h2><p>Record payment-to-date, see outstanding balances, and reconcile job-level collections internally.</p></div><span class="tool-arrow">Open payments →</span></a>
+    <a class="tool-card" href="/internal/schedule"><span class="tool-icon">□</span><div><p class="kicker">Operations</p><h2>Installation schedule</h2><p>See scheduled projects by week and jump directly into the job workspace.</p></div><span class="tool-arrow">Open schedule →</span></a>
+    <a class="tool-card" href="/internal/leads"><span class="tool-icon">◌</span><div><p class="kicker">CRM</p><h2>Lead workspace</h2><p>Review inbound requests, contact details, attribution, and visitor journeys.</p></div><span class="tool-arrow">Work leads →</span></a>
+    <a class="tool-card" href="/internal/mail-pilot"><span class="tool-icon">✉</span><div><p class="kicker">Marketing</p><h2>Mail pilot</h2><p>A postcard test to homes that just sold or pulled a permit, built from county records: the list, the groups, and what the mailing has to earn.</p></div><span class="tool-arrow">Open mail pilot →</span></a>
+    <a class="tool-card" href="/internal/ask-logs"><span class="tool-icon">✦</span><div><p class="kicker">Intelligence</p><h2>Ask activity</h2><p>See what prospects are asking the Clearview website assistant before they contact the company.</p></div><span class="tool-arrow">Review Ask →</span></a>
   </section>
 
-  <section class="app-card panel" aria-labelledby="app-title" data-app-card>
+  <section class="app-card panel" id="phone-setup" aria-labelledby="app-title" data-app-card>
     <div class="app-copy">
       <p class="kicker">Phone app</p>
       <h2 id="app-title">Install and offline</h2>
@@ -34,22 +50,12 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     </div>
   </section>
 
-  <section class="tool-grid" aria-label="Internal tools">
-    <a class="tool-card" href="/internal/google-tools"><span class="tool-icon">G</span><div><p class="kicker">Connected operations</p><h2>Google tools</h2><p>Search visibility, business reviews, address checks, receipt capture, calendars, routes and weather.</p></div><span class="tool-arrow">Open Google tools →</span></a>
-    <a class="tool-card tool-primary" href="/internal/tools/measurements"><span class="tool-icon">⌗</span><div><p class="kicker">Field</p><h2>Window measurements</h2><p>Capture openings, dimensions, quantities, rooms, replacement method, and notes from the job site.</p></div><span class="tool-arrow">Open tool →</span></a>
-    <a class="tool-card tool-primary visualizer-card" href="/internal/quotes"><span class="tool-icon">◈</span><div><p class="kicker">Production</p><h2>Build plan + visualizer</h2><p>Build the plan opening-by-opening, then switch to a visual field map that walks Mark through scope, openings, materials, installation, and QC.</p></div><span class="tool-arrow">Open quotes →</span></a>
-    <a class="tool-card tool-primary field-mode-card" href="/internal/jobs"><span class="tool-icon">▶</span><div><p class="kicker">Field execution</p><h2>Opening field mode</h2><p>Open a job and execute one opening at a time through Verify, Remove, Prep, Install, Flash / Seal, Operate, Photograph, and Complete.</p></div><span class="tool-arrow">Choose a job →</span></a>
-    <a class="tool-card" href="/internal/quotes/new"><span class="tool-icon">$</span><div><p class="kicker">Sales</p><h2>Smart quote builder</h2><p>Build an editable quote from the price book, add custom work, and finalize or print.</p></div><span class="tool-arrow">Open quote builder →</span></a>
-    <a class="tool-card" href="/internal/follow-up"><span class="tool-icon">↗</span><div><p class="kicker">CRM</p><h2>Lead follow-up</h2><p>Turn a lead into a concrete next action with due dates, contact shortcuts, notes, and completion tracking.</p></div><span class="tool-arrow">Open follow-up →</span></a>
-    <a class="tool-card" href="/internal/jobs"><span class="tool-icon">✓</span><div><p class="kicker">Operations</p><h2>Job workspace</h2><p>Turn finalized quotes into projects, schedule installation, track progress, and keep crew notes with the job.</p></div><span class="tool-arrow">Open jobs →</span></a>
-    <a class="tool-card" href="/internal/jobs"><span class="tool-icon">▣</span><div><p class="kicker">Operations</p><h2>Job prep & closeout</h2><p>Open a job first, then launch its field checklist, quote-material review, staging notes, and closeout workflow.</p></div><span class="tool-arrow">Choose a job →</span></a>
-    <a class="tool-card" href="/internal/payments"><span class="tool-icon">◫</span><div><p class="kicker">Closeout</p><h2>Payments & balances</h2><p>Record payment-to-date, see outstanding balances, and reconcile job-level collections internally.</p></div><span class="tool-arrow">Open payments →</span></a>
-    <a class="tool-card" href="/internal/schedule"><span class="tool-icon">□</span><div><p class="kicker">Operations</p><h2>Installation schedule</h2><p>See scheduled projects by week and jump directly into the job workspace.</p></div><span class="tool-arrow">Open schedule →</span></a>
-    <a class="tool-card" href="/internal/tools/photos"><span class="tool-icon">▧</span><div><p class="kicker">Field</p><h2>Installation photos</h2><p>Capture before, during, after, and issue photos with job IDs, timestamps, and field notes.</p></div><span class="tool-arrow">Open photo log →</span></a>
-    <a class="tool-card" href="/internal/leads"><span class="tool-icon">◌</span><div><p class="kicker">CRM</p><h2>Lead workspace</h2><p>Review inbound requests, contact details, attribution, and visitor journeys.</p></div><span class="tool-arrow">Work leads →</span></a>
-    <a class="tool-card" href="/internal/mail-pilot"><span class="tool-icon">✉</span><div><p class="kicker">Marketing</p><h2>Mail pilot</h2><p>A postcard test to homes that just sold or pulled a permit, built from county records: the list, the groups, and what the mailing has to earn.</p></div><span class="tool-arrow">Open mail pilot →</span></a>
-    <a class="tool-card" href="/internal/ask-logs"><span class="tool-icon">✦</span><div><p class="kicker">Intelligence</p><h2>Ask activity</h2><p>See what prospects are asking the Clearview website assistant before they contact the company.</p></div><span class="tool-arrow">Review Ask →</span></a>
+  <section class="mail-test panel" id="email-checks" aria-labelledby="mail-test-title">
+    <div class="mail-test-copy"><p class="kicker">Production check</p><h2 id="mail-test-title">Estimate email delivery</h2><p>Run a controlled message through the same Resend configuration used by the public estimate form. This does not create a customer lead.</p></div>
+    <div class="mail-test-action"><div class="mail-test-buttons"><button class="btn btn-primary" type="button" data-mail-test>Send production test</button><button class="btn btn-ghost" type="button" data-mail-check>Check Resend activity</button></div><p class="mail-test-status" data-mail-status role="status">No test run yet.</p></div>
+    <div class="mail-test-results" data-mail-results hidden><div class="mail-result-block"><p class="kicker">Recent Resend sends</p><div data-mail-sends></div></div><div class="mail-result-block"><p class="kicker">Sending domains</p><div data-mail-domains></div></div></div>
   </section>
+
   <section class="roadmap panel"><div><p class="kicker">Operating sequence</p><h2>From estimate to completed job</h2><p class="muted">The internal system is built around one continuous record instead of separate disconnected utilities.</p></div><div class="roadmap-flow" role="group" aria-label="Workflow roadmap"><span>Lead</span><i>→</i><span>Measure</span><i>→</i><span>Quote</span><i>→</i><span>Build plan</span><i>→</i><span>Visualize</span><i>→</i><span>Sign</span><i>→</i><span>Schedule</span><i>→</i><span>Prep</span><i>→</i><span>Field mode</span><i>→</i><span>Close</span><i>→</i><span>Collect</span></div></section>
 </InternalLayout>
 <script>
@@ -160,4 +166,10 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   .app-diag{width:100%;margin-top:.6rem;font:12px/1.4 ui-monospace,monospace;border:1px solid var(--line);border-radius:var(--radius-lg);padding:.6rem;background:var(--paper)}.app-diag[hidden]{display:none}
   .app-actions{display:flex;gap:.5rem;flex-wrap:wrap}.app-note{margin:.6rem 0 0;color:var(--ink-faint);font-size:var(--step--2);min-height:1.2em}
   @media(max-width:820px){.app-card{grid-template-columns:1fr}}
+  .tools-jumps{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:var(--space-m)}
+  .tools-jumps a{display:flex;align-items:center;justify-content:center;min-height:44px;padding:.6rem .9rem;border:1px solid var(--line);border-radius:var(--radius);color:var(--ink);font-weight:700;text-decoration:none;background:var(--paper-raised)}
+  .tools-jumps a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .tool-grid{margin-bottom:var(--space-l)}
+  @media(max-width:680px){.tools-head{margin-bottom:var(--space-m)}.tools-jumps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tools-jumps a{padding:.6rem .45rem;font-size:var(--step--1)}.tool-card{min-height:0;padding:1rem;gap:.65rem}.tool-card h2{font-size:var(--step-0)}.tool-card p:not(.kicker){font-size:var(--step--1)}.tool-arrow{margin-top:.25rem}}
+
 </style>
