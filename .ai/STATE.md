@@ -2,7 +2,7 @@
 
 ## 2026-10-18 - Command Center continuation: Jobs queue first
 
-The finalized-quote creation form is a native expandable panel, initially closed, so existing jobs are reachable sooner on a phone. Its instructions, finalized-quote list and approval gates remain inside the panel. Browser flow audit now opens it with Enter and checks the first job against the phone navigation. Three existing Windows test-runner issues are corrected (file URLs and CRLF handling). Validation and publication status: see HANDOFF's continuation entry. Remaining: Google tools connection summary, Tools page order, laptop title size, and issue #77 reproduction.
+The finalized-quote creation form is a native expandable panel, initially closed, so existing jobs are reachable sooner on a phone. Its instructions, finalized-quote list and approval gates remain inside the panel. Browser flow audit now opens it with Enter and checks the first job against the phone navigation. Three existing Windows test-runner issues are corrected (file URLs and CRLF handling), and browser audit paths use URL slashes so nested screens receive their fixture IDs. Validation: all 62 suite steps/build and the corrected 297-view browser audit pass. PR #262 is merged as `49bc333`; production PWA health/gate checks pass for that build. Audit-path follow-up: `codex/windows-audit-paths`. Signed-in production layout still requires a current browser login. Remaining: Google tools connection summary, Tools page order, laptop title size, and issue #77 reproduction.
 
 ## 2026-10-18 - Command Center, round eight
 

@@ -93,7 +93,7 @@ const sets = [
   { name: 'general-job', quote: ids.q4, job: ids.gL },
 ].map((set) => ({ ...set, invoice: 'INV-' + set.quote.replace(/^Q-/, '') }));
 const pages = [];
-(function walk(dir) { for (const f of fs.readdirSync(dir)) { const p = path.join(dir, f); if (fs.statSync(p).isDirectory()) walk(p); else if (f.endsWith('.html') && f !== 'login.html') pages.push('/internal/' + path.relative(dist + '/internal', p).replace(/\.html$/, '').replace(/(^|\/)index$/, '')); } })(dist + '/internal');
+(function walk(dir) { for (const f of fs.readdirSync(dir)) { const p = path.join(dir, f); if (fs.statSync(p).isDirectory()) walk(p); else if (f.endsWith('.html') && f !== 'login.html') pages.push('/internal/' + path.relative(dist + '/internal', p).split(path.sep).join('/').replace(/\.html$/, '').replace(/(^|\/)index$/, '')); } })(dist + '/internal');
 const query = (url, set) => {
   const q = new URLSearchParams();
   if (/quotes\/(view|build-plan|build-plan-approval|build-plan-visualizer)/.test(url)) { q.set('id', set.quote); q.set('quoteId', set.quote); }
