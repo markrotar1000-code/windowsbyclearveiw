@@ -42,4 +42,17 @@ for (const control of ['button', 'select', 'th', '[role=tab]', '.btn']) assert.o
 assert.match(read('src/pages/internal/leads.astro'), /\.ld-list \{ display:grid; grid-template-columns:minmax\(0, 1fr\);/, 'the leads list track may shrink');
 assert.match(read('src/pages/internal/leads/analyze.astro'), /\.la-list\{display:grid;grid-template-columns:minmax\(0,1fr\)/, 'the lead analyzer list track may shrink');
 
+// The same rule has a cost: a flex row's short label, badge or price may then shrink to one letter per line.
+// Found 2026-10-18 by the audit's "squeezed text" check: Jobs ("active jobs" printed vertically), Payments (the
+// balance beside a long customer name), the job and prep pages (a line price beside a long label) and Field (the
+// "FIELD VERIFY" badge). Each of these keeps its width and the long label beside it wraps instead.
+assert.match(read('src/pages/internal/jobs/index.astro'), /\.queue-summary\{flex:none\}\.queue-summary span\{white-space:nowrap;overflow-wrap:normal\}/, 'the jobs active count never breaks');
+assert.match(read('src/pages/internal/payments.astro'), /:global\(\.balance-block\)\{flex:none\}:global\(\.balance-block span\),:global\(\.balance-block strong\)\{white-space:nowrap;overflow-wrap:normal\}/, 'the payments balance never breaks');
+assert.match(read('src/pages/internal/jobs/field.astro'), /\.verify-badge\{flex:none;white-space:nowrap;overflow-wrap:normal\}/, 'the Field verify badge never breaks');
+assert.match(read('src/pages/internal/jobs/prepare.astro'), /\.material-row\)>:global\(strong:last-child\)\{flex:none;white-space:nowrap/, 'the prep line price never breaks');
+assert.match(read('src/pages/internal/jobs/view.astro'), /\.scope-row\)>:global\(strong:last-child\)\{flex:none;white-space:nowrap/, 'the job line price never breaks');
+// First screen on a phone: long explanations in banners give way to the work (class phone-hide).
+assert.match(internalLayout, /\.internal-main :global\(\.phone-hide\)\{display:none!important\}/, 'phone-hide hides a long explanation on a phone');
+for (const page of ['src/pages/internal/quotes/index.astro', 'src/pages/internal/jobs/index.astro', 'src/pages/internal/today.astro']) assert.match(read(page), /class="[^"]*phone-hide/, `${page} hides its banner paragraph on a phone`);
+
 console.log('internal mobile: ok');
