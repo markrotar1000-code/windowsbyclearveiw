@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round three
+
+Five places where a short label, badge or price was squeezed to one letter per line by the global `overflow-wrap: anywhere` are fixed, and the audit detects the class. Phone first screens are shorter (`phone-hide`). Open: the Jobs list still starts low (the create form sits above it).
+
 ## 2026-10-18 - Command Center, round two
 
 Every Command Center load failure is retryable and in plain words (one rule in `InternalLayout`); touch targets are 44 px; the browser audit's failure pass checks both. Open: laptop title size (74 px), an in-place Try again (instead of Reload) on list screens other than Today.

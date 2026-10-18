@@ -120,6 +120,16 @@ for (const set of sets) {
       await page.waitForTimeout(500);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth).catch(() => 0);
       if (overflow > 0) problems.push(`scrolls sideways by ${overflow} px`);
+      // Text squeezed to one letter per line (a figure or label with no room, because text may break anywhere): found
+      // 2026-10-18 on Jobs ("active jobs") and Payments ("Balance $99,999.99" beside a long name).
+      const squeezed = await page.evaluate(() => [...document.querySelectorAll('.internal-main *')].filter((e) => {
+        if (e.children.length) return false;
+        const t = (e.textContent || '').trim(); if (t.length < 6 || /^(.)\1+$/.test(t) || /^[Ww]+$/.test(t)) return false;
+        const r = e.getBoundingClientRect(); if (!r.width) return false;
+        const s = getComputedStyle(e); const lh = parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.3;
+        return r.height / lh >= 4 && r.width / parseFloat(s.fontSize) < 3.2;
+      }).map((e) => (e.textContent || '').trim().slice(0, 20))).catch(() => []);
+      if (squeezed.length) problems.push(`text squeezed to one letter per line: ${[...new Set(squeezed)].slice(0, 2).join(', ')}`);
       views += 1;
       if (problems.length) findings.push(`${set.name} / ${label} / ${url}\n    ${[...new Set(problems)].slice(0, 4).join('\n    ')}`);
       await page.close();
