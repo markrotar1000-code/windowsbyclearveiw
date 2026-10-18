@@ -55,4 +55,13 @@ assert.match(read('src/pages/internal/jobs/view.astro'), /\.scope-row\)>:global\
 assert.match(internalLayout, /\.internal-main :global\(\.phone-hide\)\{display:none!important\}/, 'phone-hide hides a long explanation on a phone');
 for (const page of ['src/pages/internal/quotes/index.astro', 'src/pages/internal/jobs/index.astro', 'src/pages/internal/today.astro']) assert.match(read(page), /class="[^"]*phone-hide/, `${page} hides its banner paragraph on a phone`);
 
+// The quote builder on a phone: the running total and the save button stay on screen while lines are edited
+// (2026-10-18). Phone only; the laptop layout is unchanged.
+const quoteNew = read('src/pages/internal/quotes/new.astro');
+assert.match(quoteNew, /<div class="qb-dock" data-dock hidden>/, 'the quote builder has a total dock');
+assert.match(quoteNew, /data-dock-save>/, 'the dock has a save button');
+assert.match(quoteNew, /form\.querySelector\('\[data-dock-save\]'\)\?\.addEventListener\('click', \(\) => form\.requestSubmit\(\)\)/, 'the dock saves through the form (validation still runs)');
+assert.match(quoteNew, /if \(dock instanceof HTMLElement\) dock\.hidden = items\.length === 0;/, 'the dock shows only once a line exists');
+assert.match(quoteNew, /\.qb-dock \{ display: none; \}\s*@media \(max-width: 680px\) \{\s*\.qb-dock \{[^}]*position: sticky; bottom: calc\(4\.6rem/, 'the dock is phone-only and sits above the bottom navigation');
+
 console.log('internal mobile: ok');

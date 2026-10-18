@@ -157,6 +157,8 @@ const catalog = {
 
     <p class="qb-status" data-status role="alert" hidden></p>
     <button class="btn btn-primary" type="submit" data-submit>Save &amp; continue</button>
+    <!-- Phone only: the running total and the save button stay on screen while lines are edited. -->
+    <div class="qb-dock" data-dock hidden><span class="qb-dock-total">Total <output data-dock-total>$0</output></span><button class="btn btn-primary" type="button" data-dock-save>Save &amp; continue</button></div>
   </form>
 </InternalLayout>
 
@@ -231,6 +233,9 @@ const catalog = {
     const itemsEmpty = form.querySelector('[data-items-empty]');
     const subtotalOut = form.querySelector('[data-subtotal]');
     const totalOut = form.querySelector('[data-total]');
+    const dock = form.querySelector('[data-dock]');
+    const dockOut = form.querySelector('[data-dock-total]');
+    form.querySelector('[data-dock-save]')?.addEventListener('click', () => form.requestSubmit());
     const discountInput = form.querySelector('[data-discount]');
 
     if (
@@ -300,6 +305,8 @@ const catalog = {
       const discount = Math.max(0, Math.min(subtotal, Math.round((Number(discountInput.value) || 0) * 100)));
       subtotalOut.textContent = formatCents(subtotal);
       totalOut.textContent = formatCents(subtotal - discount);
+      if (dockOut) dockOut.textContent = formatCents(subtotal - discount);
+      if (dock instanceof HTMLElement) dock.hidden = items.length === 0;
     }
 
     // Rebuilds the rows. Only for adding, removing and loading lines, never while typing.
@@ -923,5 +930,21 @@ const catalog = {
       justify-self: end;
       align-self: end;
     }
+  }
+
+  /* Phone: a dock above the bottom navigation, so the number being built is always in view. */
+  .qb-dock { display: none; }
+  @media (max-width: 680px) {
+    .qb-dock {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-s);
+      position: sticky; bottom: calc(4.6rem + env(safe-area-inset-bottom)); z-index: 5;
+      margin-top: var(--space-m); padding: .6rem .75rem;
+      border: 1px solid var(--line-strong); border-radius: var(--radius-lg);
+      background: var(--paper-raised); box-shadow: var(--shadow-md);
+    }
+    .qb-dock[hidden] { display: none; }
+    .qb-dock-total { font-size: var(--step-1); font-weight: 650; display: grid; line-height: 1.1; }
+    .qb-dock-total output { font-variant-numeric: tabular-nums; }
+    .qb-dock .btn { flex: none; white-space: nowrap; overflow-wrap: normal; }
   }
 </style>
