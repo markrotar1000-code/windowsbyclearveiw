@@ -7,7 +7,7 @@
 //   npm run build
 //   CHROMIUM_PATH=/path/to/chrome node scripts/audit-command-center.mjs [--serve]    (--serve: just run the server on :4440)
 //
-// Add --flows-only to run just the interaction checks (including measurement editing).
+// Add --flows-only to run just the interaction checks (including measurement editing and local photo capture).
 //
 // The seed goes through the handlers themselves (quotes, signed plans, jobs, payments, tasks) plus leads with
 // messy values: a 1,800-character note, an HTML-looking name, long emails and links with no spaces. That is what
@@ -183,7 +183,7 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
   const open = async (name) => {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => flowProblems.push(`${name}: script error ${e.message.slice(0, 100)}`));
-    page.on('response', (r) => { const u = r.url(); if (r.status() >= 400 && u.includes('/internal/api/') && !(name === 'payments' && r.status() === 400) && !/build-plan-state/.test(u)) flowProblems.push(`${name}: ${r.status()} ${r.request().method()} ${u.replace(base, '').slice(0, 70)}`); });
+    page.on('response', (r) => { const u = r.url(); if (r.status() >= 400 && u.includes('/internal/api/') && !(name === 'payments' && r.status() === 400) && !(name === 'photos' && r.status() === 503 && /job-photos/.test(u)) && !/build-plan-state/.test(u)) flowProblems.push(`${name}: ${r.status()} ${r.request().method()} ${u.replace(base, '').slice(0, 70)}`); });
     page.on('dialog', (d) => d.accept());
     return page;
   };
@@ -272,7 +272,33 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     if ((await page.locator('[data-body] tr').count()) !== 1 || (await row.locator('[data-field="room"]').inputValue()) !== 'Living "room"') flowProblems.push('measurements: removing the second opening changes the first');
     await page.close();
   }
-  views += 8;
+  {
+    const page = await open('photos');
+    await page.route('**/internal/api/job-photos**', (route) => route.fulfill({ status: route.request().method() === 'GET' ? 200 : 503, contentType: 'application/json', body: JSON.stringify({ configured: false, photos: [], error: 'Cloud storage is not configured.' }) }));
+    await page.goto(base + '/internal/tools/photos?jobId=' + job.id + '&opening=1&stage=before', { waitUntil: 'networkidle' });
+    const capture = await page.locator('.capture-button').boundingBox();
+    const nav = await page.locator('.internal-mobile-nav').boundingBox();
+    if (!capture || !nav || capture.y + 44 > nav.y) flowProblems.push('photos: the capture action is below the first phone screen');
+    if (!(await page.locator('[data-files]').isEnabled())) flowProblems.push('photos: a valid job cannot capture photos');
+    await page.locator('[data-opening-input]').fill('2');
+    if (!(await page.locator('[data-field-back]').getAttribute('href')).endsWith('&opening=2')) flowProblems.push('photos: return to Field does not follow the current opening');
+    await page.locator('[data-opening-input]').fill('');
+    if ((await page.locator('[data-field-back]').getAttribute('href')).includes('&opening=')) flowProblems.push('photos: project-wide view returns to a stale opening');
+    await page.locator('[data-opening-input]').fill('1');
+    await page.locator('[data-files]').setInputFiles(root + '/public/icon-192.png');
+    await page.locator('.photo-card').first().waitFor(); await page.waitForTimeout(700);
+    await page.locator('.photo-card textarea').first().fill('Audit: sill detail'); await page.locator('.photo-card [data-save]').first().click();
+    await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(500);
+    if ((await page.locator('.photo-card textarea').first().inputValue()) !== 'Audit: sill detail') flowProblems.push('photos: the photo note does not survive reload');
+    await page.locator('[data-stage="after"]').click(); await page.waitForTimeout(300);
+    if ((await page.locator('.photo-card').count()) !== 0) flowProblems.push('photos: the stage filter shows a before photo as after');
+    await page.locator('[data-stage="before"]').click(); await page.waitForTimeout(300);
+    if ((await page.locator('.photo-card').count()) !== 1) flowProblems.push('photos: returning to Before loses the saved photo');
+    await page.locator('.backup-tools summary').focus(); await page.keyboard.press('Enter');
+    if (!(await page.locator('[data-export]').isVisible()) || !(await page.locator('[data-import-trigger]').isVisible())) flowProblems.push('photos: keyboard cannot reach backup actions');
+    await page.close();
+  }
+  views += 9;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }

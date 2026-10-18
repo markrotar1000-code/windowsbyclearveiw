@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Photos: reachable phone capture and correct return context
+
+Merged #266 as `c52616c` after GitHub/Pages checks passed; production PWA files and app gate pass for that build. `codex/photos-phone-capture` compacts the phone header/context, moves backup actions into a native disclosure, and adapts stage buttons to enlarged text. On a 390 x 844 phone, capture starts at 703 px instead of 1190 px, above bottom navigation at 773 px. Missing-job capture stays disabled with a clear instruction. Return to Field now follows the current opening/project-wide selection. All 62 suite/build steps and 9 interaction flows pass. Focused checks cover local photo/note persistence, stage filters, JSON backup/restore, 320–1280 widths and 150%/200% text. Cloud responses are mocked; no physical camera, signed-in production UI or live cloud upload is claimed for this proposed round.
+
 ## 2026-10-18 - Measurements: usable phone rows and stable editing
 
 Merged #265 as `3b51633` after GitHub/Pages checks passed; production PWA assets and app gate pass for that build. On `codex/measurements-phone-cards`, runtime worksheet rows now receive their intended styles: phone cards have full-width room/type/notes, paired dimensions, and a 44px remove action. Editing a field no longer rebuilds its row and loses focus. Desktop/print retain table rows. All 62 suite/build steps and 8 interaction flows pass; focused browser checks cover reload, export/restore, 320–1280 px and 150%/200% text. The new UI awaits PR merge. Physical devices and physical printouts remain unverified. Next: review remaining field-tool ergonomics and reproduce #77 in production.

@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Photos phone round (`codex/photos-phone-capture`)
+
+#266 is merged as `c52616c` after both checks passed; production PWA files/app gate are healthy. This proposed round brings photo capture from 1190 to 703 px down a 390 x 844 phone screen. Native backup/restore disclosure, compact context and responsive stage buttons keep capture reachable. All cloud-status and local-backup explanations remain. Missing-job capture stays gated with an instruction, and the Field return link now follows the current opening or project-wide view.
+
+Validation: all 62 suite/build steps and 9 interaction flows pass. Focused checks cover photo/note reload persistence, stage filtering, JSON export/clear/restore, valid/missing jobs, 320–1280 widths, and 150%/200% text. Uses a public icon fixture and mocked cloud responses, with no production photo writes. Physical camera/device and signed-in production UI remain unverified. The UI round needs PR merge before production claims; production currently contains #266.
+
 ## 2026-10-18 - Measurements phone round (`codex/measurements-phone-cards`)
 
 #265 passed both checks and is merged as `3b51633`; production PWA files/app gate are healthy. This next round fixes runtime measurement-row CSS and editing focus. Dynamic descendants use :global under the measurement table; phones get readable cards, while desktop/print remain tables. The change handler saves without rebuilding the current row, preserving the next-field focus. Numerical totals/worksheet format and reminders are unchanged.
