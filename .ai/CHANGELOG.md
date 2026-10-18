@@ -1,5 +1,15 @@
 # ICM Changelog
 
+## 2026-10-18 - Google tools chooser and connection summary (branch `codex/google-tools-phone-navigation`)
+
+Keith requested merging #264 after checks pass and the next phone UX round. #264 passed both checks and was merged as `01b41a8`; production PWA assets and login protection pass for that build.
+
+On a 390 x 844 phone, Check an address began around 1402 px down the Google tools page, after four reports. A native Choose a tool disclosure now offers 12 direct links, with visit preparation, document and expense actions first; the menu fits above bottom navigation at normal text size. Links preserve normal fragment navigation and clear the sticky header. The page now summarizes how many of its 10 provider connections are configured while retaining each tool's setup state and the explicit requirement for a successful live test. No provider operation runs when the chooser opens.
+
+Large-text checks exposed the calendar date/time inputs forcing an implicit form grid wider than the phone. Form/label tracks now use minmax(0,1fr), and inputs may shrink. All seven forms, confirmations, per-tool connection elements and operational request handling remain intact.
+
+Validation: all 62 test:all steps including build pass. Focused local Chrome checks cover all 12 shortcuts, keyboard expansion, widths 320/360/390/768/1280 and 360 px at 150%/200% text with no overflow; connection fixtures cover 0/3/10 configured, 500 and dropped requests, control availability and one mocked report request. No live Google request, production write or physical-phone verification is claimed. Screenshots in this task's outputs show seeded/local states. Preview checks will run on the new PR; signed-in production remains a separate verification step after merge.
+
 ## 2026-10-18 - Tools: field actions before setup (branch `codex/tools-phone-work-first`)
 
 Keith requested merging #263 and the next phone UX round. #263 passed GitHub/Pages checks and was merged as `a534bb7`; production worker/manifest/offline/icons/app-gate checks pass for that build.

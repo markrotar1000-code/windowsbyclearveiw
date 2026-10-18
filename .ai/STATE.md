@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Google tools: direct phone navigation
+
+Merged #264 after GitHub/Pages checks passed as `01b41a8`; production PWA files and app-gate checks pass for that build. `codex/google-tools-phone-navigation` adds a native Choose a tool disclosure with 12 direct links, plus a configured-connection count that preserves per-tool statuses and the live-test qualification. Form/label tracks and date/time inputs can shrink at enlarged text sizes. All 62 suite/build steps pass. Focused browser checks cover every shortcut, keyboard use, 320–1280 px, 150%/200% text, configured/missing/failed connection responses and a mocked report action. This UI round awaits PR merge; no Google service access, production writes or physical-device validation is claimed. Remaining: laptop title size and production reproduction of #77.
+
 ## 2026-10-18 - Tools: everyday work first on a phone
 
 PR #263 is merged as `a534bb7`; production PWA health/gate checks pass for that build. On `codex/tools-phone-work-first`, Tools opens with measurements, installation photos and field mode, ahead of phone setup and email checks. Jump links reach both setup panels. Phone cards use their content height instead of a 13rem minimum. All 14 tool cards, panel explanations and interaction scripts are preserved. Validation: all 62 suite/build steps pass; local Chrome checks at 320/360/390/768/1280 px and 360 px at 150%/200% text show no horizontal overflow or script errors. First tool starts at 357 px instead of 1197 px on a 390 x 844 phone. Publication: new PR; not production until merged. Remaining: Google tools connection summary, laptop title size, issue #77 reproduction.
