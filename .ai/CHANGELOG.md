@@ -1,5 +1,15 @@
 # ICM Changelog
 
+## 2026-10-18 - Measurements: actual phone cards and continuous field editing (branch `codex/measurements-phone-cards`)
+
+Keith requested merging #265 after checks pass and another phone UX round. Both checks passed; merged as `3b51633`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
+
+Adding an opening at 390 px exposed fields only 17–31 px wide. Astro-scoped tag selectors did not match rows/inputs created by JavaScript, although the static tbody became a grid. Dynamic table descendants now use scoped-ancestor :global selectors. Phone cards show opening/remove on the first line, full-width room and type, paired width/height and quantity/area, and full-width notes; controls are at least 100 px wide at the tested phone sizes. Desktop keeps the table, and print CSS restores rows/headers.
+
+A second bug appeared during real editing: the change handler rebuilt the whole row, so Tab after Room focused the body instead of Type. Changes now update the existing field/state and save; numeric totals still update during input, with numeric normalization on change. Worksheet format, storage key, calculations, export/restore and verification reminders remain unchanged.
+
+Validation: all 62 test:all steps including build pass. A new measurement flow in audit-command-center checks card geometry, Room-to-Type focus, live area, quoted-text reload persistence, and removing the second opening without changing the first. --flows-only runs the interaction pass; 8 flows pass with 0 problems. Focused Chrome checks add export/clear/restore, 320/360/390/620/768/1280 widths, 150%/200% text without page overflow, and print table/header display. Local screenshots are in this task's outputs. No physical-device, printer or signed-in production UI validation is claimed for this proposed round.
+
 ## 2026-10-18 - Google tools chooser and connection summary (branch `codex/google-tools-phone-navigation`)
 
 Keith requested merging #264 after checks pass and the next phone UX round. #264 passed both checks and was merged as `01b41a8`; production PWA assets and login protection pass for that build.

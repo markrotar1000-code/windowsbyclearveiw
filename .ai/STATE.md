@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Measurements: usable phone rows and stable editing
+
+Merged #265 as `3b51633` after GitHub/Pages checks passed; production PWA assets and app gate pass for that build. On `codex/measurements-phone-cards`, runtime worksheet rows now receive their intended styles: phone cards have full-width room/type/notes, paired dimensions, and a 44px remove action. Editing a field no longer rebuilds its row and loses focus. Desktop/print retain table rows. All 62 suite/build steps and 8 interaction flows pass; focused browser checks cover reload, export/restore, 320–1280 px and 150%/200% text. The new UI awaits PR merge. Physical devices and physical printouts remain unverified. Next: review remaining field-tool ergonomics and reproduce #77 in production.
+
 ## 2026-10-18 - Google tools: direct phone navigation
 
 Merged #264 after GitHub/Pages checks passed as `01b41a8`; production PWA files and app-gate checks pass for that build. `codex/google-tools-phone-navigation` adds a native Choose a tool disclosure with 12 direct links, plus a configured-connection count that preserves per-tool statuses and the live-test qualification. Form/label tracks and date/time inputs can shrink at enlarged text sizes. All 62 suite/build steps pass. Focused browser checks cover every shortcut, keyboard use, 320–1280 px, 150%/200% text, configured/missing/failed connection responses and a mocked report action. This UI round awaits PR merge; no Google service access, production writes or physical-device validation is claimed. Remaining: laptop title size and production reproduction of #77.
