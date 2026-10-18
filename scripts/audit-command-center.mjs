@@ -171,6 +171,76 @@ for (const mode of ['500', 'no signal']) {
   }
   await ctx.close();
 }
+// ---- flows pass: the everyday actions, done for real on a phone-sized browser. Each must work, leave the screen in a
+// state that says so, and raise no script error or failed API call (a refused over-payment is the one expected 400).
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, serviceWorkers: 'block' });
+  const base = `http://127.0.0.1:${PORT}`;
+  const flowProblems = [];
+  const open = async (name) => {
+    const page = await ctx.newPage();
+    page.on('pageerror', (e) => flowProblems.push(`${name}: script error ${e.message.slice(0, 100)}`));
+    page.on('response', (r) => { const u = r.url(); if (r.status() >= 400 && u.includes('/internal/api/') && !(name === 'payments' && r.status() === 400) && !/build-plan-state/.test(u)) flowProblems.push(`${name}: ${r.status()} ${r.request().method()} ${u.replace(base, '').slice(0, 70)}`); });
+    page.on('dialog', (d) => d.accept());
+    return page;
+  };
+  const jobList = (await (await fetch(base + '/internal/api/jobs')).json()).jobs;
+  const job = jobList.find((j) => j.customer_name === 'Pat Doe' && j.status === 'scheduled');
+  {
+    const page = await open('today'); await page.goto(base + '/internal/today', { waitUntil: 'networkidle' });
+    const before = await page.locator('[data-done]').count();
+    if (!before) flowProblems.push('today: no follow-up to complete'); else { await page.locator('[data-done]').first().click(); await page.waitForTimeout(800); const after = await page.locator('[data-done]').count(); if (after !== before - 1) flowProblems.push(`today: marking a follow-up done changed ${before} to ${after}`); }
+    await page.close();
+  }
+  {
+    const page = await open('follow-up'); await page.goto(base + '/internal/follow-up', { waitUntil: 'networkidle' });
+    await page.click('[data-add-open]'); await page.fill('input[name=title]', 'Audit: call about glass'); await page.click('[data-form] button[type=submit]'); await page.waitForTimeout(900);
+    if (!(await page.evaluate(() => document.body.innerText.includes('Audit: call about glass')))) flowProblems.push('follow-up: a saved follow-up is not shown');
+    if ((await page.inputValue('input[name=title]')) !== '') flowProblems.push('follow-up: the title field is not cleared after saving');
+    await page.close();
+  }
+  {
+    const page = await open('leads'); await page.goto(base + '/internal/leads', { waitUntil: 'networkidle' });
+    const href = await page.locator('a.ld-action:has-text("Add follow-up")').first().getAttribute('href');
+    await page.goto(base + href, { waitUntil: 'networkidle' }); await page.waitForTimeout(500);
+    if (!(await page.evaluate(() => { const c = document.querySelector('[data-add-card]'); return c && !c.hidden; }))) flowProblems.push('leads: "Add follow-up" from a lead does not open the form');
+    await page.close();
+  }
+  {
+    const page = await open('quote-new'); await page.goto(base + '/internal/quotes/new', { waitUntil: 'networkidle' });
+    await page.fill('input[name=name]', 'Audit Customer'); await page.fill('input[name=phone]', '(360) 555-0188'); await page.click('[data-catalog-add]'); await page.waitForTimeout(200);
+    if (await page.locator('[data-dock]').isHidden()) flowProblems.push('quote-new: the phone total dock does not appear after the first line');
+    await page.click('[data-dock-save]'); await page.waitForTimeout(1500);
+    if (!/quotes\/(view|build-plan)/.test(page.url())) flowProblems.push('quote-new: saving from the dock did not leave the builder');
+    await page.close();
+  }
+  {
+    const page = await open('payments'); await page.goto(base + '/internal/payments', { waitUntil: 'networkidle' }); await page.waitForTimeout(800);
+    const det = page.locator('.payment-card details').first(); await det.locator('summary').click(); await page.waitForTimeout(300);
+    const status = () => det.locator('[data-status-text]').innerText();
+    const save = async (value) => { if (!(await det.evaluate((e) => e.open))) await det.locator('summary').click(); await det.locator('[data-paid-input]').fill(value); await det.locator('[data-save]').click(); await page.waitForTimeout(900); };
+    await save('100'); if (!/^Saved/.test(await status())) flowProblems.push('payments: after saving, the card does not say Saved (and the editor must stay open)');
+    await save('9999999'); if (!/between \$0 and/.test(await status())) flowProblems.push('payments: an over-payment is not explained');
+    await save('abc'); if (!/valid amount/.test(await status())) flowProblems.push('payments: a non-number is not explained');
+    await save('1,200.50'); if (!/^Saved/.test(await status())) flowProblems.push('payments: "1,200.50" (comma) is not accepted');
+    await page.close();
+  }
+  {
+    const page = await open('job-view'); await page.goto(base + '/internal/jobs/view?id=' + job.id, { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    await page.locator('[data-install-notes]').fill('Audit note: gate code 1234'); await page.locator('[data-save]').click(); await page.waitForTimeout(900);
+    await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(500);
+    if (!(await page.locator('[data-install-notes]').inputValue()).includes('Audit note')) flowProblems.push('job-view: an edited note is not kept after reload');
+    await page.close();
+  }
+  {
+    const page = await open('jobs-create'); await page.goto(base + '/internal/jobs', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    if ((await page.locator('[data-quote-select] option').count()) > 1) { await page.selectOption('[data-quote-select]', { index: 1 }); await page.click('[data-create]'); await page.waitForTimeout(1500); if (!/jobs\/view\?id=/.test(page.url())) flowProblems.push('jobs: creating a job from a finalized quote did not open the job'); }
+    await page.close();
+  }
+  views += 7;
+  for (const f of flowProblems) findings.push(`flow / ${f}`);
+  await ctx.close();
+}
 await browser.close();
 server.close();
 console.log(`${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes, plus ${pages.length * 2} with the API failing), ${findings.length} with problems`);

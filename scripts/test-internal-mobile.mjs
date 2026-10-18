@@ -64,4 +64,12 @@ assert.match(quoteNew, /form\.querySelector\('\[data-dock-save\]'\)\?\.addEventL
 assert.match(quoteNew, /if \(dock instanceof HTMLElement\) dock\.hidden = items\.length === 0;/, 'the dock shows only once a line exists');
 assert.match(quoteNew, /\.qb-dock \{ display: none; \}\s*@media \(max-width: 680px\) \{\s*\.qb-dock \{[^}]*position: sticky; bottom: calc\(4\.6rem/, 'the dock is phone-only and sits above the bottom navigation');
 
+// Payments: after Save the list is rebuilt, which used to collapse the editor and reset its line to "Ready", so
+// nothing said the payment had been recorded (found 2026-10-18 by the audit's flows pass). The saved card now stays open
+// and reads "Saved 7:59 PM".
+const payments = read('src/pages/internal/payments.astro');
+assert.match(payments, /<details class="payment-editor"\$\{justSaved===j\.id\?' open':''\}>/, 'the just-saved payment editor stays open');
+assert.match(payments, /data-status-text>\$\{justSaved===j\.id\?'Saved '\+savedAt:'Ready'\}</, 'the just-saved payment says Saved with the time');
+assert.match(payments, /job\.notes=d\.payment\.notes;justSaved=job\.id;savedAt=/, 'a successful save marks the job as just saved');
+
 console.log('internal mobile: ok');

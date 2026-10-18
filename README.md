@@ -334,7 +334,7 @@ npx wrangler pages dev dist \
   --ai AI
 ```
 
-`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing. To drive every internal page in a real browser over seeded data (including a pass with the API failing, which every screen must survive by saying it could not load), use `scripts/audit-command-center.mjs` (needs Playwright; not in CI).
+`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing. To drive every internal page in a real browser over seeded data (including a pass with the API failing, which every screen must survive by saying it could not load, and a pass that does the everyday actions: complete and add a follow-up, save a quote, record a payment, create a job), use `scripts/audit-command-center.mjs` (needs Playwright; not in CI).
 
 ### Internal data rules
 
