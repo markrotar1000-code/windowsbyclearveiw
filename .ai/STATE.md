@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round seven
+
+Analytics, Schedule and Invoices polished for a phone. Open: Tools page order (email test and offline text sit above the tools), Jobs create-form placement, laptop title size.
+
 ## 2026-10-18 - Command Center, round six
 
 Today and Follow-up hide repeated stat cards on a phone, so the first task is above the fold. Open: Jobs create-form placement, laptop title size; remaining ideas are small.

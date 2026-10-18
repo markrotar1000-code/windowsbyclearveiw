@@ -78,4 +78,19 @@ assert.match(payments, /job\.notes=d\.payment\.notes;justSaved=job\.id;savedAt=/
 assert.match(read('src/pages/internal/follow-up.astro'), /<section class="stats phone-hide" aria-label="Follow-up summary">/, 'Follow-up hides its repeated stats on a phone');
 assert.match(read('src/pages/internal/today.astro'), /<section class="summary-grid phone-hide" aria-label="Today's workload">/, 'Today hides its repeated summary cards on a phone');
 
+// Pages looked at on a phone for the first time on 2026-10-18 (Analytics, Schedule, Invoices):
+//   - Analytics figures stay two to a row (they were one per row, five cards deep), the big number steps down so a
+//     six-figure amount fits half a screen, an odd last card spans the row, and "Last 90 days" sits under its title;
+//   - Schedule: a day with nothing booked is one line ("Mon, Oct 12  No installation scheduled"), not a card (seven of
+//     them filled three screens), and its two header buttons share the row;
+//   - Invoices: the dark banner's explanation is hidden on a phone, as on Quotes.
+const analytics = read('src/pages/internal/analytics.astro');
+assert.match(analytics, /@media\(max-width:420px\)\{\.an-stat\{padding:\.8rem\}\.an-stat strong\{font-size:var\(--step-2\);overflow-wrap:normal\}\.an-head\{flex-direction:column/, 'analytics stat cards compact on a phone');
+assert.match(analytics, /@media\(max-width:339px\)\{\.an-stats\{grid-template-columns:1fr\}\}/, 'analytics goes to one column only below 340 px');
+assert.match(analytics, /\.an-stats>\.an-stat:last-child:nth-child\(odd\)\{grid-column:1\/-1\}/, 'an odd last analytics card spans the row');
+const schedule = read('src/pages/internal/schedule.astro');
+assert.match(schedule, /:global\(\.day:has\(\.none\)\)\{display:flex;justify-content:space-between/, 'an empty schedule day is one line on a phone');
+assert.match(schedule, /\.actions \.btn:last-child:nth-child\(odd\)\{grid-column:1\/-1\}/, 'schedule header buttons share the row');
+assert.match(read('src/pages/internal/invoices/index.astro'), /<p class="phone-hide">Draft invoices can be prepared/, 'Invoices hides its banner explanation on a phone');
+
 console.log('internal mobile: ok');
