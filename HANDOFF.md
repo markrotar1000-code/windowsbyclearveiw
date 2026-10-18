@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Continue Command Center after #261 (`codex/jobs-phone-queue`)
+
+The Jobs creation form now starts collapsed behind "Create job from quote" so Mark reaches his current queue sooner. Expand it to select a finalized quote and create the job; the approval gates remain intact. Native details/summary supports keyboard and touch. The audit checks keyboard expansion and the first job's position above bottom navigation before creating a job. Three test scripts now work on Windows (file URL imports and CRLF normalization).
+
+Validation: all 62 `test:all` steps pass, including the production build; keyboard expansion/collapse and expanded-form widths 320/360/390/768/1280 pass in local Chrome. Full 297-view browser audit is running; record the result before marking the PR ready. No production deployment is claimed. Still open: Google tools' repeated connection messages, Tools page order, laptop title size, and reproducing the first-click navigation issue #77. Pricing, legal and provider-connection questions in earlier entries still require owner input.
+
 ## 2026-10-16 - /new-construction flashing diagram removed
 
 Per Keith. See `.ai/CHANGELOG.md` (2026-10-16). The diagram component still exists and is used on the guides.

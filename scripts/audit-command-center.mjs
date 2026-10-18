@@ -234,6 +234,17 @@ for (const mode of ['500', 'no signal']) {
   }
   {
     const page = await open('jobs-create'); await page.goto(base + '/internal/jobs', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    const disclosure = page.locator('.create-disclosure');
+    if (await disclosure.evaluate((e) => e.open)) flowProblems.push('jobs: creation form starts expanded and pushes the queue down');
+    const firstJob = page.locator('.job-card').first();
+    if (await firstJob.count()) {
+      const card = await firstJob.boundingBox();
+      const nav = await page.locator('.internal-mobile-nav').boundingBox().catch(() => null);
+      if (card && card.y + 44 > (nav?.y ?? 760)) flowProblems.push('jobs: the first job is not reachable in the first phone screen');
+    }
+    await disclosure.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    if (!(await page.locator('[data-quote-select]').isVisible())) flowProblems.push('jobs: keyboard cannot expand job creation');
     if ((await page.locator('[data-quote-select] option').count()) > 1) { await page.selectOption('[data-quote-select]', { index: 1 }); await page.click('[data-create]'); await page.waitForTimeout(1500); if (!/jobs\/view\?id=/.test(page.url())) flowProblems.push('jobs: creating a job from a finalized quote did not open the job'); }
     await page.close();
   }
