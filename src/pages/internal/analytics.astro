@@ -1033,5 +1033,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   .an-stats-5{grid-template-columns:repeat(5,minmax(0,1fr))}
   @media(max-width:900px){.an-stats-5{grid-template-columns:repeat(2,minmax(0,1fr))}.an-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media(max-width:720px){.an-hero{align-items:flex-start;flex-direction:column}.an-grid,.an-links{grid-template-columns:minmax(0,1fr)}}
-  @media(max-width:420px){.an-stats{grid-template-columns:1fr}}
+  /* Phone: figures stay two to a row (the cards were one per row and ran the page to several screens); the
+     big number steps down so "$117,186" fits half a screen; the "Last 90 days" tag goes under the title. */
+  @media(max-width:420px){.an-stat{padding:.8rem}.an-stat strong{font-size:var(--step-2);overflow-wrap:normal}.an-head{flex-direction:column;align-items:flex-start;gap:.15rem}}
+  @media(max-width:900px){.an-stats>.an-stat:last-child:nth-child(odd){grid-column:1/-1}}
+  @media(max-width:339px){.an-stats{grid-template-columns:1fr}}
 </style>
