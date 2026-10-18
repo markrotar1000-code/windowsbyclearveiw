@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round four
+
+Quote builder on a phone has a sticky total-and-save dock above the bottom navigation. Field keyboards were checked and are already right. Open: Jobs create-form placement, laptop title size.
+
 ## 2026-10-18 - Command Center, round three
 
 Five places where a short label, badge or price was squeezed to one letter per line by the global `overflow-wrap: anywhere` are fixed, and the audit detects the class. Phone first screens are shorter (`phone-hide`). Open: the Jobs list still starts low (the create form sits above it).
