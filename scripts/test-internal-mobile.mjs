@@ -72,4 +72,10 @@ assert.match(payments, /<details class="payment-editor"\$\{justSaved===j\.id\?' 
 assert.match(payments, /data-status-text>\$\{justSaved===j\.id\?'Saved '\+savedAt:'Ready'\}</, 'the just-saved payment says Saved with the time');
 assert.match(payments, /job\.notes=d\.payment\.notes;justSaved=job\.id;savedAt=/, 'a successful save marks the job as just saved');
 
+// Duplicate numbers: on Today and Follow-up the dark status card already shows overdue, due today and open, then a
+// grid of cards repeated the same figures and pushed the actual list below the fold (first task at about 1000 px on a
+// phone, now about 585 px). The repeats are hidden on a phone only.
+assert.match(read('src/pages/internal/follow-up.astro'), /<section class="stats phone-hide" aria-label="Follow-up summary">/, 'Follow-up hides its repeated stats on a phone');
+assert.match(read('src/pages/internal/today.astro'), /<section class="summary-grid phone-hide" aria-label="Today's workload">/, 'Today hides its repeated summary cards on a phone');
+
 console.log('internal mobile: ok');

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round six
+
+Today and Follow-up hide repeated stat cards on a phone, so the first task is above the fold. Open: Jobs create-form placement, laptop title size; remaining ideas are small.
+
 ## 2026-10-18 - Command Center, round five
 
 The browser audit now presses the everyday buttons (flows pass, 7 flows). Payments confirms a save ("Saved 7:59 PM"). Open: Jobs create-form placement, laptop title size.
