@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Next phone round: Tools (`codex/tools-phone-work-first`)
+
+Merged #263 after both GitHub and Cloudflare checks passed; production build `a534bb7` passes PWA health and app-gate checks. Tools now prioritizes measurements, installation photos and field mode, before setup/email checks. The two top jump links preserve quick access to those panels. Cards are more compact on phones; all 14 original cards, panel warnings and interaction scripts remain.
+
+Validation: all 62 suite/build steps pass; local Chrome widths 320/360/390/768/1280 and 360 px at 150%/200% text have no overflow. Phone first tool moves 1197 to 357 px; setup anchors clear the sticky header. No script errors. This UI round is proposed on the branch/PR, with production unchanged until merged. Next candidates: Google tools connection summary, laptop title size, production reproduction of #77. Signed-in production and physical devices still require verification. Do not send a production email test merely to check this layout.
+
 ## 2026-10-18 - Continue Command Center after #261 (`codex/jobs-phone-queue`)
 
 The Jobs creation form now starts collapsed behind "Create job from quote" so Mark reaches his current queue sooner. Expand it to select a finalized quote and create the job; the approval gates remain intact. Native details/summary supports keyboard and touch. The audit checks keyboard expansion and the first job's position above bottom navigation before creating a job. Three test scripts now work on Windows (file URL imports and CRLF normalization). The browser audit also converts nested Windows filesystem paths to URL slashes before attaching quote/job fixture IDs.

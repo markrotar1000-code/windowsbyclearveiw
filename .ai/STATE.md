@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Tools: everyday work first on a phone
+
+PR #263 is merged as `a534bb7`; production PWA health/gate checks pass for that build. On `codex/tools-phone-work-first`, Tools opens with measurements, installation photos and field mode, ahead of phone setup and email checks. Jump links reach both setup panels. Phone cards use their content height instead of a 13rem minimum. All 14 tool cards, panel explanations and interaction scripts are preserved. Validation: all 62 suite/build steps pass; local Chrome checks at 320/360/390/768/1280 px and 360 px at 150%/200% text show no horizontal overflow or script errors. First tool starts at 357 px instead of 1197 px on a 390 x 844 phone. Publication: new PR; not production until merged. Remaining: Google tools connection summary, laptop title size, issue #77 reproduction.
+
 ## 2026-10-18 - Command Center continuation: Jobs queue first
 
 The finalized-quote creation form is a native expandable panel, initially closed, so existing jobs are reachable sooner on a phone. Its instructions, finalized-quote list and approval gates remain inside the panel. Browser flow audit now opens it with Enter and checks the first job against the phone navigation. Three existing Windows test-runner issues are corrected (file URLs and CRLF handling), and browser audit paths use URL slashes so nested screens receive their fixture IDs. Validation: all 62 suite steps/build and the corrected 297-view browser audit pass. PR #262 is merged as `49bc333`; production PWA health/gate checks pass for that build. Audit-path follow-up: `codex/windows-audit-paths`. Signed-in production layout still requires a current browser login. Remaining: Google tools connection summary, Tools page order, laptop title size, and issue #77 reproduction.

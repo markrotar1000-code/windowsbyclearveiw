@@ -1,5 +1,13 @@
 # ICM Changelog
 
+## 2026-10-18 - Tools: field actions before setup (branch `codex/tools-phone-work-first`)
+
+Keith requested merging #263 and the next phone UX round. #263 passed GitHub/Pages checks and was merged as `a534bb7`; production worker/manifest/offline/icons/app-gate checks pass for that build.
+
+Tools previously began with email checks and a long install/offline panel, so its first useful card started at 1197 px on a 390 x 844 phone. Everyday tools now come first, ordered measurements, installation photos and field mode, followed by the remaining cards. Setup and email panels remain below them, with direct jump links near the page title. Phone cards fit their contents instead of imposing 13rem minimum heights. All 14 cards, original descriptions/targets, offline limitations, email-test explanation and complete interaction script are preserved.
+
+Validation: all 62 `test:all` steps including build pass. Local Chrome: first tool at 357 px, measurements and photos above bottom navigation; jump targets at 84 px below a 68 px sticky header; no overflow at 320/360/390/768/1280 px or 360 px with 150%/200% text; no page script errors. No production email test was sent. Screenshots: task outputs `tools-phone-before.png` and `tools-phone-after.png` use seeded local data. This round awaits PR merge/preview; physical phones and signed-in production layout were not verified.
+
 ## 2026-10-18 - Jobs queue before creation controls (branch `codex/jobs-phone-queue`)
 
 Continuing the Command Center phone usability work merged through #261. The Jobs page's finalized-quote creation form starts closed behind a native details/summary control ("Create job from quote"). Opening it exposes the same quote selector, instructions and creation action; server approval requirements are unchanged. No custom click interception or animation. The audit's creation flow checks keyboard expansion, first-job visibility above phone navigation, and creation through the existing real handler. Local browser checks at 320, 360, 390, 768 and 1280 px found no horizontal overflow in the expanded form. The first job starts at about 704 px on a 390 x 844 phone, ahead of navigation at 773 px; restoring the old form in the same browser puts it at 902 px. A direct touch at scroll position zero opens the job.
