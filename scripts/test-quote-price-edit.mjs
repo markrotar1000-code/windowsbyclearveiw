@@ -2,7 +2,6 @@
 // Runs the real handlers on real SQLite, like test-quote-signing.mjs.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 import * as quotesIndex from '../functions/internal/api/quotes/index.js';
 import * as quoteById from '../functions/internal/api/quotes/[id].js';
@@ -18,8 +17,8 @@ const read = (p) => fs.readFileSync(new URL(p, root), 'utf8');
 
 // ── A vinyl Cascade slider starts at $850 whether it is an insert or a fin install ──────────────────────
 {
-  const { pricing } = await import(pathToFileURL(`${root.pathname}src/data/pricing.ts`).href);
-  const { suggestedUnitPrice } = await import(pathToFileURL(`${root.pathname}src/lib/quote-pricing.ts`).href);
+  const { pricing } = await import(new URL('src/data/pricing.ts', root).href);
+  const { suggestedUnitPrice } = await import(new URL('src/lib/quote-pricing.ts', root).href);
   const slider = pricing.openings.find((o) => o.id === 'slider');
   const casement = pricing.openings.find((o) => o.id === 'casement');
   const cascade = pricing.brands.find((b) => b.id === 'cascade');

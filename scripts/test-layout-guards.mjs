@@ -120,7 +120,7 @@ const captionRule = workCard.match(/\.work-card figcaption\s*\{([^}]*)\}/);
 assert.ok(captionRule && /flex-wrap:\s*wrap/.test(captionRule[1]), 'WorkCard figcaption must wrap so the tag can drop under the caption');
 
 // 7. The phone menu panel is capped to the screen and scrolls (see 6).
-const header = readFileSync(`${root}src/components/Header.astro`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const header = readFileSync(`${root}src/components/Header.astro`, 'utf8').replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '');
 const menuMedia = header.match(/@media \(max-width:\s*1400px\)\s*\{([\s\S]*?)\n  \}\n/);
 assert.ok(menuMedia, 'Header.astro must have the @media (max-width: 1400px) menu block');
 const panel = menuMedia[1].match(/\.nav\s*\{([^}]*position:\s*absolute[^}]*)\}/);
@@ -195,7 +195,7 @@ for (const file of sources(`${root}src`)) {
   for (const m of text.matchAll(/grid-template-columns:\s*1fr\s*[;}]/g)) bareFr.push(`${rel}: ${m[0].trim()}`);
 }
 assert.deepEqual(bareFr, [], `use \`grid-template-columns: minmax(0, 1fr)\` for a single column:\n  ${bareFr.join('\n  ')}`);
-const read = (rel) => readFileSync(`${root}${rel}`, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const read = (rel) => readFileSync(`${root}${rel}`, 'utf8').replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '');
 const cta = read('src/components/CtaBar.astro');
 assert.match(cta.match(/@media \(max-width:\s*900px\)\s*\{([\s\S]*?)\n  \}\n/)[1], /\.cta-bar\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*max-content\)/, 'the stacked CTA band needs `grid-template-columns: minmax(0, max-content)`: its implicit auto column grew to 415 px at 200% text and `.cta-band` (overflow hidden) clipped the right edge. (max-content, not 1fr, keeps the column its usual width at normal sizes.)');
 const estimator = read('src/components/CostEstimator.astro');

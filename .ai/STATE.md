@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center continuation: Jobs queue first
+
+The finalized-quote creation form is a native expandable panel, initially closed, so existing jobs are reachable sooner on a phone. Its instructions, finalized-quote list and approval gates remain inside the panel. Browser flow audit now opens it with Enter and checks the first job against the phone navigation. Three existing Windows test-runner issues are corrected (file URLs and CRLF handling). Validation and publication status: see HANDOFF's continuation entry. Remaining: Google tools connection summary, Tools page order, laptop title size, and issue #77 reproduction.
+
 ## 2026-10-18 - Command Center, round eight
 
 Job screen jump buttons, the quote document header and Copilot's margins fixed for a phone. Open: Google tools repeats "Not connected" per panel, Tools page order, Jobs create-form placement, laptop title size.

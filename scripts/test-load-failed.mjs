@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (path) => readFileSync(`${root}/${path}`, 'utf8');
 const pass = (message) => console.log(`PASS: ${message}`);
-const { loadFailureMessage, NO_SIGNAL_MESSAGE } = await import(`${root}/src/lib/load-failed.ts`);
+const { loadFailureMessage, NO_SIGNAL_MESSAGE } = await import(new URL('../src/lib/load-failed.ts', import.meta.url).href);
 
 // 1. The browser's own network wording never reaches Mark; a server sentence does.
 for (const raw of ['Failed to fetch', 'Load failed', 'NetworkError when attempting to fetch resource.', 'Network request failed', '']) {
@@ -45,7 +45,7 @@ assert.match(layout, /data-reload-offer/, 'a load failure gets a Reload page but
 assert.match(layout, /Reload and lose the changes you have typed/, 'the Reload button asks first when a field was edited');
 assert.ok(layout.includes('label:not(.la-card):has(> input[type="checkbox"])') && layout.includes('.internal-main :global(.btn),.internal-main :global(.filter){min-height:2.75rem}'), 'buttons, chips and checkbox rows are 44 px touch targets');
 pass('the layout settles stale subtitles, offers a Reload, sizes touch targets and has one reduced-motion switch');
-const { isNoSignalText, isLoadFailureText } = await import(`${root}/src/lib/load-failed.ts`);
+const { isNoSignalText, isLoadFailureText } = await import(new URL('../src/lib/load-failed.ts', import.meta.url).href);
 for (const text of ['Failed to fetch', 'Load failed', 'Could not reach the server. Check your signal.']) assert.equal(isNoSignalText(text), true, text);
 for (const text of ['Could not load leads.', 'Could not check connections.']) assert.equal(isLoadFailureText(text) && !isNoSignalText(text), true, text);
 for (const text of ['Saved.', 'No quote with that id.', 'Ready']) assert.equal(isLoadFailureText(text), false, text);
