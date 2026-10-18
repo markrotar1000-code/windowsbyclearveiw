@@ -31,7 +31,7 @@ function* walk(dir) {
 }
 const rel = (path) => relative(root, path).replaceAll('\\', '/');
 // Pages Mark uses from the Command Center show errors to him and are not covered by this rule.
-const internal = (path) => /^src\/(pages\/internal\/|layouts\/InternalLayout|scripts\/internal-pwa|lib\/photo-sync)/.test(path);
+const internal = (path) => /^src\/(pages\/internal\/|layouts\/InternalLayout|scripts\/internal-pwa|lib\/photo-sync|lib\/load-failed)/.test(path);
 
 const offenders = [];
 let scanned = 0;

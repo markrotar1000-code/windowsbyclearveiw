@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center failure states, phone header, reduced motion
+
+Every `/internal` screen now says so when its data does not arrive (13 page views were stuck on "Loading…" before; the audit's new failure pass reports 0). `src/lib/load-failed.ts` and `InternalLayout.astro` carry the shared pieces; `test:load-failed` guards them (`test:all` is 62 steps). Phone page titles are smaller; one reduced-motion rule covers every screen. Manual proof: `scripts/audit-command-center.mjs` (needs Playwright; not in CI). Open: laptop title size, a retry button on screens other than Today.
+
 ## 2026-10-16 - /new-construction: diagram out, gable-windows photos in
 
 The flashing diagram (the "Window Flashing: Give Water a Way Out" graphic) is removed everywhere as inaccurate: `/new-construction`, the `what-your-openings-need` guide, its component and image file, and the `flashing-order` diagram options. Do not reinstate it without Mark's say-so. Also on `/new-construction`: five photos of one gable-windows job are in as their own block (`newBuildGableWork` in `src/data/work.ts`) and in the gallery's New construction group. Details: `.ai/CHANGELOG.md` (2026-10-16).

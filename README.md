@@ -334,7 +334,7 @@ npx wrangler pages dev dist \
   --ai AI
 ```
 
-`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing. To drive every internal page in a real browser over seeded data, use `scripts/audit-command-center.mjs` (needs Playwright; not in CI).
+`npx astro dev` and `astro preview` do not provide the full Pages Functions environment, so use `wrangler pages dev` for internal/API testing. To drive every internal page in a real browser over seeded data (including a pass with the API failing, which every screen must survive by saying it could not load), use `scripts/audit-command-center.mjs` (needs Playwright; not in CI).
 
 ### Internal data rules
 
@@ -357,7 +357,7 @@ npm run test:all   # runs every CI test step in CI order (scripts/run-all-tests.
 npm run build
 ```
 
-`test:all` has 61 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
+`test:all` has 62 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
 
 Notable guards:
 

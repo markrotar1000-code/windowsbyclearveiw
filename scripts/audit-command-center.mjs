@@ -127,8 +127,31 @@ for (const set of sets) {
     await ctx.close();
   }
 }
+// ---- failure pass: every API answers 500, then every request is dropped (a phone with no signal).
+// A page must say it could not load. "Loading…" or "Checking…" still on screen after 1.5 s is a bug: Today, the
+// quote screen and the approval screen once sat on it forever, with the only message below the fold.
+// ("Checking this phone…" on Tools is a local service-worker check, not an API call, and this run blocks workers.)
+const STILL_LOADING = /^\s*(Loading|Checking)\b[^]{0,60}$/i;
+for (const mode of ['500', 'no signal']) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  await ctx.route('**/internal/api/**', (route) => (mode === '500' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Server error."}' }) : route.abort()));
+  for (const url of pages.sort()) {
+    const page = await ctx.newPage();
+    try { await page.goto(`http://127.0.0.1:${PORT}${url}${query(url, sets[0])}`, { waitUntil: 'load', timeout: 20000 }); } catch { /* the page itself failed to load */ }
+    await page.waitForTimeout(1500);
+    const stuck = await page.evaluate((source) => {
+      const re = new RegExp(source, 'i');
+      const visible = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+      return [...document.querySelectorAll('.internal-main *')].filter((e) => e.children.length === 0 && visible(e) && re.test(e.textContent || '') && !/Checking this phone/.test(e.textContent || '')).map((e) => (e.textContent || '').trim().slice(0, 40));
+    }, STILL_LOADING.source).catch(() => []);
+    views += 1;
+    if (stuck.length) findings.push(`failed API (${mode}) / ${url}\n    still says: ${[...new Set(stuck)].slice(0, 3).join(' | ')}`);
+    await page.close();
+  }
+  await ctx.close();
+}
 await browser.close();
 server.close();
-console.log(`${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes), ${findings.length} with problems`);
+console.log(`${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes, plus ${pages.length * 2} with the API failing), ${findings.length} with problems`);
 for (const f of findings) console.log('  ' + f);
 process.exit(findings.length ? 1 : 0);
