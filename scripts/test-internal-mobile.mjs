@@ -93,4 +93,14 @@ assert.match(schedule, /:global\(\.day:has\(\.none\)\)\{display:flex;justify-con
 assert.match(schedule, /\.actions \.btn:last-child:nth-child\(odd\)\{grid-column:1\/-1\}/, 'schedule header buttons share the row');
 assert.match(read('src/pages/internal/invoices/index.astro'), /<p class="phone-hide">Draft invoices can be prepared/, 'Invoices hides its banner explanation on a phone');
 
+// Seen on a phone on 2026-10-18 (job, quote and Copilot screens): the job screen's six jump buttons shared one row at
+// about 50 px each with labels wrapping in half (now three by two); the quote document's number printed one fragment
+// per line and its email broke mid-word (the header stacks on a phone, the number never breaks); Copilot's own
+// padding doubled the page margins.
+assert.match(read('src/pages/internal/jobs/view.astro'), /@media\(max-width:720px\)\{\.head-actions\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)\}/, 'the job jump buttons are three by two on a phone');
+const quoteView = read('src/pages/internal/quotes/view.astro');
+assert.match(quoteView, /\.contract-meta \[data-quote-id\]\{white-space:nowrap;overflow-wrap:normal\}/, 'the quote number never breaks');
+assert.match(quoteView, /@media\(max-width:560px\)\{:global\(\.contract-head\)\{flex-direction:column/, 'the quote header stacks on a phone');
+assert.match(read('src/pages/internal/copilot.astro'), /@media\(max-width:680px\)\{\.copilot-shell\{padding:\.25rem 0 1rem\}\}/, 'Copilot does not double the page margins on a phone');
+
 console.log('internal mobile: ok');
