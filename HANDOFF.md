@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Google tools phone round (`codex/google-tools-phone-navigation`)
+
+#264 is merged as `01b41a8` after both checks passed; production PWA assets and app gate are healthy for that build. This next round adds a native Choose a tool menu with 12 fragment links and a count of configured provider connections. Per-tool status and all existing tool explanations/confirmations remain. Calendar date/time inputs and their grid tracks now shrink correctly at 200% text.
+
+Validation: all 62 suite/build steps pass; focused Chrome checks cover all shortcuts, keyboard, 320–1280 px, 150%/200% text, 0/3/10 configured connection fixtures, 500/no-signal states and a mocked report click. All seven forms and connection displays are preserved. No Google calls, production writes or physical-device validation were performed. This round is proposed in its PR; production stays on #264 until merged. Remaining candidates: laptop title size and issue #77 production reproduction. Provider setup is not proven live access.
+
 ## 2026-10-18 - Next phone round: Tools (`codex/tools-phone-work-first`)
 
 Merged #263 after both GitHub and Cloudflare checks passed; production build `a534bb7` passes PWA health and app-gate checks. Tools now prioritizes measurements, installation photos and field mode, before setup/email checks. The two top jump links preserve quick access to those panels. Cards are more compact on phones; all 14 original cards, panel warnings and interaction scripts remain.
