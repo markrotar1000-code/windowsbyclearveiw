@@ -104,6 +104,7 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
     </script>
 
     <script>
+      import { isLoadFailureText, isNoSignalText, NO_SIGNAL_MESSAGE } from '../lib/load-failed';
       (() => {
         const moreButton = document.querySelector('[data-mobile-more]');
         const moreMenu = document.getElementById('internal-more-menu');
@@ -198,12 +199,38 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
             }).catch(() => {});
         }
 
-        // A page that fails to load shows its own error, but its subtitle used to keep saying "Loading project…".
-        // Whenever a visible [data-error] message exists, a subtitle still reading "Loading…" says so plainly instead.
+        // A screen that fails to load says so in its own words. Three things are made the same everywhere:
+        //  1. a subtitle still reading "Loading…" while an error shows becomes "Could not load this page.";
+        //  2. the browser's own "Failed to fetch" / "Load failed" becomes one plain no-signal sentence;
+        //  3. that sentence gets a Reload button (asks first if a field on the page was edited).
+        const MESSAGE_SELECTOR = '[data-error], [role="alert"], .error, [data-status], .status';
+        const hasRetry = () => [...document.querySelectorAll('.internal-main button, .internal-main a')].some((el) => el instanceof HTMLElement && el.offsetParent !== null && /try again|retry|reload|refresh/i.test(el.textContent || ''));
+        const pageEdited = () => [...document.querySelectorAll('.internal-main input, .internal-main textarea, .internal-main select')].some((el) => {
+          if (el instanceof HTMLSelectElement) return [...el.options].some((option) => option.selected !== option.defaultSelected);
+          if (el instanceof HTMLTextAreaElement) return el.value !== el.defaultValue;
+          if (!(el instanceof HTMLInputElement) || ['hidden', 'file', 'button', 'submit'].includes(el.type)) return false;
+          return el.type === 'checkbox' || el.type === 'radio' ? el.checked !== el.defaultChecked : el.value !== el.defaultValue;
+        });
         function settleLoadingSubtitles() {
-          const failed = [...document.querySelectorAll('[data-error]')].some((el) => el instanceof HTMLElement && !el.hidden && (el.textContent || '').trim());
+          let noSignal = false;
+          for (const el of document.querySelectorAll(MESSAGE_SELECTOR)) {
+            if (!(el instanceof HTMLElement) || el.hidden || el.offsetParent === null) continue;
+            const text = (el.textContent || '').trim();
+            if (!text || el.querySelector('button, a') || !isLoadFailureText(text)) continue;
+            if (isNoSignalText(text) && text !== NO_SIGNAL_MESSAGE && !/could not reach the server/i.test(text)) el.textContent = NO_SIGNAL_MESSAGE;
+            noSignal = true;
+          }
+          const failed = noSignal || [...document.querySelectorAll('[data-error]')].some((el) => el instanceof HTMLElement && !el.hidden && (el.textContent || '').trim());
           if (!failed) return;
           for (const el of document.querySelectorAll('[data-subtitle]')) if (/^\s*Loading\b/i.test(el.textContent || '')) el.textContent = 'Could not load this page.';
+          if (noSignal && !document.querySelector('[data-reload-offer]') && !hasRetry()) {
+            const main = document.querySelector('.internal-main');
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'btn btn-ghost'; button.dataset.reloadOffer = 'true'; button.textContent = 'Reload page';
+            button.addEventListener('click', () => { if (pageEdited() && !window.confirm('Reload and lose the changes you have typed on this page?')) return; location.reload(); });
+            const anchor = [...document.querySelectorAll(MESSAGE_SELECTOR)].find((el) => el instanceof HTMLElement && !el.hidden && el.offsetParent !== null && isLoadFailureText((el.textContent || '').trim()));
+            if (anchor instanceof HTMLElement) anchor.after(button); else main?.append(button);
+          }
         }
         new MutationObserver(settleLoadingSubtitles).observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
 
@@ -249,6 +276,9 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
         .internal-main :global(h1 + .lede),.internal-main :global(h1 + p){font-size:var(--step--1)!important;line-height:1.4!important;margin-block:0 .5rem!important}
         .internal-main :global(.kicker){margin-bottom:.1rem}
       }
+      /* Touch targets: buttons and filter chips at least 44 px tall, and a checkbox row is one big tap, not a 20 px box. */
+      .internal-main :global(.btn),.internal-main :global(.filter){min-height:2.75rem}.internal-main :global(.filter){min-width:2.75rem}
+      .internal-main :global(label:not(.la-card):has(> input[type="checkbox"])),.internal-main :global(label.check){display:inline-flex;align-items:center;gap:.55rem;min-height:2.75rem}
       /* Press feedback on a phone, and a short settle-in for each screen. */
       .internal-main{animation:internal-settle 180ms ease-out both}
       @keyframes internal-settle{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}

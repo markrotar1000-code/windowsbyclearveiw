@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round two
+
+Every Command Center load failure is retryable and in plain words (one rule in `InternalLayout`); touch targets are 44 px; the browser audit's failure pass checks both. Open: laptop title size (74 px), an in-place Try again (instead of Reload) on list screens other than Today.
+
 ## 2026-10-18 - Command Center failure states, phone header, reduced motion
 
 Every `/internal` screen now says so when its data does not arrive (13 page views were stuck on "Loading…" before; the audit's new failure pass reports 0). `src/lib/load-failed.ts` and `InternalLayout.astro` carry the shared pieces; `test:load-failed` guards them (`test:all` is 62 steps). Phone page titles are smaller; one reduced-motion rule covers every screen. Manual proof: `scripts/audit-command-center.mjs` (needs Playwright; not in CI). Open: laptop title size, a retry button on screens other than Today.
