@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Measurements phone round (`codex/measurements-phone-cards`)
+
+#265 passed both checks and is merged as `3b51633`; production PWA files/app gate are healthy. This next round fixes runtime measurement-row CSS and editing focus. Dynamic descendants use :global under the measurement table; phones get readable cards, while desktop/print remain tables. The change handler saves without rebuilding the current row, preserving the next-field focus. Numerical totals/worksheet format and reminders are unchanged.
+
+Validation: 62 suite/build steps pass; `CHROMIUM_PATH=... node scripts/audit-command-center.mjs --flows-only` passes all 8 interaction flows, including the new measurements case. Focused checks cover reload and JSON export/restore with quoted room text, normal/large text widths 320–1280, and print row/header display. Physical devices and physical printouts remain unverified. This proposed round needs PR merge before production claims; production currently contains #265.
+
 ## 2026-10-18 - Google tools phone round (`codex/google-tools-phone-navigation`)
 
 #264 is merged as `01b41a8` after both checks passed; production PWA assets and app gate are healthy for that build. This next round adds a native Choose a tool menu with 12 fragment links and a count of configured provider connections. Per-tool status and all existing tool explanations/confirmations remain. Calendar date/time inputs and their grid tracks now shrink correctly at 200% text.

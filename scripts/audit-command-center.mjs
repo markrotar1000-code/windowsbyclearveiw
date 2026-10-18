@@ -7,6 +7,8 @@
 //   npm run build
 //   CHROMIUM_PATH=/path/to/chrome node scripts/audit-command-center.mjs [--serve]    (--serve: just run the server on :4440)
 //
+// Add --flows-only to run just the interaction checks (including measurement editing).
+//
 // The seed goes through the handlers themselves (quotes, signed plans, jobs, payments, tasks) plus leads with
 // messy values: a 1,800-character note, an HTML-looking name, long emails and links with no spaces. That is what
 // found, on 2026-10-12: the closeout API failing on a database that had never opened Field, and 22 of 58 page
@@ -106,7 +108,8 @@ const EXPECTED_409 = /job-closeout|job-checklist|build-plan/;
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const findings = [];
 let views = 0;
-for (const set of sets) {
+const flowsOnly = process.argv.includes('--flows-only');
+for (const set of (flowsOnly ? [] : sets)) {
   for (const [label, viewport] of [['phone 390', { width: 390, height: 844 }], ['laptop 1280', { width: 1280, height: 800 }]]) {
     const ctx = await browser.newContext({ viewport, serviceWorkers: 'block' });
     for (const url of pages.sort()) {
@@ -142,7 +145,7 @@ for (const set of sets) {
 // quote screen and the approval screen once sat on it forever, with the only message below the fold.
 // ("Checking this phone…" on Tools is a local service-worker check, not an API call, and this run blocks workers.)
 const STILL_LOADING = /^\s*(Loading|Checking)\b[^]{0,60}$/i;
-for (const mode of ['500', 'no signal']) {
+for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
   await ctx.route('**/internal/api/**', (route) => (mode === '500' ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Server error."}' }) : route.abort()));
   for (const url of pages.sort()) {
@@ -248,12 +251,33 @@ for (const mode of ['500', 'no signal']) {
     if ((await page.locator('[data-quote-select] option').count()) > 1) { await page.selectOption('[data-quote-select]', { index: 1 }); await page.click('[data-create]'); await page.waitForTimeout(1500); if (!/jobs\/view\?id=/.test(page.url())) flowProblems.push('jobs: creating a job from a finalized quote did not open the job'); }
     await page.close();
   }
-  views += 7;
+  {
+    const page = await open('measurements'); await page.goto(base + '/internal/tools/measurements', { waitUntil: 'networkidle' });
+    await page.locator('[data-empty-add]').click();
+    const row = page.locator('[data-body] tr').first();
+    if ((await row.evaluate((e) => getComputedStyle(e).display)) !== 'grid') flowProblems.push('measurements: runtime row is not a phone card');
+    const widths = await row.locator('[data-field]').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width));
+    if (widths.some((w) => w < 100)) flowProblems.push('measurements: a field is squeezed narrower than 100 px');
+    await row.locator('[data-field="room"]').fill('Living "room"');
+    await row.locator('[data-field="room"]').press('Tab');
+    if (!(await row.locator('[data-field="type"]').evaluate((e) => document.activeElement === e))) flowProblems.push('measurements: editing the room drops focus instead of moving to Type');
+    await row.locator('[data-field="type"]').selectOption('Casement');
+    await row.locator('[data-field="width"]').fill('48'); await row.locator('[data-field="height"]').fill('36'); await row.locator('[data-field="quantity"]').fill('2');
+    if ((await page.locator('[data-area]').innerText()) !== '24 sq ft') flowProblems.push('measurements: area does not update while typing');
+    await row.locator('[data-field="notes"]').fill('Check trim'); await row.locator('[data-field="notes"]').press('Tab');
+    await page.reload({ waitUntil: 'networkidle' });
+    if ((await row.locator('[data-field="room"]').inputValue()) !== 'Living "room"' || (await row.locator('[data-field="notes"]').inputValue()) !== 'Check trim' || (await page.locator('[data-area]').innerText()) !== '24 sq ft') flowProblems.push('measurements: worksheet edits are not kept after reload');
+    await page.locator('[data-add]').click();
+    await page.locator('[data-body] tr').last().locator('[data-remove]').click();
+    if ((await page.locator('[data-body] tr').count()) !== 1 || (await row.locator('[data-field="room"]').inputValue()) !== 'Living "room"') flowProblems.push('measurements: removing the second opening changes the first');
+    await page.close();
+  }
+  views += 8;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }
 await browser.close();
 server.close();
-console.log(`${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes, plus ${pages.length * 2} with the API failing), ${findings.length} with problems`);
+console.log(flowsOnly ? `${views} interaction flows, ${findings.length} with problems` : `${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes, plus ${pages.length * 2} with the API failing), ${findings.length} with problems`);
 for (const f of findings) console.log('  ' + f);
 process.exit(findings.length ? 1 : 0);
