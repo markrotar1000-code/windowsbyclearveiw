@@ -500,7 +500,14 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     }
 
     async function load() {
-      const response = await fetch(`/internal/api/quotes/${encodeURIComponent(id!)}`);
+      let response: Response;
+      try {
+        response = await fetch(`/internal/api/quotes/${encodeURIComponent(id!)}`);
+      } catch {
+        // No signal: say so, instead of leaving "Loading…" up forever.
+        fail('Could not reach the server. Check your signal, then reload this page.');
+        return;
+      }
       if (!response.ok) {
         fail(response.status === 404 ? 'No quote with that id.' : 'Could not load this quote.');
         return;
