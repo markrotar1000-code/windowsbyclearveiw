@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Command Center, round eight
+
+Job screen jump buttons, the quote document header and Copilot's margins fixed for a phone. Open: Google tools repeats "Not connected" per panel, Tools page order, Jobs create-form placement, laptop title size.
+
 ## 2026-10-18 - Command Center, round seven
 
 Analytics, Schedule and Invoices polished for a phone. Open: Tools page order (email test and offline text sit above the tools), Jobs create-form placement, laptop title size.

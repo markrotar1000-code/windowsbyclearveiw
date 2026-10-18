@@ -412,4 +412,6 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   @media(max-width:720px){.job-head{align-items:flex-start;flex-direction:column}.detail-grid,.notes-grid{grid-template-columns:1fr}.status-card{align-items:flex-start;flex-direction:column}.schedule-form{grid-template-columns:1fr}.plan-grid{grid-template-columns:1fr}.plan-grid section:nth-child(odd){border-right:0}.build-actions,.head-actions{width:100%}.build-actions .btn,.head-actions .btn{flex:1;min-width:0}:global(.job-opening){grid-template-columns:1fr;gap:.2rem}.panel-head{align-items:flex-start;flex-direction:column}.panel-head .btn{width:100%}.save-row{position:sticky;bottom:0;background:var(--paper-raised);z-index:3;padding-bottom:calc(var(--space-s) + env(safe-area-inset-bottom))}.save-row .btn{min-height:48px}.note-panel textarea,.closeout textarea{font-size:16px}}
   /* The line price keeps its width; the long label beside it wraps instead. */
   :global(.scope-row)>:global(strong:last-child){flex:none;white-space:nowrap;overflow-wrap:normal}
+  /* Phone: six jump buttons shared one row at about 50 px each, labels wrapping in half; now three by two. */
+  @media(max-width:720px){.head-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.head-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center}}
 </style>

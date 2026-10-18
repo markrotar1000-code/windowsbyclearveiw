@@ -1284,4 +1284,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       display: block !important;
     }
   }
+  /* The quote number printed one fragment per line ("Q-" / "20261018-" / "2274") beside the company block; it keeps its width and the company details wrap instead. */
+  .contract-meta{flex:none}.contract-meta [data-quote-id]{white-space:nowrap;overflow-wrap:normal}
+  /* On a phone the company block and the quote details stack, so neither is squeezed (the email no longer breaks mid-word). */
+  @media(max-width:560px){:global(.contract-head){flex-direction:column;align-items:flex-start;gap:.6rem}.contract-meta{text-align:left}.contract-brand-sub a{overflow-wrap:normal}}
 </style>
