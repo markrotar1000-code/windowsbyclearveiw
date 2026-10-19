@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Leads phone round (`codex/leads-phone-context`)
+
+#268 is merged as `e0aacca` after both checks passed; production reports that build with healthy PWA files/app gate. This proposed round previews long lead requests behind native full-text expansion (short notes remain visible), adds email/punctuation-independent phone search, a live result count, and Clear search with focus restoration and work-filter preservation. Work-type buttons now wrap at enlarged text. The seeded long-note card drops from 1,064 to 378 px at 390 x 844.
+
+Validation: 62 suite/build steps, 9 interaction flows and focused Chrome checks at 320–1280 px plus 150%/200% text pass; interaction audit covers search recovery, full-note keyboard access and the existing follow-up handoff. All request content is escaped; data and action links are unchanged. No production writes or customer communications. This UI needs PR merge before production claims; production currently contains #268. Physical devices and signed-in production UI remain unverified.
+
 ## 2026-10-18 - Follow-up phone round (`codex/follow-up-phone-readability`)
 
 #267 is merged as `a8ee95d` after both checks passed; production PWA assets/app gate are healthy. This proposed round wraps task titles on phone Today/Follow-up, focuses Task on Add follow-up, and shows an onscreen/focused Follow-up saved confirmation only for confirmed server creation. Failed/auth/incomplete responses retain input. Shrinking form tracks also prevent date/time fields being clipped at 200% text.

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Leads: compact requests and usable phone search
+
+Merged #268 as `e0aacca` after both GitHub/Pages checks passed; production reports that build and passes PWA assets/app-gate checks. `codex/leads-phone-context` previews requests over 240 characters with a native keyboard/touch disclosure for the complete escaped text; short requests remain visible. The seeded 1,800-character request card is 378 px tall closed instead of 1,064 px at 390 x 844. Email and punctuation-independent phone search, a live result count and Clear search with restored input focus help find and recover the queue. Clear keeps the active work-type filter. That filter now wraps at 200% text. All 62 suite/build steps, 9 interaction flows and focused Chrome checks at 320–1280 px and 150%/200% text pass; interaction audit covers search, request expansion and lead-to-follow-up navigation. This proposed UI awaits PR merge. Physical devices and signed-in production UI remain unverified.
+
 ## 2026-10-18 - Follow-up: full phone titles and confirmed saves
 
 Merged #267 as `a8ee95d` after GitHub/Pages checks passed; production PWA assets and app gate pass for that build. `codex/follow-up-phone-readability` shows full task titles on phone Today/Follow-up, focuses Task when Add follow-up opens, and displays/focuses a visible Follow-up saved status only after a confirmed 201 response with a record ID. Failed/auth/HTML responses preserve text and do not claim success. Follow-up form fields now fit at enlarged text sizes. All 62 suite/build steps and 9 interaction flows pass; focused checks cover save/retry, 401/HTML failures, title readability, 320–1280 px and 150%/200% text. This proposed UI awaits PR merge; physical devices and signed-in production UI remain unverified.

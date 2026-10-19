@@ -21,13 +21,17 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
   <p data-empty hidden>No estimate requests yet.</p>
 
   <div class="ld-type-filter" data-type-filter-wrap hidden><WorkTypeFilter /></div>
-  <label class="ld-search" data-search-wrap hidden>
-    Search
-    <input type="search" data-search placeholder="Name, phone, or city" />
-  </label>
+  <div class="ld-search" data-search-wrap hidden>
+    <label for="lead-search">Search leads</label>
+    <div class="ld-search-controls">
+      <input id="lead-search" type="search" data-search placeholder="Name, phone, email, or city" aria-controls="lead-list" />
+      <button class="btn btn-ghost" type="button" data-clear-search hidden>Clear search</button>
+    </div>
+    <p class="ld-results" data-results role="status" aria-live="polite" aria-atomic="true"></p>
+  </div>
   <p class="ld-empty-filtered" data-empty-filtered hidden>No leads match that search or filter.</p>
 
-  <div class="ld-list" data-list hidden></div>
+  <div id="lead-list" class="ld-list" data-list hidden></div>
 </InternalLayout>
 
 <script>
@@ -43,6 +47,8 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     const emptyFilteredEl = document.querySelector('[data-empty-filtered]');
     const searchWrap = document.querySelector('[data-search-wrap]');
     const searchInput = document.querySelector('[data-search]');
+    const clearSearch = document.querySelector('[data-clear-search]');
+    const results = document.querySelector('[data-results]');
 
     function escapeHtml(s: string) {
       const div = document.createElement('div');
@@ -87,6 +93,16 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
       return `<ol class="ld-journey">${items}</ol>`;
     }
 
+    function renderNotes(notes) {
+      if (!notes) return '';
+      const text = String(notes);
+      if (text.length <= 240) return `<p class="ld-notes">${escapeHtml(text)}</p>`;
+      return `<details class="ld-request">
+        <summary><span class="ld-request-preview">${escapeHtml(text.slice(0, 180))}…</span><span class="ld-request-more">Read full request</span><span class="ld-request-less">Close full request</span></summary>
+        <p class="ld-notes">${escapeHtml(text)}</p>
+      </details>`;
+    }
+
     async function load() {
       try {
         const response = await fetch('/internal/api/leads');
@@ -110,7 +126,8 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
           for (const lead of leads) {
             const card = document.createElement('article');
             card.className = 'ld-card';
-            card.dataset.search = `${lead.name || ''} ${lead.phone || ''} ${lead.city || ''}`.toLowerCase();
+            card.dataset.search = `${lead.name || ''} ${lead.phone || ''} ${lead.email || ''} ${lead.city || ''}`.toLowerCase();
+            card.dataset.phone = String(lead.phone || '').replace(/\D/g, '');
             // Untagged inquiries are window work; the siding page files its requests as 'siding'.
             const kind = lead.service === 'siding' ? 'siding' : 'windows';
             card.dataset.type = kind;
@@ -139,7 +156,7 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
                 ${phoneHref ? `<a class="ld-action" href="${phoneHref}">Call</a>` : ''}
                 ${lead.email ? `<a class="ld-action" href="mailto:${escapeHtml(lead.email)}">Email</a>` : ''}
               </div>
-              ${lead.notes ? `<p class="ld-notes">${escapeHtml(lead.notes)}</p>` : ''}
+              ${renderNotes(lead.notes)}
               ${lead.intent ? `<p class="ld-meta"><strong>Website engagement: ${Number(lead.intent.score)}/100</strong> &middot; ${Number(lead.intent.sessions)} browser visit(s)<br>${lead.intent.signals.map(escapeHtml).join(" &middot; ")}<br><small>Browser-reported activity before this request; a prioritization aid, not a buying prediction.</small></p>` : ""}
               <details class="ld-journey-wrap">
                 <summary>${lead.visit_count || 0} page${lead.visit_count === 1 ? '' : 's'} viewed this visit &middot; ${arrivalLine(lead)}</summary>
@@ -162,12 +179,19 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     function applyFilter() {
       if (!(searchInput instanceof HTMLInputElement) || !(list instanceof HTMLElement)) return;
       const query = searchInput.value.trim().toLowerCase();
+      const phoneQuery = query.replace(/\D/g, '');
+      const isPhoneQuery = phoneQuery.length > 0 && /^[+\d\s().-]+$/.test(query);
       let visibleCount = 0;
       for (const card of list.querySelectorAll('[data-search]')) {
         const el = card as HTMLElement;
-        const match = (!query || (el.dataset.search || '').includes(query)) && (!typeFilter || el.dataset.type === typeFilter);
+        const match = (!query || (el.dataset.search || '').includes(query) || (isPhoneQuery && (el.dataset.phone || '').includes(phoneQuery))) && (!typeFilter || el.dataset.type === typeFilter);
         el.hidden = !match;
         if (match) visibleCount += 1;
+      }
+      if (clearSearch instanceof HTMLElement) clearSearch.hidden = !query;
+      if (results instanceof HTMLElement) {
+        const total = list.querySelectorAll('[data-search]').length;
+        results.textContent = `${visibleCount} of ${total} lead${total === 1 ? '' : 's'}`;
       }
       if (emptyFilteredEl instanceof HTMLElement) {
         emptyFilteredEl.hidden = !((query || typeFilter) && visibleCount === 0);
@@ -186,6 +210,15 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
       searchInput.addEventListener('input', applyFilter);
     }
 
+    if (clearSearch instanceof HTMLButtonElement) {
+      clearSearch.addEventListener('click', () => {
+        if (!(searchInput instanceof HTMLInputElement)) return;
+        searchInput.value = '';
+        applyFilter();
+        searchInput.focus();
+      });
+    }
+
     load();
   }
 
@@ -198,7 +231,12 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
   .ld-head-actions { display:flex; gap:var(--space-xs); flex-wrap:wrap; }
   .ld-error { color:var(--danger); }
   .ld-type-filter { margin-bottom: var(--space-s); }
+  .ld-type-filter :global(.wt-filter) { max-width:100%; flex-wrap:wrap; }
   .ld-search { display:grid; gap:.2rem; max-width:20rem; margin-bottom:var(--space-m); font-size:var(--step--1); font-weight:500; }
+  .ld-search-controls { display:flex; flex-wrap:wrap; gap:.4rem; min-width:0; }
+  .ld-search-controls input { flex:1 1 14rem; min-width:0; width:100%; }
+  .ld-search-controls .btn { min-height:2.75rem; }
+  .ld-results { margin:0; color:var(--ink-soft); font-size:var(--step--2); font-weight:400; }
   .ld-search input { border:1px solid var(--line-strong); border-radius:var(--radius); padding:.55rem; font:inherit; font-size:var(--step-0); }
   .ld-empty-filtered { color:var(--ink-soft); }
   /* A bare `1fr` track will not shrink below its content, and `overflow-wrap: break-word` does not lower a
@@ -216,6 +254,14 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
   :global(.ld-action-primary) { border-color:var(--accent); background:var(--accent); color:var(--on-accent, #fff); }
   :global(.ld-action-primary:hover) { background:var(--accent-strong, var(--accent)); color:var(--on-accent, #fff); }
   :global(.ld-notes) { margin:var(--space-xs) 0 0; font-size:var(--step--1); white-space:pre-line; }
+  :global(.ld-request) { margin-top:var(--space-xs); font-size:var(--step--1); }
+  :global(.ld-card .ld-request summary) { display:list-item; list-style-position:inside; cursor:pointer; min-height:2.75rem; }
+  :global(.ld-request summary:focus-visible) { outline:2px solid var(--accent); outline-offset:3px; }
+  :global(.ld-request-preview) { white-space:pre-line; }
+  :global(.ld-request-more), :global(.ld-request-less) { color:var(--accent); font-weight:700; text-decoration:underline; }
+  :global(.ld-request-more) { display:block; }
+  :global(.ld-request-less), :global(.ld-request[open] .ld-request-preview), :global(.ld-request[open] .ld-request-more) { display:none; }
+  :global(.ld-request[open] .ld-request-less) { display:inline; }
   :global(.ld-journey-wrap) { margin-top:var(--space-xs); font-size:var(--step--2); color:var(--ink-faint); }
   :global(.ld-journey-wrap summary) { cursor:pointer; color:var(--ink-soft); }
   :global(.ld-journey) { margin:var(--space-2xs) 0 0; padding-left:1.2em; display:grid; gap:.15rem; }
