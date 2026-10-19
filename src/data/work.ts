@@ -79,6 +79,7 @@ import sidingBrickWallPanels from '../assets/work/siding-brick-wall-panels.jpg';
 import sidingGarageHouseWrap from '../assets/work/siding-garage-house-wrap.jpg';
 import sidingGarageVerticalWood from '../assets/work/siding-garage-vertical-wood.jpg';
 import sidingTwoStoryPanels from '../assets/work/siding-two-story-panels.jpg';
+import sidingHousewrapSideWall from '../assets/work/siding-housewrap-side-wall.jpg';
 
 // New batch added 2026-10-03
 import taupeBrickBaseArchTransomInstall from '../assets/work/taupe-brick-base-arch-transom-install.jpg';
@@ -591,6 +592,19 @@ const byOrder = (a: WorkPhoto, b: WorkPhoto) => a.order - b.order;
 // the newest photos, `recentWorkPhotos`); nothing else reads it yet, so keep the
 // `featured` flags as the shortlist if a page needs older work again.
 export const featuredWork = workPhotos.filter((photo) => photo.featured).sort(byOrder);
+
+/**
+ * The home page's "Siding" tile (owner-supplied 2026-10-19, Higgsfield 4K upscale of a 1530 x 2040
+ * original). It is portrait while the four /siding photos are all landscape, and `frameForGroup` turns the
+ * whole /siding grid portrait if one portrait photo joins it, so it stays out of workPhotos on purpose
+ * (same reason as `patioSliderPhoto`). Caption and alt text describe only what is visible: house wrap on
+ * a two-story side wall, not finished siding, and no scope of work is claimed.
+ */
+export const sidingTilePhoto = {
+  image: sidingHousewrapSideWall,
+  alt: 'Side wall of a two-story house wrapped in yellow house wrap with windows and a door set in, a red ladder against the wall and a gravel path alongside',
+  caption: 'Two-story side wall wrapped and ready for siding',
+};
 
 export const sidingWork = workPhotos.filter((photo) => photo.kind === 'siding').sort(byOrder);
 
