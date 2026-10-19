@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-19 - Audit of Codex PRs #262-#268
+
+Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The flow now waits 500 ms after the click.
+
 ## 2026-10-18 - Read full customer actions and confirm follow-up saves (branch `codex/follow-up-phone-readability`)
 
 Keith requested merging #267 and the next phone UX round. Both checks passed; merged as `a8ee95d`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
