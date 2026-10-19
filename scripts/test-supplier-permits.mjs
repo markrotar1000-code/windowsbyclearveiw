@@ -12,7 +12,7 @@ import { ensurePermitLeadTables } from '../functions/internal/_lib/permit-leads.
 import { ensureMailPilotTables } from '../functions/internal/_lib/mail-pilot.mjs';
 import { ensureJobsSchema } from '../functions/internal/_lib/jobs-schema.mjs';
 import {
-  CSV_HEADER, GROUPS, GROUP_KEYS, SCORED_GROUPS, SIGNAL_LABELS, SUPPLIER_COLUMNS, SUPPLIER_DDL, cleanBuilderKey, cleanGroup, connectionText, groupFor, listRow, looseAddressKey, metroRankFor, nameWords, readConnections, readSupplierCsv, readSupplierList, readSupplierSummary, toSupplierCsv,
+  CSV_HEADER, GROUPS, GROUP_KEYS, SCORED_GROUPS, SIGNAL_LABELS, SUPPLIER_COLUMNS, SUPPLIER_DDL, cleanBuilderKey, cleanGroup, connectionText, groupFor, listRow, looseAddressKey, metroRankFor, nameWords, readConnections, readSupplierCsv, readSupplierList, readSupplierSummary, toSupplierCsv, normalizePhone, CONTACT_DDL,
 } from '../functions/internal/_lib/supplier-permits.mjs';
 import { CASE_NUMBER, SUPPLIER_LICENSE_FIELDS, SUPPLIER_PARCEL_FIELDS, fetchCasePermits, fetchParcelCandidates, fetchSupplierLicenses, fetchSupplierParcels, likeLiteral } from './supplier-permits/fetch.mjs';
 import { fetchParcels } from './permit-leads/fetch.mjs';
@@ -492,9 +492,10 @@ const askFresh = async (query = '', env = { QUOTES_DB: fresh }, method = 'GET') 
   const broken = { prepare() { throw new Error('D1 is locked'); } };
   assert.deepEqual(await (await askFresh('', { QUOTES_DB: broken })).json(), { status: 'unavailable' }, 'a failing database never breaks the Analytics page');
   assert.deepEqual(await (await askFresh('?view=list', { QUOTES_DB: broken })).json(), { status: 'unavailable' });
-  const post = await askFresh('', { QUOTES_DB: fresh }, 'POST');
-  assert.equal(post.status, 405);
-  assert.equal(post.headers.get('allow'), 'GET, HEAD');
+  const put = await askFresh('', { QUOTES_DB: fresh }, 'PUT');
+  assert.equal(put.status, 405);
+  assert.equal(put.headers.get('allow'), 'GET, HEAD, POST');
+  assert.equal((await askFresh('', { QUOTES_DB: fresh }, 'POST')).status, 400, 'a POST with no JSON body is refused, not guessed at');
   assert.equal((await askFresh('', { QUOTES_DB: fresh }, 'HEAD')).status, 200);
   assert.equal((await readSupplierList(fresh, { group: 'remodel' })).group, 'remodel');
   assert.ok((await readSupplierSummary(fresh)).status === 'ok');
@@ -630,6 +631,117 @@ const askFresh = async (query = '', env = { QUOTES_DB: fresh }, method = 'GET') 
   pass('the endpoint and page sit behind the session gate, and nothing with owner data can be committed');
 }
 
+// ---------- do not contact + call log ----------
+{
+  assert.equal(normalizePhone('(360) 555-0142'), '3605550142');
+  assert.equal(normalizePhone('+1 360 555 0142'), '3605550142');
+  assert.equal(normalizePhone('1-360-555-0142'), '3605550142');
+  assert.equal(normalizePhone('555-0142'), '', 'seven digits is not a number to block');
+  assert.equal(normalizePhone('0605550142'), '', 'an area code cannot start with 0 or 1');
+  assert.equal(normalizePhone(null), '');
+  assert.equal(CONTACT_DDL.length, 3);
+
+  const contacts = createD1();
+  await contacts.exec(sql1);
+  const post = (payload, env = { QUOTES_DB: contacts }) => api.onRequest({ request: new Request('https://example.test/internal/api/supplier-permits', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }), env });
+  const list = async (query = '?view=list') => (await (await api.onRequest({ request: new Request(`https://example.test/internal/api/supplier-permits${query}`), env: { QUOTES_DB: contacts } })).json());
+
+  // pick a real row from the made-up report that has an owner phone
+  const first = (await list()).rows.find((r) => normalizePhone(r.ownerPhone));
+  assert.ok(first, 'the fixture has a permit with an owner phone');
+  const phone = normalizePhone(first.ownerPhone);
+  assert.equal(first.ownerBlocked, false);
+  assert.equal(first.ownerCalls, null);
+
+  // a call is logged against the number and the permit
+  let res = await post({ action: 'log', phone: first.ownerPhone, permitId: first.id, who: 'owner', outcome: 'no_answer', note: '  tried   after 5  ' });
+  assert.equal(res.status, 201);
+  assert.equal(res.headers.get('cache-control'), 'private, no-store');
+  let state = await list('?view=contacts');
+  assert.equal(state.status, 'ok');
+  assert.deepEqual(state.blocked, []);
+  assert.equal(state.log.length, 1);
+  assert.equal(state.log[0].phone, phone);
+  assert.equal(state.log[0].permitId, first.id);
+  assert.equal(state.log[0].note, 'tried after 5', 'notes are tidied');
+  assert.equal(state.log[0].outcomeLabel, 'No answer');
+  const afterLog = (await list()).rows.find((r) => r.id === first.id);
+  assert.equal(afterLog.ownerCalls.count, 1);
+  assert.equal(afterLog.ownerCalls.outcome, 'no_answer');
+  assert.equal(afterLog.ownerBlocked, false);
+
+  // bad input never writes
+  for (const bad of [
+    { action: 'log', phone: '555-0142', outcome: 'reached' },
+    { action: 'log', phone, outcome: 'made-up' },
+    { action: 'log', phone },
+    { action: 'block', phone: 'abc' },
+    { action: 'unblock', phone },
+    { action: 'delete', phone },
+    {},
+  ]) assert.equal((await post(bad)).status, 400, JSON.stringify(bad));
+  assert.equal((await api.onRequest({ request: new Request('https://example.test/internal/api/supplier-permits', { method: 'POST', body: '{nope' }), env: { QUOTES_DB: contacts } })).status, 400);
+  assert.equal((await list('?view=contacts')).log.length, 1, 'refused requests wrote nothing');
+
+  // "asked not to be contacted" blocks the number in the same step and every other permit with that number shows it
+  res = await post({ action: 'log', phone: `1 ${first.ownerPhone}`, permitId: first.id, who: 'owner', outcome: 'asked_not_to_call', note: 'said take me off your list' });
+  assert.equal(res.status, 201);
+  assert.equal((await res.json()).blocked, true);
+  state = await list('?view=contacts');
+  assert.deepEqual(state.blocked.map((b) => [b.phone, b.reason]), [[phone, 'asked_not_to_call']]);
+  const blockedRow = (await list()).rows.find((r) => r.id === first.id);
+  assert.equal(blockedRow.ownerBlocked, true);
+  assert.equal(blockedRow.ownerCalls.count, 2);
+
+  // a blocked number takes no more calls, in any format
+  for (const spelling of [first.ownerPhone, phone, `+1${phone}`]) {
+    const refused = await post({ action: 'log', phone: spelling, who: 'owner', outcome: 'reached' });
+    assert.equal(refused.status, 409, spelling);
+    assert.match((await refused.json()).error, /do-not-contact/i);
+  }
+  assert.equal((await list('?view=contacts')).log.length, 2);
+
+  // the spreadsheet marks it
+  const csv = await (await api.onRequest({ request: new Request('https://example.test/internal/api/supplier-permits?view=csv'), env: { QUOTES_DB: contacts } })).text();
+  const header = csv.split('\r\n')[0].split(',');
+  assert.equal(header.at(-1), 'Do not contact');
+  assert.ok(csv.includes('Owner phone\r\n') || csv.includes('Owner phone"'), 'the file flags the blocked owner phone');
+
+  // block without a call is idempotent and keeps the first reason
+  const other = (await list()).rows.map((r) => normalizePhone(r.builderPhone)).find((p) => p && p !== phone) || '3605550199';
+  assert.equal((await post({ action: 'block', phone: other, reason: 'registry', note: 'on the registry' })).status, 200);
+  assert.equal((await post({ action: 'block', phone: other, reason: 'other' })).status, 200);
+  state = await list('?view=contacts');
+  assert.equal(state.blocked.find((b) => b.phone === other).reason, 'registry');
+  assert.equal(state.blocked.length, 2);
+
+  // history of one number
+  const one = await list(`?view=contacts&phone=${encodeURIComponent(first.ownerPhone)}`);
+  assert.equal(one.log.length, 2);
+  assert.ok(one.log.every((e) => e.phone === phone));
+
+  // lifting a block needs a written reason, is only for numbers that are blocked, and stays in the log
+  assert.equal((await post({ action: 'unblock', phone: other, note: '   ' })).status, 400);
+  assert.equal((await post({ action: 'unblock', phone: '3605550123', note: 'x' })).status, 404);
+  assert.equal((await post({ action: 'unblock', phone: other, note: 'owner emailed asking for a call' })).status, 200);
+  state = await list('?view=contacts');
+  assert.deepEqual(state.blocked.map((b) => b.phone), [phone]);
+  const lifted = state.log.find((e) => e.phone === other);
+  assert.equal(lifted.outcome, 'block_lifted');
+  assert.equal(lifted.note, 'owner emailed asking for a call');
+  assert.equal((await post({ action: 'log', phone: other, who: 'builder', outcome: 'reached' })).status, 201, 'once lifted, the number can be logged again');
+
+  // a weekly load never touches the contact tables (the load file only has the permit tables)
+  assert.ok(!/supplier_contact/.test(sql1), 'the load file does not mention the contact tables');
+  await contacts.exec(sql1);
+  assert.equal((await list('?view=contacts')).blocked.some((b) => b.phone === phone), true, 'reloading the permits keeps the do-not-contact list');
+
+  // errors
+  assert.equal((await post({ action: 'log', phone, outcome: 'reached' }, { })).status, 503);
+  assert.equal((await post({ action: 'log', phone, outcome: 'reached' }, { QUOTES_DB: { prepare() { throw new Error('locked'); } } })).status, 500);
+  pass('a call is logged against the number, "asked not to be contacted" blocks it everywhere, a blocked number takes no more calls, lifting needs a reason, and a weekly load never touches the list');
+}
+
 // ---------- page, docs and wiring ----------
 {
   const page = fs.readFileSync(`${root}src/pages/internal/analytics.astro`, 'utf8');
@@ -646,6 +758,8 @@ const askFresh = async (query = '', env = { QUOTES_DB: fresh }, method = 'GET') 
   assert.ok(/Connected to/.test(page) && /view=list&limit=100&builder=/.test(page), 'the list shows connections and a builder opens its own permits');
   assert.ok(/c\.href\.startsWith\('\/internal\/'\)/.test(page), 'only a link into the Command Center is ever made a link');
   assert.ok(/licensed/i.test(page) && /telephone|solicit/i.test(page), 'the page says the list is licensed and warns about unsolicited calls and texts');
+  assert.ok(/Do not contact/.test(page) && /action: 'log'/.test(page) && /action: 'unblock'/.test(page) && /view=contacts/.test(page), 'the page logs calls and manages the do-not-contact list');
+  assert.ok(/blockedPhones\.has\(/.test(page), 'a blocked number is never drawn as a tel: link');
   assert.equal(pkg.scripts['build:supplier-permits'], 'node scripts/build-supplier-permits.mjs');
   assert.equal(pkg.scripts['test:supplier-permits'], 'node --disable-warning=ExperimentalWarning scripts/test-supplier-permits.mjs');
   assert.ok(/npm run test:supplier-permits/.test(workflow), 'CI runs this test');

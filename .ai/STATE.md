@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-19 - Supplier permits: do-not-contact flag and call log
+
+Keith asked for a do-not-contact flag and call log after the question of whether permit phones need a registry check. Every phone number in the Analytics permit list and builder tables now has a Log call button (outcome, note, history); "asked not to be contacted" blocks the number everywhere in one step, a blocked number is plain text, takes no new entries and is marked in the spreadsheet, and lifting needs a written reason. Tables `supplier_contact_blocks` and `supplier_contact_log` are created on first use (not part of the weekly load SQL). No production step is needed; it does not replace a registry scrub, and owner calling stays out of scope.
+
 ## 2026-10-18 - Leads: compact requests and usable phone search
 
 Merged #268 as `e0aacca` after both GitHub/Pages checks passed; production reports that build and passes PWA assets/app-gate checks. `codex/leads-phone-context` previews requests over 240 characters with a native keyboard/touch disclosure for the complete escaped text; short requests remain visible. The seeded 1,800-character request card is 378 px tall closed instead of 1,064 px at 390 x 844. Email and punctuation-independent phone search, a live result count and Clear search with restored input focus help find and recover the queue. Clear keeps the active work-type filter. That filter now wraps at 200% text. All 62 suite/build steps, 9 interaction flows and focused Chrome checks at 320–1280 px and 150%/200% text pass; interaction audit covers search, request expansion and lead-to-follow-up navigation. This proposed UI awaits PR merge. Physical devices and signed-in production UI remain unverified.

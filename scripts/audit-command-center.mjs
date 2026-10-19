@@ -20,6 +20,7 @@
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createD1 } from './_lib/d1-sqlite.mjs';
+import { ensureSupplierTables } from '../functions/internal/_lib/supplier-permits.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 process.chdir(root); process.removeAllListeners('warning');
@@ -69,6 +70,11 @@ await call('jobs.js','PATCH','/internal/api/jobs?id='+jL,{status:'scheduled',sch
 const gL=(await call('jobs.js','POST','/internal/api/jobs',{workType:'general',customerName:LONG('G',150),workDescription:LONG('D',300),agreedAmount:'99999.99'})).id;
 await call('tasks.js','POST','/internal/api/tasks',{title:LONG('T',230),notes:LONG('n',900),dueAt:new Date(now-2*864e5).toISOString()});
 ins.run(iso(1),LONG('N',110),'(360) 555-0123',LONG('m',100)+'@example.com',LONG('Z',70),'Homeowner',LONG('/',50)+'https://example.com/'+LONG('p',300),'https://example.com/'+LONG('r',200),LONG('u',60),'/'+LONG('l',150),2,JSON.stringify([{path:'/'+LONG('p',180),title:LONG('t',160)}]));
+// Two made-up supplier permits (555 numbers) so the Analytics call log and do-not-contact flow can be driven.
+await ensureSupplierTables(env.QUOTES_DB);
+D.prepare("INSERT INTO supplier_import_meta (key, value) VALUES ('imported_at', ?), ('edition', '2026-W40')").run(new Date(now).toISOString());
+const sp=D.prepare("INSERT INTO supplier_permits (id, source, section, grp, county, city, site_address, permit_date, owner_name, owner_phone, builder_name, builder_phone, builder_key, builder_license, score, signals, first_seen, last_seen, imported_at, edition) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+sp.run('AUD-1','Construction Monitor','Approved','remodel','Clark County','Vancouver','100 NE AUDIT ST',iso(3).slice(0,10),'ROE AUDIT','(360) 555-0142','AUDIT BUILDERS LLC','(360) 555-0143','AUDIT BUILDERS LLC','AUDITBL001',2,'[]',iso(3).slice(0,10),iso(3).slice(0,10),iso(0),'2026-W40');
 const ids={q1,q2,q3,q4,j1,j2,j3,g1,qL,jL,gL};
 // ---- server
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.json':'application/json','.woff2':'font/woff2','.webmanifest':'application/manifest+json','.mp4':'video/mp4','.glb':'model/gltf-binary','.xml':'application/xml','.txt':'text/plain'};
@@ -320,7 +326,28 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     if (!(await page.locator('[data-export]').isVisible()) || !(await page.locator('[data-import-trigger]').isVisible())) flowProblems.push('photos: keyboard cannot reach backup actions');
     await page.close();
   }
-  views += 9;
+  {
+    const page = await open('analytics-calls'); await page.goto(base + '/internal/analytics', { waitUntil: 'networkidle' }); await page.waitForTimeout(800);
+    await page.click('[data-supplier-load]'); await page.locator('[data-supplier-rows] tr').first().waitFor();
+    if (!(await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count())) flowProblems.push('analytics: a licensed contractor phone is not a tel: link before it is blocked');
+    const logButton = page.locator('[data-supplier-rows] .an-phone-btn', { hasText: 'Log call' }).nth(1);
+    const box = await logButton.boundingBox();
+    if (!box || box.height < 44) flowProblems.push('analytics: the Log call button is under 44 px tall on a phone');
+    await logButton.click(); await page.locator('[data-contact-dialog][open]').waitFor();
+    await page.selectOption('[data-contact-outcome]', 'no_answer'); await page.click('[data-contact-save]'); await page.waitForTimeout(700);
+    if (!/Saved/.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('analytics: logging a call did not confirm');
+    await page.selectOption('[data-contact-outcome]', 'asked_not_to_call'); await page.click('[data-contact-save]'); await page.waitForTimeout(900);
+    if (!/do-not-contact/i.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('analytics: "asked not to be contacted" did not block the number');
+    if (await page.locator('[data-contact-form]').isVisible()) flowProblems.push('analytics: a blocked number can still be logged');
+    if ((await page.locator('[data-contact-history] li').count()) < 2) flowProblems.push('analytics: the call history is missing entries');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
+    if (overflow) flowProblems.push('analytics: the call dialog overflows the phone screen');
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    if ((await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count()) !== 0) flowProblems.push('analytics: a do-not-contact number is still a tel: link');
+    if (!(await page.locator('[data-supplier-rows] .an-dnc').count())) flowProblems.push('analytics: the list does not mark the do-not-contact number');
+    await page.close();
+  }
+  views += 10;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }

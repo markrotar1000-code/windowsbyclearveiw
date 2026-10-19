@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-19 - Do-not-contact flag and call log for supplier permit phones
+
+Keith asked whether permit-list numbers need a Do Not Call check before individual calls; answer recorded in the workflow contract (homeowners are mail-only, builder numbers are business-to-business, no registry check exists) and Keith asked for the flag and log. Added `normalizePhone`, `logContact`, `blockPhone`, `unblockPhone`, `readContacts`, `readBlocked` in `functions/internal/_lib/supplier-permits.mjs`; `GET ?view=contacts` and `POST` on `/internal/api/supplier-permits`; a Log call button and dialog in Analytics; a "Do not contact" spreadsheet column. The contact tables are separate from `SUPPLIER_DDL`, so the load file never mentions them. Tests: `test:supplier-permits` (phone normalization, logging, auto-block, refusal in any spelling, idempotent block, lift needs a reason, load keeps the list, error paths, page wiring) and a new phone-width flow in `audit-command-center.mjs` (seeded with one made-up permit). Not done: a national registry scrub.
+
 ## 2026-10-19 - Audit of Codex PRs #262-#268
 
 Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The audit fix originally waited 500 ms after the click. During #269 integration, this becomes a wait for the existing Note saved confirmation, preserving the same persistence check without a fixed delay.
