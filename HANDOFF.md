@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-18 - Follow-up phone round (`codex/follow-up-phone-readability`)
+
+#267 is merged as `a8ee95d` after both checks passed; production PWA assets/app gate are healthy. This proposed round wraps task titles on phone Today/Follow-up, focuses Task on Add follow-up, and shows an onscreen/focused Follow-up saved confirmation only for confirmed server creation. Failed/auth/incomplete responses retain input. Shrinking form tracks also prevent date/time fields being clipped at 200% text.
+
+Validation: 62 suite/build steps and 9 interaction flows pass; focused Chrome checks cover successful save/retry, 401/HTML failure states, full long titles, 320–1280 px and 150%/200% text without clipping/overflow. Record schema, due-date conversion, queue sorting and Done behavior are unchanged. Only seeded local tasks were written. Physical devices and signed-in production remain unverified. This UI needs PR merge before production claims; production currently contains #267.
+
 ## 2026-10-18 - Photos phone round (`codex/photos-phone-capture`)
 
 #266 is merged as `c52616c` after both checks passed; production PWA files/app gate are healthy. This proposed round brings photo capture from 1190 to 703 px down a 390 x 844 phone screen. Native backup/restore disclosure, compact context and responsive stage buttons keep capture reachable. All cloud-status and local-backup explanations remain. Missing-job capture stays gated with an instruction, and the Field return link now follows the current opening or project-wide view.
