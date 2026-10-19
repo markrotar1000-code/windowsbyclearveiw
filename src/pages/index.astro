@@ -7,21 +7,21 @@ import WorkCard from '../components/WorkCard.astro';
 import FacebookIcon from '../components/icons/FacebookIcon.astro';
 import { Image } from 'astro:assets';
 import { site } from '../data/site';
-import { findWork } from '../data/work';
+import { findWork, sidingTilePhoto } from '../data/work';
 import { coverScale, scaleSizes } from '../lib/image-sizes';
 import { patioSliderPhoto, recentWorkPhotos } from '../data/gallery-additions';
 
 const replacementTile = findWork('gray-lap-siding-triple-hung')!;
 const newBuildTile = findWork('new-build-tan-corner')!;
-// Siding tile: the same owner-supplied job photo that is the /siding hero.
-const sidingTile = findWork('siding-two-story-panels')!;
+// Siding tile: owner-supplied house-wrap photo (2026-10-19, 4K); see sidingTilePhoto in work.ts.
+const sidingTile = sidingTilePhoto;
 // The sliding-doors tile shows the patio door added 2026-10-11 (4K, retouched; see
 // docs/GALLERY-PHOTOS-2026-10-11.md). It is a Clearview job photo (Keith, 2026-10-11) kept out of
 // workPhotos so it is not shown twice on /gallery; see gallery-additions.ts.
 const slidingDoorsTile = patioSliderPhoto;
 
 // A service tile's frame is about 300 x 460 on a desktop (four across) and 341 x 320 on a phone.
-// 0.65 is the narrower ratio, so a landscape photo (the new-build and siding tiles) is asked for
+// 0.65 is the narrower ratio, so a landscape photo (the new-build tile) is asked for
 // at a width that covers the taller frame instead of being stretched to it.
 const SERVICE_TILE_RATIO = 0.65;
 const serviceTileSizes = (photo: { image: Parameters<typeof coverScale>[0] }) =>
