@@ -1,5 +1,15 @@
 # ICM Changelog
 
+## 2026-10-18 - Photo capture within reach on a phone (branch `codex/photos-phone-capture`)
+
+Keith requested merging #266 and another phone UX round. Both checks passed; #266 merged as `c52616c`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
+
+The photo capture action started around 1190 px down a 390 x 844 phone screen. Phone backup/restore actions now sit in a native disclosure, context fields use a compact two-column arrangement, and stage buttons use one row when they fit and two rows at enlarged text. Capture now starts at 703 px, providing a tap target above bottom navigation at 773 px. Every job/opening/stage/cloud status, backup limitation and capture instruction remains. Expanded backup controls span the phone width and the camera action has a keyboard focus indicator.
+
+Missing job selection now says Choose a job before taking photos while keeping the existing verification gate. Another navigation bug was reproduced: selecting Opening 2 still returned to Opening 1. The Field link now follows each opening change and removes a stale opening parameter for project-wide view. Photo storage, sync, export/restore formats and deletion confirmations are unchanged.
+
+Validation: all 62 test:all steps including build pass; 9 interaction flows pass with 0 problems. The new photo flow checks capture geometry, valid-job eligibility, current opening/project-wide return links, local capture, note reload persistence, stage filters and keyboard access to backups (cloud requests mocked). Focused Chrome checks add JSON export/clear/restore, no-job gating, widths 320/360/390/520/768/1280, and 360 px at 150%/200% text without page overflow. A public icon is the local image fixture; no real customer photo or live cloud upload was used. Physical devices/camera and signed-in production UI remain unverified. Before/after screenshots are in the task outputs; this new UI round awaits PR merge.
+
 ## 2026-10-18 - Measurements: actual phone cards and continuous field editing (branch `codex/measurements-phone-cards`)
 
 Keith requested merging #265 after checks pass and another phone UX round. Both checks passed; merged as `3b51633`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
