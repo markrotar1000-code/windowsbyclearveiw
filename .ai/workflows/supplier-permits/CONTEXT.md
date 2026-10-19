@@ -57,6 +57,10 @@ Rows in D1 (`supplier_permits`, `supplier_import_meta`), the Analytics section, 
 builder business names only; the list and the spreadsheet carry owner names, mailing addresses and phones and are
 separate requests behind the session gate, `private, no-store`, never cached by the service worker.
 
+Do-not-contact list and call log: Mark's own records in D1 (`supplier_contact_blocks`, `supplier_contact_log`), written from the Analytics page through
+`POST /internal/api/supplier-permits` and kept outside `SUPPLIER_DDL`, so a weekly load can never overwrite them. Keyed by the 10-digit number; a listed number is never
+linked, takes no new log entries and is flagged in the spreadsheet. Lifting needs a written reason and stays in the log.
+
 Connections: every permit row from the list view carries `connections`, the same project in our other records, each with
 a label, **number**, **name**, detail, how it matched and, for our own quotes and jobs, a link into the Command Center.
 Permit leads and the mail pilot are read by the ids saved on the permit at load time; Clearview quotes and jobs are
@@ -73,7 +77,7 @@ summary gives each builder) to open one builder's permits. "Same address" is a l
   `--allow-mismatch` to load.
 - Owner phone numbers come from the report and are shown as plain text. Washington restricts unsolicited calls and
   texts: no calling, texting or auto-dialing from this list without the owner having asked to hear from us. Mail is the
-  channel for homeowners. Contacting anyone is out of scope for this workflow.
+  channel for homeowners. Contacting anyone is out of scope for this workflow; the call log and do-not-contact list only record what a person did and stop a listed number from being logged or linked. They are not a registry check.
 - Do not present a name-only or "verify" license match as a verified license, and never treat "no match" as unlicensed.
 - Never invent a business figure. Mark's job value, margin and close rate are typed input elsewhere, not filled in here.
 - Loading into Mark's production D1 needs Keith's or Mark's explicit go-ahead, after the code is merged and deployed

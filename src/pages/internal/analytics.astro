@@ -138,9 +138,28 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
           </table>
         </div>
         <p class="an-note" data-supplier-count hidden></p>
+        <p class="an-note">Every phone number has a <strong>Log call</strong> button. Write down what happened; if someone asks not to be contacted, choose that and the number goes on the do-not-contact list for every permit. A number on that list is never a link and the spreadsheet marks it.</p>
       </article>
     </div>
   </section>
+
+  <dialog class="an-dialog" data-contact-dialog aria-labelledby="an-contact-h">
+    <div class="an-dialog-head"><div><p class="kicker" data-contact-who>Phone number</p><h3 id="an-contact-h" data-contact-number>—</h3></div><button class="btn btn-ghost" type="button" data-contact-close>Close</button></div>
+    <p class="an-callout" data-contact-state role="status" hidden></p>
+    <form data-contact-form>
+      <label class="an-field"><span>What happened</span><select name="outcome" data-contact-outcome required></select></label>
+      <label class="an-field"><span>Note (optional)</span><input name="note" maxlength="500" autocomplete="off" /></label>
+      <button class="btn btn-primary" type="submit" data-contact-save>Save call</button>
+    </form>
+    <div class="an-dialog-block">
+      <form data-contact-block-form>
+        <label class="an-field"><span data-contact-block-label>Why</span><input name="why" maxlength="500" autocomplete="off" data-contact-block-input /></label>
+        <button class="btn btn-ghost" type="submit" data-contact-block-save>Add to the do-not-contact list</button>
+      </form>
+    </div>
+    <h4>History for this number</h4>
+    <ul class="an-history" data-contact-history></ul>
+  </dialog>
 
   <section class="an-section" aria-labelledby="an-site-h">
     <div class="an-head">
@@ -522,14 +541,171 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     body.append(tr);
   }
 
-  // Phone numbers come from a public license record as 10 digits; anything else is shown as plain text, never linked.
-  function phoneCell(raw: string): string | HTMLElement {
-    const digits = raw.replace(/\D/g, '');
-    if (digits.length !== 10) return raw || '—';
-    const link = document.createElement('a');
-    link.href = `tel:+1${digits}`;
-    link.textContent = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-    return link;
+  // ---------- do not contact + call log ----------
+  // Numbers on the do-not-contact list are never drawn as a link. The set is loaded before the lists are drawn and again after every save.
+  const blockedPhones = new Set<string>();
+  const OUTCOMES: [string, string][] = [['reached', 'Spoke with them'], ['no_answer', 'No answer'], ['voicemail', 'Left a voicemail'], ['wrong_number', 'Wrong number'], ['interested', 'Interested, wants to hear more'], ['asked_not_to_call', 'Asked not to be contacted']];
+  const phoneDigits = (raw: string) => {
+    let digits = raw.replace(/\D/g, '');
+    if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+    return digits.length === 10 && /^[2-9]/.test(digits) ? digits : '';
+  };
+  const prettyPhone = (digits: string) => `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  type ContactLog = { id: number; phone: string; permitId: string; who: string; outcome: string; outcomeLabel: string; note: string; at: string };
+
+  async function loadContacts() {
+    try {
+      const response = await fetch('/internal/api/supplier-permits?view=contacts', { headers: { accept: 'application/json' } });
+      if (!response.ok) throw new Error('bad status');
+      const result = (await response.json()) as { blocked?: { phone: string }[] };
+      blockedPhones.clear();
+      for (const b of result.blocked ?? []) blockedPhones.add(b.phone);
+    } catch {
+      // Without the list nothing can be marked; the log button still opens, and the server refuses a blocked number.
+    }
+  }
+
+  // Phone numbers come from the report or a public license record as 10 digits; anything else is shown as plain text, never linked.
+  // A do-not-contact number is plain text with a label. Every valid number gets a button for the call log.
+  function phoneCell(raw: string, options: { who?: 'owner' | 'builder'; permitId?: string; link?: boolean } = {}): string | HTMLElement {
+    const digits = phoneDigits(raw);
+    if (!digits) return raw || '—';
+    const wrap = document.createElement('span');
+    wrap.className = 'an-phone';
+    const blocked = blockedPhones.has(digits);
+    if (blocked || options.link === false) {
+      wrap.append(prettyPhone(digits));
+    } else {
+      const link = document.createElement('a');
+      link.href = `tel:+1${digits}`;
+      link.textContent = prettyPhone(digits);
+      wrap.append(link);
+    }
+    if (blocked) {
+      const tag = document.createElement('strong');
+      tag.className = 'an-dnc';
+      tag.textContent = 'Do not contact';
+      wrap.append(' ', tag);
+    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-ghost an-phone-btn';
+    button.textContent = blocked ? 'History' : 'Log call';
+    button.setAttribute('aria-label', `${blocked ? 'Open the history of' : 'Log a call to'} ${prettyPhone(digits)}`);
+    button.addEventListener('click', () => void openContact(digits, options.who ?? 'other', options.permitId ?? ''));
+    wrap.append(button);
+    return wrap;
+  }
+
+  const contactDialog = () => $('[data-contact-dialog]');
+  let contactNumber = '';
+  let contactWho = 'other';
+  let contactPermit = '';
+
+  const contactNote = (text: string) => { setText('[data-contact-state]', text); show('[data-contact-state]', text !== ''); };
+
+  async function post(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const response = await fetch('/internal/api/supplier-permits', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(payload) });
+      const result = (await response.json().catch(() => ({}))) as { error?: string };
+      return response.ok ? { ok: true } : { ok: false, error: result.error || 'Could not save. Try again.' };
+    } catch {
+      return { ok: false, error: 'Could not reach the server. Check your signal and try again.' };
+    }
+  }
+
+  async function paintContact() {
+    const history = $('[data-contact-history]');
+    const blocked = blockedPhones.has(contactNumber);
+    setText('[data-contact-number]', prettyPhone(contactNumber));
+    setText('[data-contact-who]', contactWho === 'owner' ? 'Owner phone' : contactWho === 'builder' ? 'Contractor phone' : 'Phone number');
+    show('[data-contact-form]', !blocked);
+    contactNote(blocked ? 'This number is on the do-not-contact list. Do not call or text it.' : '');
+    const label = $('[data-contact-block-label]');
+    const save = $('[data-contact-block-save]');
+    const input = $('[data-contact-block-input]');
+    if (label) label.textContent = blocked ? 'Why take it off the list? (required)' : 'Why add it? (optional)';
+    if (save) save.textContent = blocked ? 'Take off the do-not-contact list' : 'Add to the do-not-contact list';
+    if (input instanceof HTMLInputElement) input.value = '';
+    if (!(history instanceof HTMLElement)) return;
+    history.replaceChildren();
+    try {
+      const response = await fetch(`/internal/api/supplier-permits?view=contacts&phone=${encodeURIComponent(contactNumber)}`, { headers: { accept: 'application/json' } });
+      if (!response.ok) throw new Error('bad status');
+      const result = (await response.json()) as { log?: ContactLog[] };
+      for (const entry of result.log ?? []) {
+        const li = document.createElement('li');
+        const when = new Date(entry.at);
+        const stamp = Number.isNaN(when.getTime()) ? entry.at : when.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        li.textContent = [stamp, entry.outcomeLabel, entry.permitId ? `permit ${entry.permitId}` : '', entry.note].filter(Boolean).join(' · ');
+        history.append(li);
+      }
+      if (!history.children.length) {
+        const li = document.createElement('li');
+        li.textContent = 'No calls logged for this number yet.';
+        history.append(li);
+      }
+    } catch {
+      const li = document.createElement('li');
+      li.textContent = 'Could not load the history. Close this and try again.';
+      history.append(li);
+    }
+  }
+
+  async function openContact(digits: string, who: string, permitId: string) {
+    const dialog = contactDialog();
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    contactNumber = digits;
+    contactWho = who;
+    contactPermit = permitId;
+    const form = $('[data-contact-form]');
+    if (form instanceof HTMLFormElement) form.reset();
+    await paintContact();
+    if (!dialog.open) dialog.showModal();
+  }
+
+  /** After a save the set, the builder table and (when open) the permit list are redrawn so a new block shows everywhere at once. */
+  async function refreshContactViews() {
+    await loadSupplier();
+    if (supplierShown) { supplierShown = false; await loadSupplierRows(); }
+  }
+
+  function wireContactDialog() {
+    const dialog = contactDialog();
+    if (!(dialog instanceof HTMLDialogElement)) return;
+    const outcome = $('[data-contact-outcome]');
+    if (outcome instanceof HTMLSelectElement && !outcome.options.length) {
+      for (const [value, label] of OUTCOMES) outcome.append(new Option(label, value));
+    }
+    $('[data-contact-close]')?.addEventListener('click', () => dialog.close());
+    $('[data-contact-form]')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement)) return;
+      const data = new FormData(form);
+      const save = $('[data-contact-save]');
+      if (save instanceof HTMLButtonElement) save.disabled = true;
+      const result = await post({ action: 'log', phone: contactNumber, who: contactWho, permitId: contactPermit, outcome: String(data.get('outcome') || ''), note: String(data.get('note') || '') });
+      if (save instanceof HTMLButtonElement) save.disabled = false;
+      if (!result.ok) { contactNote(result.error || 'Could not save.'); return; }
+      form.reset();
+      await refreshContactViews();
+      await paintContact();
+      contactNote(blockedPhones.has(contactNumber) ? 'Saved. This number is now on the do-not-contact list.' : 'Saved.');
+    });
+    $('[data-contact-block-form]')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      if (!(form instanceof HTMLFormElement)) return;
+      const why = String(new FormData(form).get('why') || '').trim();
+      const lifting = blockedPhones.has(contactNumber);
+      if (lifting && !why) { contactNote('Write why this number is coming off the do-not-contact list.'); return; }
+      const result = await post(lifting ? { action: 'unblock', phone: contactNumber, note: why } : { action: 'block', phone: contactNumber, reason: 'other', note: why });
+      if (!result.ok) { contactNote(result.error || 'Could not save.'); return; }
+      await refreshContactViews();
+      await paintContact();
+      contactNote(lifting ? 'Taken off the do-not-contact list.' : 'Saved. This number is now on the do-not-contact list.');
+    });
   }
 
   function renderPermits(permit: PermitSummary | undefined) {
@@ -857,6 +1033,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   }
 
   async function loadSupplier() {
+    await loadContacts();
     try {
       const response = await fetch('/internal/api/supplier-permits', { headers: { accept: 'application/json' } });
       if (!response.ok) throw new Error('bad status');
@@ -906,8 +1083,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         // An owner's phone is shown as text on purpose (see the note above); only a licensed contractor's number is a link.
         const contractorCell = document.createElement('span');
         contractorCell.append(contractor);
-        if (r.builderPhone) contractorCell.append(' · ', licensed ? phoneCell(r.builderPhone) : r.builderPhone);
-        appendRow(body, [address, `${shortDate(r.permitDate)} · ${r.id}${r.pending ? ' (pending)' : ''}`, work, connectionCell(r.connections ?? []), r.owner || '—', mail, r.ownerPhone || '—', contractorCell, home, sold, scored ? `${r.score} of 5` : '—']);
+        if (r.builderPhone) contractorCell.append(' · ', phoneCell(r.builderPhone, { who: 'builder', permitId: r.id, link: licensed }));
+        appendRow(body, [address, `${shortDate(r.permitDate)} · ${r.id}${r.pending ? ' (pending)' : ''}`, work, connectionCell(r.connections ?? []), r.owner || '—', mail, r.ownerPhone ? phoneCell(r.ownerPhone, { who: 'owner', permitId: r.id, link: false }) : '—', contractorCell, home, sold, scored ? `${r.score} of 5` : '—']);
       }
       if (!rows.length) emptyRow(body, 11, 'No permits in this group.');
       const total = result.total ?? rows.length;
@@ -956,6 +1133,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     if (supplierShown) { supplierShown = false; void loadSupplierRows(); }
   });
   document.querySelector('[data-refresh]')?.addEventListener('click', load);
+  wireContactDialog();
   load();
 </script>
 <style>
@@ -1020,6 +1198,17 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   .an-table-xwide{min-width:80rem}
   :global(.an-conn-list){display:grid;gap:.4rem;min-width:14rem}
   :global(.an-conn){font-size:var(--step--1);line-height:1.35}
+  :global(.an-phone){display:inline-flex;flex-wrap:wrap;align-items:center;gap:.35rem}
+  :global(.an-phone-btn){min-height:2rem;padding:.2rem .55rem;font-size:var(--step--2)}
+  :global(.an-dnc){color:var(--danger,#9b1c1c);font-size:var(--step--2);text-transform:uppercase;letter-spacing:.03em}
+  .an-dialog{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--paper-raised);color:var(--ink);padding:var(--space-m);width:min(32rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow:auto;box-shadow:var(--shadow-lg,0 20px 50px rgb(0 0 0 / .25))}
+  .an-dialog::backdrop{background:rgb(0 0 0 / .5)}
+  .an-dialog-head{display:flex;justify-content:space-between;align-items:start;gap:var(--space-s);margin-bottom:var(--space-s)}
+  .an-dialog-head h3{margin:.1rem 0 0}
+  .an-dialog form{display:grid;gap:.6rem;margin-bottom:var(--space-s)}
+  .an-dialog-block{border-top:1px solid var(--line);padding-top:var(--space-s)}
+  .an-dialog h4{margin:var(--space-s) 0 .3rem}
+  .an-history{list-style:none;margin:0;padding:0;display:grid;gap:.35rem;font-size:var(--step--1)}
   :global(.an-conn small),:global(.an-sub){display:block;color:var(--ink-soft);font-size:var(--step--2)}
   :global(.an-conn-no){font-weight:700}
   :global(.an-mini){padding:.3rem .65rem;font-size:var(--step--2);white-space:nowrap}

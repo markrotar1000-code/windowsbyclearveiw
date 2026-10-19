@@ -360,6 +360,17 @@ folder in the repo), and nothing from the report belongs in chat, issues or scre
 table come from a summary request with no owner data; the list and the spreadsheet are separate requests, behind the session
 gate, `private, no-store`, never cached by the service worker. The spreadsheet escapes cells that could be read as formulas.
 Owner phone numbers are shown as plain text on purpose: Washington restricts unsolicited calls and texts, so use mail for
+
+**Do not contact and the call log.** Every phone number in the permit list (and the builder tables) has a **Log call** button that
+opens a small window: what happened (spoke with them, no answer, left a voicemail, wrong number, interested, asked not to be
+contacted), an optional note, and that number's history. "Asked not to be contacted" puts the number on the do-not-contact
+list in the same step; the number can also be added by hand (it is on the registry, they said so by email). The list is keyed by
+the 10 digits, so it covers every permit that carries the number, in any spelling. A listed number is never a link, takes no new
+call entries, and is marked in the spreadsheet (last column, "Do not contact"). Taking a number off needs a written reason and
+leaves a "Block lifted" entry in the log. This is Mark's own record, kept in D1 (`supplier_contact_blocks`, `supplier_contact_log`);
+the weekly load never touches it. It does not check the national Do Not Call registry: that needs a subscription and a scrub
+of the list by area code, and homeowners are mail-only until it exists. API: `GET /internal/api/supplier-permits?view=contacts[&phone=]`,
+`POST` with `{ action: 'log' | 'block' | 'unblock', phone, ... }`.
 homeowners and phone only people who asked to hear from us.
 
 **Counties.** Only Clark County permits are enriched (the county publishes parcels and sales for free). Oregon permits in

@@ -47,12 +47,122 @@ export const SUPPLIER_DDL = [
   `CREATE TABLE IF NOT EXISTS supplier_import_meta (key TEXT PRIMARY KEY, value TEXT)`,
 ];
 
+// Mark's own record of who he has called and who must not be contacted again. Unlike the permit rows these are business
+// records, so they live outside SUPPLIER_DDL: the weekly load file only ever merges permits and can never touch them.
+export const CONTACT_DDL = [
+  `CREATE TABLE IF NOT EXISTS supplier_contact_blocks (
+    phone TEXT PRIMARY KEY, reason TEXT NOT NULL, note TEXT, created_at TEXT NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS supplier_contact_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT NOT NULL, permit_id TEXT, who TEXT NOT NULL, outcome TEXT NOT NULL, note TEXT, created_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_supplier_contact_log_phone ON supplier_contact_log(phone, created_at DESC)`,
+];
+
 const created = new WeakSet();
 
 export async function ensureSupplierTables(db) {
   if (!db || created.has(db)) return;
-  for (const sql of SUPPLIER_DDL) await db.prepare(sql).run();
+  for (const sql of [...SUPPLIER_DDL, ...CONTACT_DDL]) await db.prepare(sql).run();
   created.add(db);
+}
+
+// ---------- do not contact + call log ----------
+
+export const CONTACT_OUTCOMES = {
+  reached: 'Spoke with them',
+  no_answer: 'No answer',
+  voicemail: 'Left a voicemail',
+  wrong_number: 'Wrong number',
+  interested: 'Interested, wants to hear more',
+  asked_not_to_call: 'Asked not to be contacted',
+};
+const CONTACT_WHO = ['owner', 'builder', 'other'];
+const BLOCK_REASONS = ['asked_not_to_call', 'registry', 'other'];
+export const LIFTED = 'block_lifted';
+
+/** A phone number as the 10 digits both lists key on, or '' when it is not a plausible US number. */
+export function normalizePhone(raw) {
+  let digits = String(raw ?? '').replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+  return digits.length === 10 && /^[2-9]/.test(digits) ? digits : '';
+}
+
+const cleanNote = (raw) => String(raw ?? '').replace(/\s+/g, ' ').trim().slice(0, 500);
+const cleanPermitId = (raw) => { const id = String(raw ?? '').trim(); return /^[A-Za-z0-9 ._/-]{1,60}$/.test(id) ? id : null; };
+
+export async function readBlocked(db) {
+  await ensureSupplierTables(db);
+  const rows = await all(db.prepare(`SELECT phone, reason, created_at FROM supplier_contact_blocks ORDER BY created_at DESC`));
+  return new Map(rows.map((r) => [r.phone, { reason: r.reason, since: r.created_at }]));
+}
+
+/** Calls logged per number: { count, last (ISO), outcome }. Lifting a block is history, not a call. */
+async function readCallSummary(db) {
+  const rows = await all(db.prepare(`SELECT phone, outcome, created_at FROM supplier_contact_log WHERE outcome != ? ORDER BY created_at, id`).bind(LIFTED));
+  const summary = new Map();
+  for (const r of rows) {
+    const current = summary.get(r.phone) || { count: 0, last: '', outcome: '' };
+    summary.set(r.phone, { count: current.count + 1, last: r.created_at, outcome: r.outcome });
+  }
+  return summary;
+}
+
+/** Everything the page needs once: the numbers not to contact and the latest entries of the log. */
+export async function readContacts(db, { phone = '', limit = 50 } = {}) {
+  await ensureSupplierTables(db);
+  const blocked = await readBlocked(db);
+  const digits = normalizePhone(phone);
+  const rows = digits
+    ? await all(db.prepare(`SELECT id, phone, permit_id, who, outcome, note, created_at FROM supplier_contact_log WHERE phone = ? ORDER BY created_at DESC, id DESC LIMIT ?`).bind(digits, Math.min(Math.max(Math.trunc(Number(limit)) || 50, 1), 200)))
+    : await all(db.prepare(`SELECT id, phone, permit_id, who, outcome, note, created_at FROM supplier_contact_log ORDER BY created_at DESC, id DESC LIMIT ?`).bind(Math.min(Math.max(Math.trunc(Number(limit)) || 50, 1), 200)));
+  return {
+    blocked: [...blocked.entries()].map(([number, b]) => ({ phone: number, reason: b.reason, since: b.since })),
+    log: rows.map((r) => ({ id: r.id, phone: r.phone, permitId: r.permit_id || '', who: r.who, outcome: r.outcome, outcomeLabel: CONTACT_OUTCOMES[r.outcome] || (r.outcome === LIFTED ? 'Block lifted' : r.outcome), note: r.note || '', at: r.created_at })),
+  };
+}
+
+const refuse = (error, status = 400) => ({ ok: false, error, status });
+
+/** Log one call (or text) attempt. A number on the do-not-contact list takes no new entries; "asked not to be contacted" blocks it in the same step. */
+export async function logContact(db, { phone, permitId, who, outcome, note } = {}, now = new Date()) {
+  await ensureSupplierTables(db);
+  const digits = normalizePhone(phone);
+  if (!digits) return refuse('That is not a 10-digit phone number.');
+  if (!Object.hasOwn(CONTACT_OUTCOMES, outcome)) return refuse('Choose what happened on the call.');
+  const person = CONTACT_WHO.includes(who) ? who : 'other';
+  if ((await readBlocked(db)).has(digits)) return refuse('This number is on the do-not-contact list. Do not call or text it.', 409);
+  const at = now.toISOString();
+  const text = cleanNote(note);
+  const statements = [db.prepare(`INSERT INTO supplier_contact_log (phone, permit_id, who, outcome, note, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(digits, cleanPermitId(permitId), person, outcome, text || null, at)];
+  if (outcome === 'asked_not_to_call') statements.push(db.prepare(`INSERT OR IGNORE INTO supplier_contact_blocks (phone, reason, note, created_at) VALUES (?, 'asked_not_to_call', ?, ?)`).bind(digits, text || null, at));
+  await db.batch(statements);
+  return { ok: true, phone: digits, blocked: outcome === 'asked_not_to_call' };
+}
+
+/** Put a number on the do-not-contact list without a call (it is on the registry, a customer said so by email, ...). Idempotent: the first reason and date stay. */
+export async function blockPhone(db, { phone, reason, note } = {}, now = new Date()) {
+  await ensureSupplierTables(db);
+  const digits = normalizePhone(phone);
+  if (!digits) return refuse('That is not a 10-digit phone number.');
+  const why = BLOCK_REASONS.includes(reason) ? reason : 'other';
+  await db.prepare(`INSERT OR IGNORE INTO supplier_contact_blocks (phone, reason, note, created_at) VALUES (?, ?, ?, ?)`).bind(digits, why, cleanNote(note) || null, now.toISOString()).run();
+  return { ok: true, phone: digits, blocked: true };
+}
+
+/** Take a number off the list. Needs a written reason (they asked to hear from us, it was a mistake) and leaves a log entry, so the history never loses that it was once blocked. */
+export async function unblockPhone(db, { phone, note } = {}, now = new Date()) {
+  await ensureSupplierTables(db);
+  const digits = normalizePhone(phone);
+  if (!digits) return refuse('That is not a 10-digit phone number.');
+  const text = cleanNote(note);
+  if (!text) return refuse('Write why this number is being taken off the do-not-contact list.');
+  if (!(await readBlocked(db)).has(digits)) return refuse('That number is not on the do-not-contact list.', 404);
+  await db.batch([
+    db.prepare(`DELETE FROM supplier_contact_blocks WHERE phone = ?`).bind(digits),
+    db.prepare(`INSERT INTO supplier_contact_log (phone, permit_id, who, outcome, note, created_at) VALUES (?, NULL, 'other', ?, ?, ?)`).bind(digits, LIFTED, text, now.toISOString()),
+  ]);
+  return { ok: true, phone: digits, blocked: false };
 }
 
 // ---------- groups ----------
@@ -420,6 +530,10 @@ export function listRow(r) {
     mailPilot: r.mail_pilot_ref || '',
     subdivision: r.subdivision || '',
     builderKey: r.builder_key || '',
+    ownerBlocked: false,
+    builderBlocked: false,
+    ownerCalls: null,
+    builderCalls: null,
     connections: [],
     signals: parse(r.signals, []),
     score: r.score,
@@ -450,7 +564,20 @@ export async function readSupplierList(db, { group = '', builder = '', limit = 1
     `SELECT ${LIST_COLUMNS} FROM supplier_permits ${where} ORDER BY score DESC, permit_date DESC, id LIMIT ? OFFSET ?`,
   ).bind(...bind, clampLimit(limit), clampOffset(offset)));
   const connections = await readConnections(db, rows);
-  return { total, group: key, builder: builderKey, rows: rows.map((r) => ({ ...listRow(r), connections: connections.get(r.id) || [] })) };
+  const blocked = await readBlocked(db);
+  const calls = await readCallSummary(db);
+  return {
+    total, group: key, builder: builderKey,
+    rows: rows.map((r) => {
+      const owner = normalizePhone(r.owner_phone);
+      const builder = normalizePhone(r.builder_phone);
+      return {
+        ...listRow(r), connections: connections.get(r.id) || [],
+        ownerBlocked: Boolean(owner && blocked.has(owner)), builderBlocked: Boolean(builder && blocked.has(builder)),
+        ownerCalls: owner ? calls.get(owner) || null : null, builderCalls: builder ? calls.get(builder) || null : null,
+      };
+    }),
+  };
 }
 
 // ---------- spreadsheet file ----------
@@ -460,7 +587,7 @@ export const CSV_HEADER = [
   'Owner', 'Owner phone', 'Owner mailing address', 'Contractor / builder', 'Builder phone', 'Builder license (as printed)',
   'State license (L&I)', 'License status', 'License expires', 'Year built', 'Home sq ft', 'Lot sq ft', 'Assessed value',
   'Owner differs from county record', 'Owner lives elsewhere', 'Last sale date', 'Last sale price', 'Subdivision', 'In permit-leads', 'In mail pilot',
-  'Builder already tracked', 'Fit (of 5)', 'Signals', 'County parcel match', 'Connected records',
+  'Builder already tracked', 'Fit (of 5)', 'Signals', 'County parcel match', 'Connected records', 'Do not contact',
 ];
 
 /** One connection as a line of text: "Permit leads RES-390001 (SMITH JOHN), same permit". Used by the file; the page draws the same facts as elements. */
@@ -488,6 +615,7 @@ export function toSupplierCsv(rows) {
       r.ownerDiffers ? 'Y' : '', r.absentee ? 'Y' : '', r.lastSaleDate, dollars(r.lastSaleCents), r.subdivision, r.inPermitLeads, r.mailPilot,
       r.trackedBuilder, SCORED_GROUPS.includes(r.group) ? r.score : '', r.signals.map((s) => SIGNAL_LABELS[s] || s).join('; '), r.parcelMatch,
       (r.connections || []).map(connectionText).join(' | '),
+      [r.ownerBlocked ? 'Owner phone' : '', r.builderBlocked ? 'Builder phone' : ''].filter(Boolean).join('; '),
     ].map(csvCell).join(','));
   }
   return `${lines.join('\r\n')}\r\n`;
