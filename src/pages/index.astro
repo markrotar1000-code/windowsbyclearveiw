@@ -13,17 +13,19 @@ import { patioSliderPhoto, recentWorkPhotos } from '../data/gallery-additions';
 
 const replacementTile = findWork('gray-lap-siding-triple-hung')!;
 const newBuildTile = findWork('new-build-tan-corner')!;
+// Siding tile: the same owner-supplied job photo that is the /siding hero.
+const sidingTile = findWork('siding-two-story-panels')!;
 // The sliding-doors tile shows the patio door added 2026-10-11 (4K, retouched; see
 // docs/GALLERY-PHOTOS-2026-10-11.md). It is a Clearview job photo (Keith, 2026-10-11) kept out of
 // workPhotos so it is not shown twice on /gallery; see gallery-additions.ts.
 const slidingDoorsTile = patioSliderPhoto;
 
-// A service tile's frame is about 404 x 460 on a desktop and 341 x 320 on a phone. 0.85 is
-// the narrower ratio, so a landscape photo (the new-build tile) is asked for at a width that
-// covers the taller frame instead of being stretched to it.
-const SERVICE_TILE_RATIO = 0.85;
+// A service tile's frame is about 300 x 460 on a desktop (four across) and 341 x 320 on a phone.
+// 0.65 is the narrower ratio, so a landscape photo (the new-build and siding tiles) is asked for
+// at a width that covers the taller frame instead of being stretched to it.
+const SERVICE_TILE_RATIO = 0.65;
 const serviceTileSizes = (photo: { image: Parameters<typeof coverScale>[0] }) =>
-  scaleSizes('(max-width: 800px) 100vw, 33vw', coverScale(photo.image, SERVICE_TILE_RATIO));
+  scaleSizes('(max-width: 800px) 100vw, 25vw', coverScale(photo.image, SERVICE_TILE_RATIO));
 
 const serviceLinks = [
   { slug: 'vancouver', label: 'Vancouver' },
@@ -82,8 +84,8 @@ const signs = [
 
   <section class="section is-airy">
     <div class="wrap" data-reveal>
-      <p class="rule-label">Three kinds of window work</p>
-      <h2>Window replacement, new construction, and sliding glass doors.</h2>
+      <p class="rule-label">Four kinds of work</p>
+      <h2>Window replacement, new construction, siding, and sliding glass doors.</h2>
       <p class="lede">Pick the one that fits your project.</p>
       <div class="service-tiles">
         <a class="service-tile" href="/replacement">
@@ -116,6 +118,21 @@ const signs = [
             <h2>New construction</h2>
           </div>
         </a>
+        <a class="service-tile" href="/siding">
+          <Image
+            src={sidingTile.image}
+            alt=""
+            widths={[400, 640, 900, 1200, 1600]}
+            width={900}
+            sizes={serviceTileSizes(sidingTile)}
+            format="webp"
+            quality={72}
+          />
+          <div class="service-tile-copy">
+            <p class="kicker">Exterior</p>
+            <h2>Siding</h2>
+          </div>
+        </a>
         <a class="service-tile" href="/sliding-glass-doors">
           <Image
             src={slidingDoorsTile.image}
@@ -132,7 +149,6 @@ const signs = [
           </div>
         </a>
       </div>
-      <p class="section-link">Also doing the exterior? <a href="/siding">See our siding work</a>.</p>
     </div>
   </section>
 
@@ -269,7 +285,7 @@ const signs = [
   /* Service tiles ─────────────────────────────────────────────────────── */
   .service-tiles {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--space-xs);
     margin-top: var(--space-l);
   }

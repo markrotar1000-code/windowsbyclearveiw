@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-19 - Home page: Siding service tile
+
+Keith asked for a card between New construction and Sliding glass doors on the home page. A fourth service tile, **Siding** (kicker "Exterior", links to `/siding`), now sits there. It reuses the existing `/siding` hero job photo (`siding-two-story-panels`); no new photo, copy claim, price or credential was added. The tile grid is four across on desktop (one column at 900 px and below, unchanged), so `SERVICE_TILE_RATIO` is 0.65 and the image `sizes` hint is 25vw. The band label and heading changed from "Three kinds of window work" to "Four kinds of work", and the "Also doing the exterior? See our siding work" line was dropped because the tile replaces it. Validation: `npm run build` and all 62 `test:all` steps pass; the built `dist/index.html` lists the tiles in order replacement, new-construction, siding, sliding-glass-doors. The tiles were not looked at in a browser (no Playwright in this session), so the four-across desktop crop and the phone layout still need a look on the preview.
+
 ## 2026-10-19 - Audit of Codex PRs #262-#268
 
 Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The audit fix originally waited 500 ms after the click. During #269 integration, this becomes a wait for the existing Note saved confirmation, preserving the same persistence check without a fixed delay.
