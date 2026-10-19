@@ -191,15 +191,19 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
   const job = jobList.find((j) => j.customer_name === 'Pat Doe' && j.status === 'scheduled');
   {
     const page = await open('today'); await page.goto(base + '/internal/today', { waitUntil: 'networkidle' });
+    if (await page.locator('.today-task-main strong').evaluateAll((els) => els.some((e) => e.scrollWidth > e.clientWidth + 1))) flowProblems.push('today: a task title is cut off on a phone');
     const before = await page.locator('[data-done]').count();
     if (!before) flowProblems.push('today: no follow-up to complete'); else { await page.locator('[data-done]').first().click(); await page.waitForTimeout(800); const after = await page.locator('[data-done]').count(); if (after !== before - 1) flowProblems.push(`today: marking a follow-up done changed ${before} to ${after}`); }
     await page.close();
   }
   {
     const page = await open('follow-up'); await page.goto(base + '/internal/follow-up', { waitUntil: 'networkidle' });
-    await page.click('[data-add-open]'); await page.fill('input[name=title]', 'Audit: call about glass'); await page.click('[data-form] button[type=submit]'); await page.waitForTimeout(900);
+    await page.click('[data-add-open]'); if (!(await page.locator('input[name=title]').evaluate((e) => document.activeElement === e))) flowProblems.push('follow-up: opening the form does not focus Task'); await page.fill('input[name=title]', 'Audit: call about glass'); await page.click('[data-form] button[type=submit]'); await page.waitForTimeout(900);
     if (!(await page.evaluate(() => document.body.innerText.includes('Audit: call about glass')))) flowProblems.push('follow-up: a saved follow-up is not shown');
     if ((await page.inputValue('input[name=title]')) !== '') flowProblems.push('follow-up: the title field is not cleared after saving');
+    if (!(await page.locator('[data-save-feedback]').isVisible()) || (await page.locator('[data-save-feedback]').innerText()) !== 'Follow-up saved.') flowProblems.push('follow-up: a successful save has no visible confirmation');
+    const clipped = await page.locator('.task-title strong').evaluateAll((els) => els.some((e) => e.scrollWidth > e.clientWidth + 1));
+    if (clipped) flowProblems.push('follow-up: a task title is cut off on a phone');
     await page.close();
   }
   {

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-18 - Follow-up: full phone titles and confirmed saves
+
+Merged #267 as `a8ee95d` after GitHub/Pages checks passed; production PWA assets and app gate pass for that build. `codex/follow-up-phone-readability` shows full task titles on phone Today/Follow-up, focuses Task when Add follow-up opens, and displays/focuses a visible Follow-up saved status only after a confirmed 201 response with a record ID. Failed/auth/HTML responses preserve text and do not claim success. Follow-up form fields now fit at enlarged text sizes. All 62 suite/build steps and 9 interaction flows pass; focused checks cover save/retry, 401/HTML failures, title readability, 320–1280 px and 150%/200% text. This proposed UI awaits PR merge; physical devices and signed-in production UI remain unverified.
+
 ## 2026-10-18 - Photos: reachable phone capture and correct return context
 
 Merged #266 as `c52616c` after GitHub/Pages checks passed; production PWA files and app gate pass for that build. `codex/photos-phone-capture` compacts the phone header/context, moves backup actions into a native disclosure, and adapts stage buttons to enlarged text. On a 390 x 844 phone, capture starts at 703 px instead of 1190 px, above bottom navigation at 773 px. Missing-job capture stays disabled with a clear instruction. Return to Field now follows the current opening/project-wide selection. All 62 suite/build steps and 9 interaction flows pass. Focused checks cover local photo/note persistence, stage filters, JSON backup/restore, 320–1280 widths and 150%/200% text. Cloud responses are mocked; no physical camera, signed-in production UI or live cloud upload is claimed for this proposed round.

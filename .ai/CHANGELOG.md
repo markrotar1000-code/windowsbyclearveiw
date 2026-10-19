@@ -1,5 +1,15 @@
 # ICM Changelog
 
+## 2026-10-18 - Read full customer actions and confirm follow-up saves (branch `codex/follow-up-phone-readability`)
+
+Keith requested merging #267 and the next phone UX round. Both checks passed; merged as `a8ee95d`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
+
+Phone task titles on Follow-up and Today were single-line ellipses: the seeded 230-character title occupied 267 px but required 2317 px. They now wrap fully on phones, with Follow-up priority on its own line. Add follow-up now focuses Task. A confirmed save displays and focuses Follow-up saved near the form's former position, bringing it into view after the form closes. Only a 201 response with a returned record ID confirms success; errors, sign-in responses and login-shaped HTML preserve input and leave success hidden. Payloads, due-date conversion, queue sorting and completion semantics remain unchanged.
+
+At 200% text, the follow-up form's grid extended its fields past the panel (form scroll width 421 px vs 313 px available), clipped by panel overflow. Shrinking form/label tracks and control minimum widths fix that.
+
+Validation: all 62 test:all steps including build pass; all 9 interaction flows pass. Existing Today/Follow-up flows now guard full titles, Task focus and save confirmation. Focused Chrome checks cover a long task with notes/date, failed save and retry, visible/focused success, 401 and HTML responses without input loss/false success, widths 320/360/390/620/760/1280, and 360 px at 150%/200% text with no clipped fields or page overflow. Only seeded in-memory records changed. No physical-device or signed-in production UI validation is claimed for this proposed round. Screenshots are in this task's outputs.
+
 ## 2026-10-18 - Photo capture within reach on a phone (branch `codex/photos-phone-capture`)
 
 Keith requested merging #266 and another phone UX round. Both checks passed; #266 merged as `c52616c`. Production worker/manifest/offline/icons/app-gate checks pass for that build.
