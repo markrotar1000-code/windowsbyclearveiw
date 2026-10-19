@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-19 - Audit of Codex PRs #262-#268
+
+Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The audit fix originally waited 500 ms after the click. During #269 integration, this becomes a wait for the existing Note saved confirmation, preserving the same persistence check without a fixed delay.
+
 ## 2026-10-18 - Leads: shorter phone cards and recoverable search (branch `codex/leads-phone-context`)
 
 Keith requested merging #268 and another phone UX round. Both checks passed; #268 merged as `e0aacca`. Production reports that build and passes worker/manifest/offline/icons/app-gate checks.
