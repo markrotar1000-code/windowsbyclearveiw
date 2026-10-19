@@ -2,7 +2,17 @@
 
 ## 2026-10-19 - Audit of Codex PRs #262-#268
 
-Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The flow now waits 500 ms after the click.
+Reviewed the seven Codex PRs (#262-#268) against the earlier rounds. No product regressions found: on main, `npm run build` and all 62 `test:all` steps pass, and the Command Center browser audit (299 page views, failure pass, flows) is clean. One audit-tool race fixed: the photos flow reloaded right after clicking Save note, before the async IndexedDB write finished, so it intermittently reported the note as lost (the page itself keeps the note). The audit fix originally waited 500 ms after the click. During #269 integration, this becomes a wait for the existing Note saved confirmation, preserving the same persistence check without a fixed delay.
+
+## 2026-10-18 - Leads: shorter phone cards and recoverable search (branch `codex/leads-phone-context`)
+
+Keith requested merging #268 and another phone UX round. Both checks passed; #268 merged as `e0aacca`. Production reports that build and passes worker/manifest/offline/icons/app-gate checks.
+
+A long request made a single lead card 1,064 px tall on a 390 x 844 phone. Notes over 240 characters now show an escaped 180-character preview and a native Read full request disclosure. The complete text is preserved and accessible with Enter/touch; short notes stay visible. The seeded 1,800-character request card is now 378 px closed. Summary layout explicitly overrides the shared phone flex rule, which otherwise squeezed its label into a narrow column.
+
+Lead search now includes email and matches phone digits independent of punctuation. A polite live result count and Clear search button reveal the current result state and restore input focus without resetting the work-type filter. That filter wraps rather than overflowing at 200% text. Quote/follow-up/contact links, notes data, list order, attribution, and engagement qualification remain unchanged; no production lead writes or customer messages occurred.
+
+Validation: all 62 test:all steps including build and all 9 interaction flows pass. Focused Chrome checks cover 320/360/390/620/760/1280 px and 360 px at 150%/200% text; email/phone queries, zero results, clear/focus, retained work filter, escaped content, and full-note keyboard expansion pass without overflow or script errors. The interaction audit adds these lead behaviors and a guard against a squeezed disclosure control. Its photo-save check now waits for the existing Note saved confirmation before reloading, rather than racing the asynchronous IndexedDB save. Before/after screenshots are in task outputs. Physical devices and signed-in production UI remain unverified. This round awaits PR merge.
 
 ## 2026-10-18 - Read full customer actions and confirm follow-up saves (branch `codex/follow-up-phone-readability`)
 

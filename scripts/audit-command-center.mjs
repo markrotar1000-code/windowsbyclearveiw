@@ -208,6 +208,22 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
   }
   {
     const page = await open('leads'); await page.goto(base + '/internal/leads', { waitUntil: 'networkidle' });
+    const total = await page.locator('.ld-card').count();
+    await page.locator('input[data-search]').fill('PAT@EXAMPLE.COM');
+    if (await page.locator('.ld-card:visible').count() !== 1) flowProblems.push('leads: email search did not find Pat');
+    if ((await page.locator('[data-results]').innerText()) !== `1 of ${total} leads`) flowProblems.push('leads: search count is wrong');
+    await page.locator('input[data-search]').fill('5035550199');
+    if (await page.locator('.ld-card:visible').count() !== 1) flowProblems.push('leads: digits-only phone search failed');
+    const request = page.locator('.ld-card:visible .ld-request');
+    if (await request.evaluate((e) => e.open)) flowProblems.push('leads: long request starts expanded');
+    if (await request.locator('.ld-request-more').evaluate((e) => e.getBoundingClientRect().width < 200)) flowProblems.push('leads: full-request control is squeezed beside the preview');
+    await request.locator('summary').focus(); await page.keyboard.press('Enter');
+    if (!(await request.locator('.ld-notes').isVisible()) || (await request.locator('.ld-notes').innerText()).length !== 1800) flowProblems.push('leads: full request is not readable with the keyboard');
+    await page.keyboard.press('Enter');
+    await page.locator('input[data-search]').fill('no matching lead');
+    if (!(await page.locator('[data-empty-filtered]').isVisible())) flowProblems.push('leads: no-results state is missing');
+    await page.locator('[data-clear-search]').click();
+    if (await page.locator('.ld-card:visible').count() !== total || !(await page.locator('input[data-search]').evaluate((e) => e === document.activeElement))) flowProblems.push('leads: clear search did not restore the queue and focus');
     const href = await page.locator('a.ld-action:has-text("Add follow-up")').first().getAttribute('href');
     await page.goto(base + href, { waitUntil: 'networkidle' }); await page.waitForTimeout(500);
     if (!(await page.evaluate(() => { const c = document.querySelector('[data-add-card]'); return c && !c.hidden; }))) flowProblems.push('leads: "Add follow-up" from a lead does not open the form');
@@ -291,7 +307,9 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.locator('[data-opening-input]').fill('1');
     await page.locator('[data-files]').setInputFiles(root + '/public/icon-192.png');
     await page.locator('.photo-card').first().waitFor(); await page.waitForTimeout(700);
-    await page.locator('.photo-card textarea').first().fill('Audit: sill detail'); await page.locator('.photo-card [data-save]').first().click(); await page.waitForTimeout(500);
+    await page.locator('.photo-card textarea').first().fill('Audit: sill detail'); await page.locator('.photo-card [data-save]').first().click();
+    // IndexedDB saving is asynchronous: wait for the UI confirmation before navigating away.
+    await page.waitForFunction(() => document.querySelector('[data-status]')?.textContent === 'Note saved');
     await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(500);
     if ((await page.locator('.photo-card textarea').first().inputValue()) !== 'Audit: sill detail') flowProblems.push('photos: the photo note does not survive reload');
     await page.locator('[data-stage="after"]').click(); await page.waitForTimeout(300);
