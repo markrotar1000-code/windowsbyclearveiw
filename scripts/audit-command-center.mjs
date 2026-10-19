@@ -291,7 +291,7 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.locator('[data-opening-input]').fill('1');
     await page.locator('[data-files]').setInputFiles(root + '/public/icon-192.png');
     await page.locator('.photo-card').first().waitFor(); await page.waitForTimeout(700);
-    await page.locator('.photo-card textarea').first().fill('Audit: sill detail'); await page.locator('.photo-card [data-save]').first().click();
+    await page.locator('.photo-card textarea').first().fill('Audit: sill detail'); await page.locator('.photo-card [data-save]').first().click(); await page.waitForTimeout(500);
     await page.reload({ waitUntil: 'networkidle' }); await page.waitForTimeout(500);
     if ((await page.locator('.photo-card textarea').first().inputValue()) !== 'Audit: sill detail') flowProblems.push('photos: the photo note does not survive reload');
     await page.locator('[data-stage="after"]').click(); await page.waitForTimeout(300);
