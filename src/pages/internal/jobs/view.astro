@@ -414,4 +414,6 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   :global(.scope-row)>:global(strong:last-child){flex:none;white-space:nowrap;overflow-wrap:normal}
   /* Phone: six jump buttons shared one row at about 50 px each, labels wrapping in half; now three by two. */
   @media(max-width:720px){.head-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.head-actions .btn{display:flex;align-items:center;justify-content:center;text-align:center}}
+  /* With six actions beside it the name was squeezed to one word per line at tablet width; stack them under the title below 1000 px. */
+  @media(min-width:721px) and (max-width:1000px){.job-head{flex-direction:column;align-items:flex-start}.job-head .head-actions{width:100%;display:flex;flex-wrap:wrap}}
 </style>

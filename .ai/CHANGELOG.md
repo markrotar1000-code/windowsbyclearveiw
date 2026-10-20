@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-20 - Round eleven: tablet width
+
+Keith asked for the next round. Method: 768 px and 1440 px screenshots of the main pages. Desktop was clean. Fixes: `settleNav()` in `InternalLayout` (current link scrolled into view; `data-more-left/right` drive a fade mask); `jobs/view.astro` header stacks between 721 and 1000 px; `jobs/index.astro` toolbar `flex-wrap`; `schedule.astro` Today button font. Guards in `test-internal-mobile.mjs`; the browser audit adds a 768 px flow (nav link visible with a fade, job name on one line, Jobs chips on screen). Left alone for Keith: the 74 px page titles at laptop and tablet widths (open decision), Payments "Payments & balances" wrapping to two lines at tablet width because of that size.
+
 ## 2026-10-20 - Round ten: job prep, production health, lead analyzer, build plan
 
 Keith asked for the next round. Method: 390 px screenshots of the job, closeout, hardening, new-job, lead-analyzer, build-plan and invoice pages. Fixes: `InternalLayout` checkbox touch rule now `label:not(.la-card):not(.check-row):has(...)` (my own round-three regression, `test-load-failed` string updated); `jobs/prepare.astro` plan counts (`:global` span/strong/small) and a non-wrapping status; `jobs/hardening.astro` rows are a flex row; `leads/analyze.astro` clamps name and notes; `quotes/build-plan.astro` list items are one-line growing textareas (Enter ignored, pasted line breaks become spaces; the page's save path is unchanged). Guards in `test-internal-mobile.mjs`; a 12th browser-audit flow checks row widths, status wrapping, row alignment, card height and cut-off items. Looked at and left alone: the new-job form and the invoice view (stress data wraps cleanly).

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-20 - Command Center round eleven: tablet width
+
+First look at 768 px (and 1440 px, which was fine). Fixed: the scrolling top nav cut the current page's link ("Paymen") and gave no hint that Analytics, Tools and Ask were out of view (it now scrolls the current link into view and fades the side with more links); the job header squeezed the customer name to one word per line beside six buttons (now stacks under 1000 px); the Jobs status chips ran off the screen (toolbar wraps); the Schedule "Today" button used a different font size. No production step.
+
 ## 2026-10-20 - Command Center round ten: job prep, production health, lead analyzer, build plan
 
 Screenshots of the job-side pages found a regression from round three: the 44 px checkbox-label rule in the layout turned every job-prep checklist row into a shrink-to-fit inline box (status "Open" wrapped to "Ope / n", borders stopped short). The rule now skips `.check-row`. Also fixed: job-prep plan counts had no padding ("7openings"), production-health rows did not line up on a phone, the lead analyzer showed a lead's whole notes (now three lines), and the build-plan purchase list cut text off at the edge of one-line inputs (now growing text boxes). No production step.
