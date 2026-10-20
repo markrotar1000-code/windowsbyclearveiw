@@ -427,6 +427,24 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     if (cut) flowProblems.push('build plan: a purchase-plan item is cut off at the edge');
     await page.close();
   }
+  {
+    // Tablet width (768 px): the top nav scrolls, the job header and the jobs toolbar must not squeeze or cut off.
+    const tctx = await browser.newContext({ viewport: { width: 768, height: 1024 }, serviceWorkers: 'block' });
+    const page = await tctx.newPage();
+    page.on('pageerror', (e) => flowProblems.push('tablet: page error ' + e.message));
+    await page.goto(base + '/internal/payments', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    const navBox = await page.evaluate(() => { const nav = document.querySelector('.internal-nav'); const a = nav?.querySelector('a.active'); if (!nav || !a) return null; const n = nav.getBoundingClientRect(); const r = a.getBoundingClientRect(); return { left: r.left - n.left, right: n.right - r.right }; });
+    if (!navBox || navBox.left < -1 || navBox.right < -1) flowProblems.push('tablet: the current page link in the top nav is cut off');
+    if (!(await page.locator('.internal-nav[data-more-right="true"], .internal-nav[data-more-left="true"]').count())) flowProblems.push('tablet: a scrolling top nav shows no fade for the links out of view');
+    await page.goto(base + '/internal/jobs/view?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    const titleH = await page.locator('.job-head h1').evaluate((e) => e.getBoundingClientRect().height);
+    if (titleH > 130) flowProblems.push('tablet: the job name wraps to several lines beside the action buttons (' + Math.round(titleH) + ' px tall)');
+    await page.goto(base + '/internal/jobs', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    const chips = await page.locator('.job-filters .filter').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.right; }));
+    if (chips.some((r) => r > 768 - 8)) flowProblems.push('tablet: a Jobs status chip runs off the screen');
+    await tctx.close();
+  }
+  views += 3;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();

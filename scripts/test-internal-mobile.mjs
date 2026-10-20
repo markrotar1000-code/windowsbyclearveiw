@@ -128,4 +128,10 @@ assert.ok(/:global\(\.row\)\{display:flex;/.test(read('src/pages/internal/jobs/h
 assert.ok(/:global\(\.la-card em\)\{display:-webkit-box;-webkit-line-clamp:3/.test(read('src/pages/internal/leads/analyze.astro')), 'the lead picker clamps long notes');
 assert.ok(/<textarea rows="1" maxlength="700"/.test(plan) && /if\(ev\.key==='Enter'\)ev\.preventDefault\(\)/.test(plan), 'build plan items are growing one-line text boxes, not truncating inputs');
 
+// Round eleven: tablet width.
+const layoutSrc = read('src/layouts/InternalLayout.astro');
+assert.ok(/function settleNav\(\)/.test(layoutSrc) && /data-more-right/.test(layoutSrc), 'the scrolling top nav brings the current link into view and fades the side with more links');
+assert.ok(/\.jobs-toolbar\{flex-wrap:wrap\}/.test(read('src/pages/internal/jobs/index.astro')), 'the Jobs toolbar wraps at tablet width');
+assert.ok(/@media\(min-width:721px\) and \(max-width:1000px\)\{\.job-head\{flex-direction:column/.test(read('src/pages/internal/jobs/view.astro')), 'the job header stacks at tablet width');
+
 console.log('internal mobile: ok');
