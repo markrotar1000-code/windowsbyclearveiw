@@ -65,8 +65,11 @@ const quickTools = [
     try{const response=await fetch(endpoint);if(response.redirected||!response.ok)throw new Error();const d=await response.json();
       const connections = Array.from(document.querySelectorAll<HTMLElement>('[data-ready]'));
       const configuredCount = connections.filter(el => Boolean(d.configured[el.dataset.ready!])).length;
-      if(status)status.textContent=`${configuredCount} of ${connections.length} connections configured. Tools run only when requested. A configured connection still needs a successful live test.`;
-      for(const el of document.querySelectorAll<HTMLElement>('[data-ready]'))el.textContent=d.configured[el.dataset.ready!]?'Configured · ready to test':'Not connected · account setup needed';
+      if(status)status.textContent=`${configuredCount} of ${connections.length} connections configured. Tools that are not connected are folded and listed last. Tools run only when requested. A configured connection still needs a successful live test.`;
+      for(const el of document.querySelectorAll<HTMLElement>('[data-ready]')){const on=Boolean(d.configured[el.dataset.ready!]);el.textContent=on?'Configured · ready to test':'Not connected · account setup needed';
+        // A tool that is not connected folds to its name and status and sorts after the ones that work, instead of a screen of dead forms.
+        const panel=el.closest<HTMLElement>('.panel');if(panel)panel.dataset.off=on?'false':'true';}
+      for(const link of document.querySelectorAll<HTMLAnchorElement>('.tool-chooser a[href^="#tool-"]')){const panel=document.getElementById(link.hash.slice(1));link.dataset.off=panel?.dataset.off==='true'?'true':'false';}
       for(const button of document.querySelectorAll<HTMLButtonElement>('[data-report], form[data-action] button')){const action=button.dataset.report||button.closest<HTMLElement>('form')?.dataset.action;button.disabled=action!=='save_expense'&&!d.configured[action!];}
       const expenses=document.querySelector('[data-expenses]');if(expenses){expenses.replaceChildren();table(expenses,['Date','Supplier','USD','Job'],d.expenses.map((e:any)=>[e.spent_date,e.vendor,(e.amount_cents/100).toFixed(2),e.job_id||'Unassigned']));}
     }catch{if(status)status.textContent='Could not check connections. Sign in again or check your signal, then reload.';for(const el of document.querySelectorAll<HTMLElement>('[data-ready]'))el.textContent='Not checked';}
@@ -101,4 +104,9 @@ const quickTools = [
   .tool-chooser a:focus-visible,.tool-chooser summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   @media(max-width:680px){.tool-chooser a{font-size:.85rem}.status{line-height:1.5}}
   form,label{min-width:0;grid-template-columns:minmax(0,1fr)}input,textarea{min-width:0}
+  .tool-grid .panel[data-off="true"]{order:2;padding:.75rem 1rem;background:var(--paper)}
+  .tool-grid .panel[data-off="true"]>:not(h2):not(.connection){display:none}
+  .tool-grid .panel[data-off="true"] h2{font-size:var(--step-0);margin:0 0 .15rem}
+  .tool-grid .panel[data-off="true"] .connection{margin:0}
+  .tool-chooser a[data-off="true"]{color:var(--ink-soft);font-weight:500}
 </style>

@@ -39,7 +39,9 @@ ok(() => {
     assert.ok(scale.max >= max, `scale.max ${scale.max} < ${max}`);
     assert.equal(scale.ticks[0], 0);
     assert.equal(scale.ticks.at(-1), scale.max);
-    assert.ok(scale.ticks.length >= 3 && scale.ticks.length <= 8, `ticks for ${max}: ${scale.ticks}`);
+    assert.ok(scale.ticks.length >= 2 && scale.ticks.length <= 8, `ticks for ${max}: ${scale.ticks}`);
+    const labels = scale.ticks.map(formatCompact);
+    assert.equal(new Set(labels).size, labels.length, `axis labels repeat for ${max}: ${labels} (a count axis must step in whole numbers)`);
   }
   assert.equal(formatCompact(999), '999');
   assert.equal(formatCompact(1500), '1.5k');

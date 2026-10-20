@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-20 - Command Center round nine: Mail pilot, Ask activity, Google tools, Copilot, Measurements
+
+Audited the five pages at phone and desktop width with seeded data (the browser audit now seeds Ask activity, a small Mail pilot load and one supplier permit). Fixed: chart value axes repeated the same label on small counts ("1, 1, 0" on a chart whose tallest bar is 1; steps are now whole numbers); Ask activity shows long questions and answers folded with a toggle, filters (Couldn't answer / Used a tool), links to our own source pages, a wrapping meta row and a Try again on failure, and builds cards as nodes; Google tools folds tools that are not connected to a name and status line and lists them after the working ones; Copilot keeps the typed question when a request fails, has starter questions and Ctrl/Cmd+Enter; Measurements can undo a removed opening and flags (never changes) an unusual size or quantity. No production step.
+
 ## 2026-10-19 - Supplier permits: do-not-contact flag and call log
 
 Keith asked for a do-not-contact flag and call log after the question of whether permit phones need a registry check. Every phone number in the Analytics permit list and builder tables now has a Log call button (outcome, note, history); "asked not to be contacted" blocks the number everywhere in one step, a blocked number is plain text, takes no new entries and is marked in the spreadsheet, and lifting needs a written reason. Tables `supplier_contact_blocks` and `supplier_contact_log` are created on first use (not part of the weekly load SQL). No production step is needed; it does not replace a registry scrub, and owner calling stays out of scope.

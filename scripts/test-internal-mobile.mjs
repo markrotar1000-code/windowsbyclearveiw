@@ -101,6 +101,23 @@ assert.match(read('src/pages/internal/jobs/view.astro'), /@media\(max-width:720p
 const quoteView = read('src/pages/internal/quotes/view.astro');
 assert.match(quoteView, /\.contract-meta \[data-quote-id\]\{white-space:nowrap;overflow-wrap:normal\}/, 'the quote number never breaks');
 assert.match(quoteView, /@media\(max-width:560px\)\{:global\(\.contract-head\)\{flex-direction:column/, 'the quote header stacks on a phone');
-assert.match(read('src/pages/internal/copilot.astro'), /@media\(max-width:680px\)\{\.copilot-shell\{padding:\.25rem 0 1rem\}\}/, 'Copilot does not double the page margins on a phone');
+assert.match(read('src/pages/internal/copilot.astro'), /@media\(max-width:680px\)\{\.copilot-shell\{padding:\.25rem 0 1rem\}/, 'Copilot does not double the page margins on a phone');
+
+// Round nine: Ask activity, Google tools, Copilot, Measurements, Mail pilot charts.
+const askLogs = read('src/pages/internal/ask-logs.astro');
+assert.ok(!/innerHTML/.test(askLogs), 'Ask activity builds its cards as nodes, not HTML strings');
+assert.ok(/al-clamped/.test(askLogs) && /Show the full answer/.test(askLogs), 'a long Ask answer starts folded with a toggle');
+assert.ok(/data-filter="refused"/.test(askLogs) && /data-filter="tools"/.test(askLogs), 'Ask activity can be filtered to unanswered questions and tool use');
+assert.ok(/data-retry/.test(askLogs), 'a failed Ask load offers Try again');
+assert.ok(/:global\(\.al-card-meta\) \{\s*display: flex;\s*flex-wrap: wrap;/.test(askLogs), 'the Ask meta row wraps instead of overflowing');
+const google = read('src/pages/internal/google-tools.astro');
+assert.ok(/panel\.dataset\.off=on\?'false':'true'/.test(google) && /\.tool-grid \.panel\[data-off="true"\]\{order:2/.test(google), 'tools that are not connected fold and sort last');
+const copilot = read('src/pages/internal/copilot.astro');
+assert.ok(/if\(!input\.value\)input\.value=draft/.test(copilot), 'a failed Copilot request gives the typed question back');
+assert.ok(/data-starter/.test(copilot) && /event\.ctrlKey\|\|event\.metaKey/.test(copilot), 'Copilot has starter questions and Ctrl/Cmd+Enter');
+const measure = read('src/pages/internal/tools/measurements.astro');
+assert.ok(/data-undo/.test(measure) && /removed = \{ opening, index \}/.test(measure), 'removing an opening can be undone');
+assert.ok(/function sizeCheck/.test(measure) && /SIZE_MAX = 144/.test(measure), 'an unusual size is flagged, not changed');
+assert.ok(/Math\.max\(1, factor \* magnitude\)/.test(read('src/lib/charts.ts')), 'a count axis steps in whole numbers');
 
 console.log('internal mobile: ok');
