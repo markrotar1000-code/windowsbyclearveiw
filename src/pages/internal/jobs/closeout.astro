@@ -4,7 +4,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
 <InternalLayout title="Job Closeout">
   <div class="head"><div><p class="kicker">Operations · final handoff</p><h1 data-title>Job closeout</h1><p class="lede" data-subtitle>Reconcile the field record before the project leaves production.</p></div><div class="actions"><a class="btn btn-ghost" data-job href="/internal/jobs">Job workspace</a><a class="btn btn-ghost" data-field href="#">Field mode</a></div></div>
   <p class="error" data-error hidden role="alert"></p>
-  <main class="closeout" data-main hidden>
+  <div class="closeout" data-main hidden>
     <section class="readiness panel"><div><p class="kicker">Release gate</p><h2 data-readiness-title>Not ready</h2><p data-readiness-copy>Checking openings, exceptions, and project closeout gates…</p></div><div class="readiness-score"><strong data-score>0%</strong><span>field record complete</span></div></section>
     <section class="summary-grid"><article class="metric panel"><span>Openings</span><strong data-openings>0 / 0</strong><small>closed in Field Mode</small></article><article class="metric panel"><span>Exceptions</span><strong data-exceptions>0</strong><small>open exceptions</small></article><article class="metric panel"><span>Photos</span><strong data-photos>0</strong><small>before / during / after records</small></article><article class="metric panel"><span>Closeout gates</span><strong data-gates>0 / 0</strong><small>project checklist</small></article></section>
     <section class="columns"><section class="panel record"><div class="panel-head"><div><p class="kicker">Opening reconciliation</p><h2>Every opening</h2></div></div><div class="opening-list" data-opening-list></div></section><aside class="side"><section class="panel exceptions"><div class="panel-head"><div><p class="kicker">Punch list</p><h2>Exceptions</h2></div></div><div data-exception-list class="exception-list"></div></section><section class="panel signoff"><div class="panel-head"><div><p class="kicker">Final handoff</p><h2>Signoff</h2></div><span class="saved" data-saved>Not finalized</span></div><label class="check"><input type="checkbox" data-walkthrough> <span>Customer walkthrough completed</span></label><label class="check"><input type="checkbox" data-warranty> <span>Warranty / care handoff completed</span></label><label class="check"><input type="checkbox" data-balance> <span>Final balance status confirmed</span></label><label class="field">Signoff name<input data-name maxlength="160" placeholder="Name of person closing the job"></label><label class="field">Closeout notes<textarea data-notes maxlength="5000" rows="4" placeholder="Final customer notes, punch-list disposition, follow-up commitments…"></textarea></label><button class="btn btn-primary finalize" data-finalize type="button">Finalize closeout</button><p class="helper">Finalization is blocked until all openings, project closeout gates, and exceptions are reconciled.</p></section></aside></section>
@@ -19,7 +19,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
         <p class="review-status" data-review-status role="status" aria-live="polite"></p>
       </div>
     </section>
-  </main>
+  </div>
 </InternalLayout>
 <script>
   // Review request panel. Separate from the closeout script above: it only

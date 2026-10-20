@@ -449,6 +449,23 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }
+// ---- accessibility pass (optional): axe-core on every page at phone width. Needs `npm i --no-save axe-core`; skipped when it is not installed.
+const axePath = root + '/node_modules/axe-core/axe.min.js';
+if (!flowsOnly && fs.existsSync(axePath)) {
+  const axeSource = fs.readFileSync(axePath, 'utf8');
+  const actx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  for (const url of pages) {
+    const page = await actx.newPage();
+    await page.goto(`http://127.0.0.1:${PORT}` + url + query(url, sets[0]), { waitUntil: 'networkidle' }).catch(() => {});
+    await page.waitForTimeout(700);
+    await page.evaluate(axeSource);
+    const result = await page.evaluate(() => axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'] } }));
+    views += 1;
+    for (const v of result.violations) findings.push(`a11y ${url}: ${v.id} (${v.impact}) ${v.help}: ${v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join(' | ')}`);
+    await page.close();
+  }
+  await actx.close();
+}
 await browser.close();
 server.close();
 console.log(flowsOnly ? `${views} interaction flows, ${findings.length} with problems` : `${views} page views (${pages.length} pages x ${sets.length} data sets x 2 sizes, plus ${pages.length * 2} with the API failing), ${findings.length} with problems`);

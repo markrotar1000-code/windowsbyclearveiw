@@ -32,7 +32,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         <h3>Which sources bring paying work</h3>
         <p class="an-note" data-source-coverage>—</p>
         <div class="an-chart" data-chart="sourceSigned"></div>
-        <div class="an-table-wrap">
+        <div class="an-table-wrap" tabindex="0" role="region" aria-label="Which sources bring paying work table (scroll sideways)">
           <table class="an-table">
             <thead><tr><th scope="col">Source</th><th scope="col">Requests</th><th scope="col">Quotes</th><th scope="col">Signed</th><th scope="col">Signed $</th><th scope="col">Collected</th></tr></thead>
             <tbody data-source-rows></tbody>
@@ -74,7 +74,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       <article class="an-panel an-wide">
         <h3>Builders and lot owners</h3>
         <p class="an-note">The lot owner is usually the builder or its project company; the permit applicant is often a permit service or engineer. "30 days" and "90 days" count permits issued in that time.</p>
-        <div class="an-table-wrap">
+        <div class="an-table-wrap" tabindex="0" role="region" aria-label="Builders and lot owners table (scroll sideways)">
           <table class="an-table an-table-wide">
             <thead><tr><th scope="col">Builder</th><th scope="col">Permits</th><th scope="col">30 days</th><th scope="col">90 days</th><th scope="col">Subdivisions</th><th scope="col">State license</th><th scope="col">Phone</th></tr></thead>
             <tbody data-builder-rows></tbody>
@@ -87,7 +87,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         <h3>Remodel and addition list</h3>
         <p class="an-note">Owner names and mailing addresses come from the county assessor. Use them for mail, not unsolicited calls or texts: Washington restricts those. Best fit first; "fit" counts how many of five signals apply (single-family, owner applied, addition, permit in last 90 days, sold in last 2 years).</p>
         <button class="btn btn-ghost" type="button" data-homeowners-load>Show the list</button>
-        <div class="an-table-wrap" data-homeowners-wrap hidden>
+        <div class="an-table-wrap" tabindex="0" role="region" aria-label="Remodel and addition list table (scroll sideways)" data-homeowners-wrap hidden>
           <table class="an-table an-table-wide">
             <thead><tr><th scope="col">Address</th><th scope="col">Permit</th><th scope="col">Work</th><th scope="col">Built</th><th scope="col">Owner</th><th scope="col">Owner mail</th><th scope="col">Sold</th><th scope="col">Fit</th></tr></thead>
             <tbody data-homeowner-rows></tbody>
@@ -116,7 +116,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       <article class="an-panel an-wide">
         <h3>New-home builders in the report</h3>
         <p class="an-note">"Projects" opens the builder's own permits from this report, with the permit number, address and subdivision. "Metro rank" is the builder's place in the report's year-to-date ranking of single-family builders for the whole metro area; the report prints shortened names, so a match is by the start of the name. "Already tracked" means the same company is in the Permit leads builders above; the report cuts long names off and those match by the start of the name, so read the tracked name shown. A license is shown only when the name matches a state record exactly (ignoring punctuation and LLC or INC).</p>
-        <div class="an-table-wrap">
+        <div class="an-table-wrap" tabindex="0" role="region" aria-label="New-home builders in the report table (scroll sideways)">
           <table class="an-table an-table-wide an-table-list">
             <thead><tr><th scope="col">Builder</th><th scope="col">Permits</th><th scope="col">Value</th><th scope="col">Last permit</th><th scope="col">Metro rank</th><th scope="col">Already tracked</th><th scope="col">State license</th><th scope="col">Phone</th><th scope="col">Projects</th></tr></thead>
             <tbody data-supplier-builder-rows></tbody>
@@ -131,7 +131,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
           <button class="btn btn-ghost" type="button" data-supplier-load>Show the list</button>
           <a class="btn btn-ghost" href="/internal/api/supplier-permits?view=csv" data-supplier-csv download>Download as spreadsheet</a>
         </div>
-        <div class="an-table-wrap" data-supplier-wrap hidden>
+        <div class="an-table-wrap" tabindex="0" role="region" aria-label="Permit list table (scroll sideways)" data-supplier-wrap hidden>
           <table class="an-table an-table-xwide an-table-list">
             <thead><tr><th scope="col">Address</th><th scope="col">Permit</th><th scope="col">Work</th><th scope="col">Connected to</th><th scope="col">Owner</th><th scope="col">Owner mail</th><th scope="col">Owner phone</th><th scope="col">Contractor</th><th scope="col">Home</th><th scope="col">Sold</th><th scope="col">Fit</th></tr></thead>
             <tbody data-supplier-rows></tbody>
