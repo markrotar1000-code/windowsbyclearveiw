@@ -134,4 +134,14 @@ assert.ok(/function settleNav\(\)/.test(layoutSrc) && /data-more-right/.test(lay
 assert.ok(/\.jobs-toolbar\{flex-wrap:wrap\}/.test(read('src/pages/internal/jobs/index.astro')), 'the Jobs toolbar wraps at tablet width');
 assert.ok(/@media\(min-width:721px\) and \(max-width:1000px\)\{\.job-head\{flex-direction:column/.test(read('src/pages/internal/jobs/view.astro')), 'the job header stacks at tablet width');
 
+// Round twelve: accessibility (axe-core found these on the real pages).
+import { readdirSync, statSync } from 'node:fs';
+const internalPages = [];
+(function walk(dir) { for (const f of readdirSync(dir)) { const p = `${dir}/${f}`; if (statSync(p).isDirectory()) walk(p); else if (f.endsWith('.astro')) internalPages.push(p); } })(`${root}src/pages/internal`);
+for (const file of internalPages) assert.ok(!/<main[\s>]/.test(readFileSync(file, 'utf8')), `${file.replace(root, '')} has its own <main>: the layout already provides the one landmark`);
+assert.ok(!/<ol class="install-list"/.test(read('src/pages/internal/quotes/build-plan.astro')), 'the build-plan install list is not an <ol> holding <div> rows');
+assert.ok(/class="visually-hidden">Quote</.test(read('src/pages/internal/quotes/view.astro')), 'the quote page has a level-one heading');
+assert.ok(!/opacity:\.58/.test(read('src/pages/internal/jobs/field.astro')), 'locked field gates are not dimmed with opacity (their text failed contrast)');
+assert.ok(!/class="an-table-wrap">/.test(read('src/pages/internal/analytics.astro')), 'every Analytics table scroller is keyboard-focusable and named');
+
 console.log('internal mobile: ok');

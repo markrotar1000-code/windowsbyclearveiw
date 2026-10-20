@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-20 - Round twelve: accessibility pass
+
+Keith asked for the next round; this one used a new tool. `scripts/audit-command-center.mjs` now runs axe-core (wcag2a/aa, 2.1 aa, best practice) on every internal page at 390 px when `npm i --no-save axe-core` has been run (not a dependency: the pass is skipped otherwise). First run found 15 issues on 8 pages, all fixed: `<main>` removed from five page bodies (the layout owns it), `ol.install-list` now a `div`, hidden `h1` on the quote page, contrast on Copilot's lede, the job-prep VERIFY callout (`#7f5600`) and Field mode locked gates (opacity replaced by a tint and dashed rail), `tabindex`/`role="region"`/unique `aria-label` on the five Analytics table scrollers and the Visualizer flow strip. `test-internal-mobile.mjs` guards each (and fails on any `<main` in `src/pages/internal`).
+
 ## 2026-10-20 - Round eleven: tablet width
 
 Keith asked for the next round. Method: 768 px and 1440 px screenshots of the main pages. Desktop was clean. Fixes: `settleNav()` in `InternalLayout` (current link scrolled into view; `data-more-left/right` drive a fade mask); `jobs/view.astro` header stacks between 721 and 1000 px; `jobs/index.astro` toolbar `flex-wrap`; `schedule.astro` Today button font. Guards in `test-internal-mobile.mjs`; the browser audit adds a 768 px flow (nav link visible with a fade, job name on one line, Jobs chips on screen). Left alone for Keith: the 74 px page titles at laptop and tablet widths (open decision), Payments "Payments & balances" wrapping to two lines at tablet width because of that size.
