@@ -278,7 +278,7 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
       }
       /* Touch targets: buttons and filter chips at least 44 px tall, and a checkbox row is one big tap, not a 20 px box. */
       .internal-main :global(.btn),.internal-main :global(.filter){min-height:2.75rem}.internal-main :global(.filter){min-width:2.75rem}
-      .internal-main :global(label:not(.la-card):has(> input[type="checkbox"])),.internal-main :global(label.check){display:inline-flex;align-items:center;gap:.55rem;min-height:2.75rem}
+      .internal-main :global(label:not(.la-card):not(.check-row):has(> input[type="checkbox"])),.internal-main :global(label.check){display:inline-flex;align-items:center;gap:.55rem;min-height:2.75rem}
       /* Phone: long explanations in banners and panels (class phone-hide) give way to the work itself. */
       @media(max-width:680px){.internal-main :global(.phone-hide){display:none!important}}
       /* Press feedback on a phone, and a short settle-in for each screen. */

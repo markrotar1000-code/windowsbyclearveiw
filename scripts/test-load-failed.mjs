@@ -43,7 +43,7 @@ assert.ok(layout.includes('.internal :global(*)') && layout.includes('transition
 assert.match(layout, /@keyframes internal-settle/);
 assert.match(layout, /data-reload-offer/, 'a load failure gets a Reload page button');
 assert.match(layout, /Reload and lose the changes you have typed/, 'the Reload button asks first when a field was edited');
-assert.ok(layout.includes('label:not(.la-card):has(> input[type="checkbox"])') && layout.includes('.internal-main :global(.btn),.internal-main :global(.filter){min-height:2.75rem}'), 'buttons, chips and checkbox rows are 44 px touch targets');
+assert.ok(layout.includes('label:not(.la-card):not(.check-row):has(> input[type="checkbox"])') && layout.includes('.internal-main :global(.btn),.internal-main :global(.filter){min-height:2.75rem}'), 'buttons, chips and checkbox rows are 44 px touch targets');
 pass('the layout settles stale subtitles, offers a Reload, sizes touch targets and has one reduced-motion switch');
 const { isNoSignalText, isLoadFailureText } = await import(new URL('../src/lib/load-failed.ts', import.meta.url).href);
 for (const text of ['Failed to fetch', 'Load failed', 'Could not reach the server. Check your signal.']) assert.equal(isNoSignalText(text), true, text);

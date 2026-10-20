@@ -23,7 +23,7 @@ assert.match(layout, /\.internal-brand\{display:inline-flex;align-items:center;m
 assert.match(layout, /class:list=\{\['internal', \{ 'field-mode': isFieldMode \}\]\}/, 'body.internal is what the touch rules key on');
 
 const plan = read('src/pages/internal/quotes/build-plan.astro');
-assert.match(plan, /<input value="\$\{esc\(v\)\}"[^>]*aria-label="\$\{esc\(listName\(key\)\)\} \$\{i\+1\}"/, 'every build-plan list input has a name');
+assert.match(plan, /<textarea rows="1" maxlength="700" aria-label="\$\{esc\(listName\(key\)\)\} \$\{i\+1\}"/, 'every build-plan list input has a name');
 assert.match(plan, /aria-label="Remove \$\{esc\(listName\(key\)\)\} \$\{i\+1\}"/, 'every remove button says which item it removes');
 
 // Long unbroken text must not push a Command Center page sideways. Found 2026-10-12 by running every internal page
@@ -119,5 +119,13 @@ const measure = read('src/pages/internal/tools/measurements.astro');
 assert.ok(/data-undo/.test(measure) && /removed = \{ opening, index \}/.test(measure), 'removing an opening can be undone');
 assert.ok(/function sizeCheck/.test(measure) && /SIZE_MAX = 144/.test(measure), 'an unusual size is flagged, not changed');
 assert.ok(/Math\.max\(1, factor \* magnitude\)/.test(read('src/lib/charts.ts')), 'a count axis steps in whole numbers');
+
+// Round ten: job prep, production health, lead analyzer, build plan.
+assert.ok(read('src/layouts/InternalLayout.astro').includes('label:not(.la-card):not(.check-row):has(> input[type="checkbox"])'), 'the checkbox touch rule leaves the job-prep checklist grid alone (it turned every row into a shrink-to-fit inline box)');
+const prep = read('src/pages/internal/jobs/prepare.astro');
+assert.ok(prep.includes('.plan-facts :global(span){') && /\.check-row small\)\{[^}]*white-space:nowrap/.test(prep), 'job prep: plan counts are padded and a status never wraps to "Ope / n"');
+assert.ok(/:global\(\.row\)\{display:flex;/.test(read('src/pages/internal/jobs/hardening.astro')), 'production health rows are a flex row that lines up');
+assert.ok(/:global\(\.la-card em\)\{display:-webkit-box;-webkit-line-clamp:3/.test(read('src/pages/internal/leads/analyze.astro')), 'the lead picker clamps long notes');
+assert.ok(/<textarea rows="1" maxlength="700"/.test(plan) && /if\(ev\.key==='Enter'\)ev\.preventDefault\(\)/.test(plan), 'build plan items are growing one-line text boxes, not truncating inputs');
 
 console.log('internal mobile: ok');
