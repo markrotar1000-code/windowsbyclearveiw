@@ -407,7 +407,27 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     if ((await page.locator('[data-body] tr').count()) !== 1 || (await page.locator('[data-body] [data-field="room"]').inputValue()) !== 'Kitchen') flowProblems.push('measurements: Undo does not bring the opening back');
     await page.close();
   }
-  views += 11;
+  {
+    const page = await open('round10-pages');
+    await page.goto(base + '/internal/jobs/prepare?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(800);
+    const rows = await page.locator('.check-row').evaluateAll((els) => els.map((e) => ({ w: e.getBoundingClientRect().width, pw: e.parentElement.getBoundingClientRect().width, label: e.querySelector('small')?.getBoundingClientRect().height ?? 0 })));
+    if (!rows.length) flowProblems.push('prepare: the checklist did not render');
+    if (rows.some((r) => r.w < r.pw - 4)) flowProblems.push('prepare: a checklist row does not fill its width (the checkbox-label rule overrode the grid)');
+    if (rows.some((r) => r.label > 22)) flowProblems.push('prepare: a checklist status wraps to two lines');
+    const stats = await page.locator('.plan-facts span').first().evaluate((e) => getComputedStyle(e).paddingLeft).catch(() => '0px');
+    if (parseFloat(stats) < 8) flowProblems.push('prepare: the plan counts have no padding');
+    await page.goto(base + '/internal/jobs/hardening', { waitUntil: 'networkidle' }); await page.waitForTimeout(500);
+    const xs = await page.locator('.row > div').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().x)));
+    if (new Set(xs).size > 1) flowProblems.push('hardening: release blocker rows do not line up');
+    await page.goto(base + '/internal/leads/analyze', { waitUntil: 'networkidle' }); await page.waitForTimeout(800);
+    const tall = await page.locator('.la-card').evaluateAll((els) => Math.max(...els.map((e) => e.getBoundingClientRect().height)));
+    if (tall > 260) flowProblems.push('analyzer: one lead with long notes takes over the screen');
+    await page.goto(base + '/internal/quotes/build-plan?quoteId=' + ids.q1, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    const cut = await page.locator('textarea[data-list-key]').evaluateAll((els) => els.filter((e) => e.scrollHeight > e.clientHeight + 2).length);
+    if (cut) flowProblems.push('build plan: a purchase-plan item is cut off at the edge');
+    await page.close();
+  }
+  views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-20 - Command Center round ten: job prep, production health, lead analyzer, build plan
+
+Screenshots of the job-side pages found a regression from round three: the 44 px checkbox-label rule in the layout turned every job-prep checklist row into a shrink-to-fit inline box (status "Open" wrapped to "Ope / n", borders stopped short). The rule now skips `.check-row`. Also fixed: job-prep plan counts had no padding ("7openings"), production-health rows did not line up on a phone, the lead analyzer showed a lead's whole notes (now three lines), and the build-plan purchase list cut text off at the edge of one-line inputs (now growing text boxes). No production step.
+
 ## 2026-10-20 - Command Center round nine: Mail pilot, Ask activity, Google tools, Copilot, Measurements
 
 Audited the five pages at phone and desktop width with seeded data (the browser audit now seeds Ask activity, a small Mail pilot load and one supplier permit). Fixed: chart value axes repeated the same label on small counts ("1, 1, 0" on a chart whose tallest bar is 1; steps are now whole numbers); Ask activity shows long questions and answers folded with a toggle, filters (Couldn't answer / Used a tool), links to our own source pages, a wrapping meta row and a Try again on failure, and builds cards as nodes; Google tools folds tools that are not connected to a name and status line and lists them after the working ones; Copilot keeps the typed question when a request fails, has starter questions and Ctrl/Cmd+Enter; Measurements can undo a removed opening and flags (never changes) an unusual size or quantity. No production step.
