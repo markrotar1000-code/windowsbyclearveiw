@@ -21,6 +21,7 @@ import http from 'node:http'; import fs from 'node:fs'; import path from 'node:p
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 import { ensureSupplierTables } from '../functions/internal/_lib/supplier-permits.mjs';
+import { ensureMailPilotTables } from '../functions/internal/_lib/mail-pilot.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url)).replace(/\/$/, '');
 process.chdir(root); process.removeAllListeners('warning');
@@ -70,6 +71,21 @@ await call('jobs.js','PATCH','/internal/api/jobs?id='+jL,{status:'scheduled',sch
 const gL=(await call('jobs.js','POST','/internal/api/jobs',{workType:'general',customerName:LONG('G',150),workDescription:LONG('D',300),agreedAmount:'99999.99'})).id;
 await call('tasks.js','POST','/internal/api/tasks',{title:LONG('T',230),notes:LONG('n',900),dueAt:new Date(now-2*864e5).toISOString()});
 ins.run(iso(1),LONG('N',110),'(360) 555-0123',LONG('m',100)+'@example.com',LONG('Z',70),'Homeowner',LONG('/',50)+'https://example.com/'+LONG('p',300),'https://example.com/'+LONG('r',200),LONG('u',60),'/'+LONG('l',150),2,JSON.stringify([{path:'/'+LONG('p',180),title:LONG('t',160)}]));
+// Made-up Ask activity and a small Mail pilot load, so those pages render real rows (long text, a refused answer, a hold segment).
+D.exec(`CREATE TABLE IF NOT EXISTS ask_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, question TEXT NOT NULL, answer TEXT NOT NULL, model_used TEXT NOT NULL, tools_used TEXT NOT NULL DEFAULT '[]', sources TEXT NOT NULL DEFAULT '[]', match_count INTEGER NOT NULL DEFAULT 0, refused INTEGER NOT NULL DEFAULT 0);
+  CREATE TABLE IF NOT EXISTS ask_handoffs (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, kind TEXT NOT NULL);`);
+const al=D.prepare("INSERT INTO ask_logs (created_at,question,answer,model_used,tools_used,sources,match_count,refused) VALUES (?,?,?,?,?,?,?,?)");
+al.run(iso(0.2),'How much for 8 vinyl windows?','Pricing depends on the measured openings, so I cannot quote a number here. The free estimate form is the fastest way to get one.','sonnet','["calculator"]','[{"title":"What windows cost","url":"/guides/window-costs","score":0.9}]',2,0);
+al.run(iso(1),'Can you fix my garage door?','I can only help with windows, doors and siding.','sonnet','[]','[]',0,1);
+al.run(iso(3),'W'.repeat(400),'A'.repeat(1500),'sonnet','["calculator","guide-search"]','[{"title":"Fogged windows","url":"/guides/fogged-windows"},{"title":"Vinyl vs fiberglass","url":"https://example.com/x"}]',5,0);
+al.run(iso(4),'[redacted]','[redacted]','haiku','[]','[]',0,0);
+for (const k of ['estimate','call','estimate','callback_open']) D.prepare("INSERT INTO ask_handoffs (created_at,kind) VALUES (?,?)").run(iso(0.5),k);
+await ensureMailPilotTables(env.QUOTES_DB);
+D.prepare("INSERT INTO mail_pilot_meta (key,value) VALUES ('imported_at',?),('sales_from','2026-08-01'),('sales_to','2026-10-05')").run(new Date(now).toISOString());
+const mp=D.prepare("INSERT INTO mail_pilot_properties (pid,ref,street,city,state,zip,jurisdiction,source,segment,sale_date,sale_cents,deed,permit_case,permit_type,permit_issued,permit_status,year_built,living_sqft,address_points,first_seen,last_seen) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+mp.run(1,'CV-0001','100 NE AUDIT ST','Vancouver','WA','98660','Vancouver','permit','A',null,null,null,'RES-1','Reroof Residential',iso(9).slice(0,10),'Issued',1978,1800,1,iso(9),iso(1));
+mp.run(2,'CV-0002','200 NW SAMPLE AVE','Camas','WA','98607','Camas','sale','C',iso(20).slice(0,10),42500000,'D-WARR',null,null,null,null,1990,2100,1,iso(20),iso(1));
+mp.run(3,'CV-0003','300 SE TEST CT','Battle Ground','WA','98604','Battle Ground','sale','E',iso(30).slice(0,10),null,'D-QCD',null,null,null,null,2012,2400,2,iso(30),iso(1));
 // Two made-up supplier permits (555 numbers) so the Analytics call log and do-not-contact flow can be driven.
 await ensureSupplierTables(env.QUOTES_DB);
 D.prepare("INSERT INTO supplier_import_meta (key, value) VALUES ('imported_at', ?), ('edition', '2026-W40')").run(new Date(now).toISOString());
@@ -347,7 +363,51 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     if (!(await page.locator('[data-supplier-rows] .an-dnc').count())) flowProblems.push('analytics: the list does not mark the do-not-contact number');
     await page.close();
   }
-  views += 10;
+  {
+    const page = await open('round9-pages');
+    await page.goto(base + '/internal/ask-logs', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    if (!(await page.locator('.al-clamped').count())) flowProblems.push('ask-logs: a very long answer is not folded');
+    const tall = await page.locator('.al-card').nth(2).boundingBox();
+    if (tall && tall.height > 420) flowProblems.push('ask-logs: a long answer still takes over the screen');
+    await page.locator('.al-more').first().click();
+    if (await page.locator('.al-clamped').count()) flowProblems.push('ask-logs: Show the full answer did not open it');
+    await page.click('[data-filter="refused"]');
+    if ((await page.locator('.al-card:not([hidden])').count()) !== 1) flowProblems.push('ask-logs: the Couldn\'t answer filter does not narrow the list');
+    if (!(await page.locator('.al-sources a[href="/guides/window-costs"]').count()) && !(await page.locator('.al-card[hidden] .al-sources a[href="/guides/window-costs"]').count())) flowProblems.push('ask-logs: a source on our own site is not a link');
+    if (await page.locator('.al-sources a[href^="https://"]').count()) flowProblems.push('ask-logs: an outside URL became a link');
+
+    await page.goto(base + '/internal/google-tools', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    const off = await page.locator('.panel[data-off="true"]').count();
+    if (off < 5) flowProblems.push('google-tools: tools that are not connected are not folded');
+    const hiddenForm = await page.locator('#tool-address form').isVisible();
+    if (off && hiddenForm) flowProblems.push('google-tools: a folded tool still shows its form');
+
+    await page.goto(base + '/internal/copilot', { waitUntil: 'networkidle' });
+    await page.route('**/internal/api/copilot', (route) => route.abort('failed'));
+    await page.fill('#message', 'What is due?'); await page.keyboard.press('Control+Enter'); await page.waitForTimeout(700);
+    if ((await page.inputValue('#message')) !== 'What is due?') flowProblems.push('copilot: a failed request loses the typed question');
+    await page.unroute('**/internal/api/copilot');
+    await page.route('**/internal/api/copilot', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '{"answer":"Two things.","route":"advisor","provider":"test"}' }));
+    await page.click('[data-starter]'); await page.waitForTimeout(700);
+    if (!(await page.locator('.message.assistant').count())) flowProblems.push('copilot: a starter question does not send');
+
+    await page.goto(base + '/internal/tools/measurements', { waitUntil: 'networkidle' });
+    await page.evaluate(() => localStorage.clear()); await page.reload({ waitUntil: 'networkidle' });
+    await page.click('[data-empty-add]');
+    const row = page.locator('[data-body] tr').first();
+    await row.locator('[data-field="width"]').fill('300'); await row.locator('[data-field="height"]').fill('48');
+    if (!(await row.evaluate((e) => e.classList.contains('check-size')))) flowProblems.push('measurements: a 300 in width is not flagged');
+    if ((await row.locator('[data-field="width"]').inputValue()) !== '300') flowProblems.push('measurements: a flagged size was changed');
+    await row.locator('[data-field="width"]').fill('36');
+    if (await row.evaluate((e) => e.classList.contains('check-size'))) flowProblems.push('measurements: the flag stays after the size is fixed');
+    await row.locator('[data-field="room"]').fill('Kitchen');
+    await row.locator('[data-remove]').click();
+    if ((await page.locator('[data-body] tr').count()) !== 0 || !(await page.locator('[data-undo]').isVisible())) flowProblems.push('measurements: removing an opening gives no Undo');
+    await page.click('[data-undo]');
+    if ((await page.locator('[data-body] tr').count()) !== 1 || (await page.locator('[data-body] [data-field="room"]').inputValue()) !== 'Kitchen') flowProblems.push('measurements: Undo does not bring the opening back');
+    await page.close();
+  }
+  views += 11;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
 }

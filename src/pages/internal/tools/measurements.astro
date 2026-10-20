@@ -17,7 +17,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   <section class="job-bar panel">
     <label>Customer / job name<input type="text" data-job-name placeholder="e.g. Smith residence" maxlength="160" /></label>
     <label>Address<input type="text" data-job-address placeholder="Optional job address" maxlength="260" /></label>
-    <span class="save-state" data-save-state role="status">Ready</span>
+    <span class="save-state" data-save-state role="status">Ready</span><button class="text-button" type="button" data-undo hidden>Undo remove</button>
   </section>
 
   <section class="summary-grid" aria-label="Measurement summary">
@@ -124,7 +124,12 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
       }
     }
 
+    let removed: { opening: Opening; index: number } | null = null;
+    const undoButton = root.querySelector('[data-undo]');
+
     function save(message = 'Saved on this device') {
+      // Anything after a removal other than the removal itself settles it.
+      if (!message.endsWith('removed') && undoButton instanceof HTMLElement) { undoButton.hidden = true; removed = null; }
       data.jobName = jobName.value;
       data.jobAddress = jobAddress.value;
       data.jobNotes = jobNotes.value;
@@ -141,6 +146,31 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     const esc = (v: unknown) => { const d = document.createElement('div'); d.textContent = String(v ?? ''); return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const fmt = (v: number) => v.toFixed(2).replace(/\.00$/, '');
+
+    // A reading that is almost certainly a slip (a missing decimal point, inches typed as feet) is flagged, never changed:
+    // the worksheet keeps exactly what was typed.
+    const SIZE_MIN = 6;
+    const SIZE_MAX = 144;
+    const QTY_MAX = 50;
+    function sizeCheck(opening: Opening): string {
+      const w = num(opening.width);
+      const h = num(opening.height);
+      const q = Math.floor(num(opening.quantity) || 1);
+      if ((w && (w < SIZE_MIN || w > SIZE_MAX)) || (h && (h < SIZE_MIN || h > SIZE_MAX))) return `Check the size: ${w ? `${fmt(w)} in` : '—'} wide by ${h ? `${fmt(h)} in` : '—'} high is unusual. Measure again.`;
+      if (q > QTY_MAX) return `Check the quantity: ${q} of one opening is unusual.`;
+      return '';
+    }
+    function flagRow(row: HTMLElement, opening: Opening) {
+      const message = sizeCheck(opening);
+      row.classList.toggle('check-size', Boolean(message));
+      if (message) row.dataset.check = message; else delete row.dataset.check;
+      const cell = row.querySelector('.area-cell');
+      if (cell) {
+        let hint = cell.querySelector('.size-hint');
+        if (message && !hint) { hint = document.createElement('small'); hint.className = 'size-hint'; hint.setAttribute('role', 'note'); cell.append(hint); }
+        if (hint) { if (message) hint.textContent = message; else hint.remove(); }
+      }
+    }
 
     function render() {
       body.innerHTML = '';
@@ -181,6 +211,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
               : 0;
             const areaCell = row.querySelector('.area-cell');
             if (areaCell) areaCell.textContent = `${fmt(rowArea)} sq ft`;
+            flagRow(row, opening);
             let totalUnits = 0;
             let totalArea = 0;
             data.openings.forEach((item) => {
@@ -204,10 +235,14 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
           });
         });
         row.querySelector('[data-remove]')?.addEventListener('click', () => {
+          // A thumb on a phone hits x by accident: keep the opening so Undo can put it back where it was.
+          removed = { opening, index };
           data.openings.splice(index, 1);
           render();
-          save();
+          save(`Opening ${index + 1} removed`);
+          if (undoButton instanceof HTMLElement) undoButton.hidden = false;
         });
+        flagRow(row, opening);
         body.append(row);
       });
 
@@ -233,6 +268,13 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     jobNotes.value = data.jobNotes;
     render();
 
+    undoButton?.addEventListener('click', () => {
+      if (!removed) return;
+      data.openings.splice(Math.min(removed.index, data.openings.length), 0, removed.opening);
+      removed = null;
+      render();
+      save('Opening restored');
+    });
     root.querySelector('[data-add]')?.addEventListener('click', addOpening);
     root.querySelector('[data-empty-add]')?.addEventListener('click', addOpening);
     [jobName, jobAddress, jobNotes].forEach((field) => field.addEventListener('input', () => save()));
@@ -325,6 +367,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   .tool-panel { padding-bottom:var(--space-m); }
   .tool-panel > p { padding:var(--space-m); padding-top:0; margin:0; }
   .workflow-actions { display:flex; flex-wrap:wrap; gap:var(--space-xs); padding-inline:var(--space-m); align-items:center; }
+  [data-undo] { color:var(--accent); font-weight:700; min-height:44px; }
   .text-button { border:0; background:transparent; color:var(--danger); font:inherit; font-size:var(--step--1); cursor:pointer; padding:.5rem; }
   .legal-note { margin-top:var(--space-s); color:var(--ink-faint); font-size:var(--step--2); }
   @media (max-width:760px) { .tool-head, .job-bar { grid-template-columns:1fr; align-items:start; flex-direction:column; } .job-bar { display:grid; } .save-state { padding-bottom:0; } .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .notes-grid { grid-template-columns:1fr; } }
@@ -348,7 +391,10 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     .workflow-actions{display:grid;grid-template-columns:minmax(0,1fr)}.workflow-actions>*{width:100%;min-height:48px}
     .tool-head .head-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.tool-head .head-actions>*{min-height:48px;display:flex;justify-content:center;align-items:center}
   }
+  .measure-table :global(tr.check-size) { outline: 2px solid var(--danger, #b3261e); outline-offset: -2px; }
+  .measure-table :global(.size-hint) { display: block; color: var(--danger, #b3261e); font-weight: 700; font-size: var(--step--2); white-space: normal; max-width: 14rem; }
   @media print {
+    .measure-table :global(.size-hint) { display: none; }
     .measure-table :global(thead){display:table-header-group}
     .measure-table :global(tbody){display:table-row-group;padding:0}
     .measure-table :global(tr){display:table-row;border:0;background:transparent}

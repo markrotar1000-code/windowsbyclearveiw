@@ -66,7 +66,8 @@ export function niceScale(max: number, target = 4): { max: number; step: number;
   const magnitude = 10 ** Math.floor(Math.log10(rough));
   const residual = rough / magnitude;
   const factor = residual <= 1 ? 1 : residual <= 2 ? 2 : residual <= 5 ? 5 : 10;
-  const step = factor * magnitude;
+  // Axis labels print whole numbers below 1,000, so a step under 1 would repeat the same label (0, 1, 1, 1, 1 on a chart whose tallest bar is 1).
+  const step = Math.max(1, factor * magnitude);
   const niceMax = Math.ceil(top / step) * step;
   const ticks: number[] = [];
   for (let v = 0; v <= niceMax + step / 1000; v += step) ticks.push(Math.round(v * 1e6) / 1e6);

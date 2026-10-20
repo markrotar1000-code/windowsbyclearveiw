@@ -8,12 +8,11 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       <h1>Ask activity</h1>
       <p class="lede">How the /ask chatbot is being used: which tools it reached for, what it could not answer, and where conversations lead. Questions and answers are kept for 30 days with phone numbers, emails, addresses and similar details scrubbed out, then deleted.</p>
     </div>
-    <a class="btn btn-ghost" href="/internal/leads">Leads</a>
-    <a class="btn btn-ghost" href="/internal/quotes">&larr; Quotes</a>
+    <div class="al-actions"><a class="btn btn-ghost" href="/internal/leads">Leads</a><a class="btn btn-ghost" href="/internal/quotes">&larr; Quotes</a></div>
   </div>
 
   <p data-loading>Loading…</p>
-  <p class="al-error" data-error hidden role="alert"></p>
+  <div class="al-error" data-error hidden role="alert"><span data-error-text></span> <button class="btn btn-ghost" type="button" data-retry>Try again</button></div>
   <p data-empty hidden>No activity yet.</p>
 
   <div class="al-summary" data-summary hidden>
@@ -30,6 +29,12 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   </div>
   <p class="al-note" data-funnel-note hidden>Last 30 days. Estimate and call taps count once per visit; call-back requests are leads from this page.</p>
 
+  <div class="al-filters" data-filters role="group" aria-label="Show questions" hidden>
+    <button type="button" class="filter active" data-filter="all" aria-pressed="true">All</button>
+    <button type="button" class="filter" data-filter="refused" aria-pressed="false">Couldn't answer</button>
+    <button type="button" class="filter" data-filter="tools" aria-pressed="false">Used a tool</button>
+  </div>
+  <p class="al-note al-none" data-filter-empty hidden>Nothing matches this filter.</p>
   <div class="al-list" data-list hidden></div>
 </InternalLayout>
 
@@ -43,12 +48,6 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     const errorEl = document.querySelector('[data-error]');
     const emptyEl = document.querySelector('[data-empty]');
     const summary = document.querySelector('[data-summary]');
-
-    function escapeHtml(s: string) {
-      const div = document.createElement('div');
-      div.textContent = s ?? '';
-      return div.innerHTML;
-    }
 
     // One malformed row must not blank the whole list.
     function parseList(raw: unknown): any[] {
@@ -82,7 +81,114 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       if (note instanceof HTMLElement) note.hidden = false;
     }
 
+    const el = (tag: string, className = '', text = '') => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    };
+
+    // An answer over this many characters starts folded to a few lines, so one long reply does not push the rest off the screen.
+    const LONG_ANSWER = 320;
+    const LONG_QUESTION = 160;
+
+    function buildCard(l: any): HTMLElement {
+      const tools = parseList(l.tools_used);
+      const sources = parseList(l.sources);
+      const when = new Date(l.created_at);
+      const date = Number.isNaN(when.getTime()) ? '' : when.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      const card = el('article', 'al-card' + (l.refused ? ' al-refused' : ''));
+      card.dataset.refused = l.refused ? '1' : '0';
+      card.dataset.tools = tools.length ? '1' : '0';
+
+      const meta = el('div', 'al-card-meta');
+      if (date) meta.append(el('span', '', date));
+      meta.append(el('span', '', String(l.model_used ?? '')));
+      for (const tool of tools) meta.append(el('span', 'al-tag', String(tool)));
+      if (l.refused) meta.append(el('span', 'al-tag al-tag-refused', 'no answer'));
+      card.append(meta);
+
+      if (isLegacy(l)) {
+        card.append(el('p', 'al-answer', 'Words not recorded (logged before question storage was turned on).'));
+        return card;
+      }
+      const question = String(l.question ?? '');
+      const answer = String(l.answer ?? '');
+      const asked = el('p', 'al-question', question);
+      const body = el('p', 'al-answer', answer);
+      card.append(asked, body);
+      if (answer.length > LONG_ANSWER || question.length > LONG_QUESTION) {
+        // Fold whichever is long; the one toggle opens both.
+        const folded = [question.length > LONG_QUESTION ? asked : null, answer.length > LONG_ANSWER ? body : null].filter((n): n is HTMLElement => Boolean(n));
+        for (const n of folded) n.classList.add('al-clamped');
+        const toggle = el('button', 'al-more', 'Show the full answer');
+        toggle.type = 'button';
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.addEventListener('click', () => {
+          let open = false;
+          for (const n of folded) open = n.classList.toggle('al-clamped') === false;
+          toggle.textContent = open ? 'Show less' : 'Show the full answer';
+          toggle.setAttribute('aria-expanded', String(open));
+        });
+        card.append(toggle);
+      }
+      const named = sources.map((s: any) => ({ title: String(s?.title ?? '').trim(), url: String(s?.url ?? '') })).filter((s: { title: string }) => s.title);
+      if (named.length) {
+        const line = el('p', 'al-sources', 'Sources: ');
+        named.forEach((source: { title: string; url: string }, i: number) => {
+          if (i) line.append(', ');
+          // Only a path on our own site becomes a link.
+          if (/^\/[^/\\]/.test(source.url)) {
+            const link = el('a', '', source.title) as HTMLAnchorElement;
+            link.href = source.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            line.append(link);
+          } else {
+            line.append(source.title);
+          }
+        });
+        card.append(line);
+      }
+      return card;
+    }
+
+    function wireFilters() {
+      const bar = document.querySelector('[data-filters]');
+      if (!(bar instanceof HTMLElement)) return;
+      bar.hidden = false;
+      const none = document.querySelector('[data-filter-empty]');
+      bar.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const mode = button.dataset.filter || 'all';
+          bar.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((b) => {
+            const on = b === button;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-pressed', String(on));
+          });
+          let shown = 0;
+          list.querySelectorAll<HTMLElement>('.al-card').forEach((card) => {
+            const match = mode === 'all' || (mode === 'refused' && card.dataset.refused === '1') || (mode === 'tools' && card.dataset.tools === '1');
+            card.hidden = !match;
+            if (match) shown += 1;
+          });
+          if (none instanceof HTMLElement) none.hidden = shown > 0;
+        });
+      });
+    }
+
+    function showError(message: string) {
+      if (loading instanceof HTMLElement) loading.hidden = true;
+      if (errorEl instanceof HTMLElement) {
+        errorEl.hidden = false;
+        const text = errorEl.querySelector('[data-error-text]');
+        if (text) text.textContent = message;
+      }
+    }
+
     async function load() {
+      if (errorEl instanceof HTMLElement) errorEl.hidden = true;
+      if (loading instanceof HTMLElement) loading.hidden = false;
       try {
         const response = await fetch('/internal/api/ask-logs');
         if (!response.ok) throw new Error();
@@ -90,7 +196,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         renderFunnel(funnel);
 
         if (loading instanceof HTMLElement) loading.hidden = true;
-        if (!logs.length) {
+        if (!Array.isArray(logs) || !logs.length) {
           if (emptyEl instanceof HTMLElement) emptyEl.hidden = false;
           return;
         }
@@ -99,46 +205,21 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
           summary.hidden = false;
           const refused = logs.filter((l: any) => l.refused).length;
           const withTools = logs.filter((l: any) => parseList(l.tools_used).length > 0).length;
-          const set = (sel: string, v: string) => { const el = summary.querySelector(sel); if (el) el.textContent = v; };
+          const set = (sel: string, v: string) => { const node = summary.querySelector(sel); if (node) node.textContent = v; };
           set('[data-stat-total]', String(logs.length));
           set('[data-stat-refused]', String(refused));
           set('[data-stat-tools]', String(withTools));
         }
 
-        if (list instanceof HTMLElement) {
-          list.hidden = false;
-          list.innerHTML = '';
-          for (const l of logs) {
-            const tools = parseList(l.tools_used);
-            const sources = parseList(l.sources);
-            const date = new Date(l.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-
-            const card = document.createElement('article');
-            card.className = 'al-card' + (l.refused ? ' al-refused' : '');
-            card.innerHTML = `
-              <div class="al-card-meta">
-                <span>${date}</span>
-                <span>${escapeHtml(l.model_used)}</span>
-                ${tools.map((t: string) => `<span class="al-tag">${escapeHtml(t)}</span>`).join('')}
-                ${l.refused ? '<span class="al-tag al-tag-refused">no answer</span>' : ''}
-              </div>
-              ${isLegacy(l)
-                ? '<p class="al-answer">Words not recorded (logged before question storage was turned on).</p>'
-                : `<p class="al-question">${escapeHtml(l.question)}</p><p class="al-answer">${escapeHtml(l.answer)}</p>`}
-              ${sources.length ? `<p class="al-sources">Sources: ${sources.map((s: any) => escapeHtml(s?.title)).join(', ')}</p>` : ''}
-            `;
-            list.append(card);
-          }
-        }
+        list.hidden = false;
+        list.replaceChildren(...logs.map(buildCard));
+        wireFilters();
       } catch {
-        if (loading instanceof HTMLElement) loading.hidden = true;
-        if (errorEl instanceof HTMLElement) {
-          errorEl.hidden = false;
-          errorEl.textContent = 'Could not load ask activity.';
-        }
+        showError('Could not load ask activity. Check your signal and try again.');
       }
     }
 
+    document.querySelector('[data-retry]')?.addEventListener('click', () => void load());
     load();
   }
 
@@ -156,9 +237,21 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     gap: var(--space-m);
   }
 
+  .al-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+
   .al-error {
     color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: var(--space-s);
+    flex-wrap: wrap;
   }
+
+  .al-filters { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: var(--space-s); }
+  .al-filters .filter { border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink-soft); border-radius: 999px; padding: .45rem .85rem; font: inherit; font-size: var(--step--1); font-weight: 700; cursor: pointer; min-height: 2.75rem; }
+  .al-filters .filter.active { background: var(--ink); color: var(--on-dark); border-color: var(--ink); }
+  .al-none { margin: 0 0 var(--space-s); }
+  :global(.al-card[hidden]) { display: none; }
 
   .al-summary {
     display: flex;
@@ -208,6 +301,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   :global(.al-card-meta) {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-xs);
     font-size: var(--step--2);
     color: var(--ink-faint);
@@ -234,6 +328,26 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     margin: 0;
     font-size: var(--step--1);
     color: var(--ink-soft);
+  }
+
+  :global(.al-clamped) {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  :global(.al-more) {
+    margin-top: .3rem;
+    min-height: 2.75rem;
+    padding: 0 .2rem;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 700;
+    cursor: pointer;
   }
 
   :global(.al-sources) {
