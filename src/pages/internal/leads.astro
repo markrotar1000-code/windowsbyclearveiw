@@ -219,6 +219,9 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
       });
     }
 
+    // A result from "Find a customer" opens this list already filtered.
+    if (searchInput instanceof HTMLInputElement && !searchInput.value) searchInput.value = (new URLSearchParams(location.search).get('q') || '').slice(0, 60);
+
     load();
   }
 

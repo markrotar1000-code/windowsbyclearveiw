@@ -456,6 +456,27 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await kctx.close();
   }
   views += 1;
+  {
+    const page = await open('find');
+    await page.goto(base + '/internal', { waitUntil: 'networkidle' }); await page.waitForTimeout(600);
+    await page.keyboard.press('/');
+    if (!(await page.evaluate(() => document.activeElement?.matches('[data-find-input]')))) flowProblems.push('find: the / key does not focus the box');
+    await page.fill('[data-find-input]', 'pat'); await page.waitForTimeout(900);
+    if (!(await page.locator('.find-group').count())) flowProblems.push('find: a name finds nothing');
+    if (!(await page.locator('.find-row[href^="/internal/quotes/view?id="]').count()) || !(await page.locator('.find-row[href^="/internal/jobs/view?id="]').count())) flowProblems.push('find: the quote and the job for a customer are not both listed');
+    const small = await page.locator('.find-row').evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().height < 44).length);
+    if (small) flowProblems.push('find: a result row is under 44 px tall');
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) flowProblems.push('find: results overflow the phone screen');
+    await page.fill('[data-find-input]', '(360) 555-0100'); await page.waitForTimeout(900);
+    if (!(await page.locator('.find-row[href^="/internal/leads?q="]').count())) flowProblems.push('find: a phone number does not find the lead');
+    await page.fill('[data-find-input]', 'zzzzqq'); await page.waitForTimeout(900);
+    if (!/Nothing found/.test(await page.locator('[data-find-status]').innerText())) flowProblems.push('find: no results is not said plainly');
+    await page.fill('[data-find-input]', 'pat'); await page.waitForTimeout(900);
+    await page.locator('.find-row[href^="/internal/leads?q="]').first().click(); await page.waitForTimeout(1200);
+    if (!/leads/.test(page.url()) || !((await page.inputValue('[data-search]').catch(() => '')) || (await page.locator('.ld-card:not([hidden]), [data-search]:not(input):not([hidden])').count()))) flowProblems.push('find: a lead result does not open Leads with the search filled in');
+    await page.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();

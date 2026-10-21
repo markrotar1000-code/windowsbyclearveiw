@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-21 - Find a customer
+
+Added `functions/internal/_lib/find.mjs` (query cleaning, LIKE with escaped wildcards, phone matched by digits, six per kind, names that start with the text first, a missing table reads as empty), `functions/internal/api/search.js`, `src/components/internal/FindBar.astro` (debounced, aborts stale requests, nodes only, `/` shortcut, 44 px rows) on the Dashboard and Today, and `?q=` on Leads. `scripts/test-find.mjs` (`npm run test:find`, in CI) runs it on real SQLite; the PWA test lists the endpoint as never cached; the browser audit adds a Find flow. Not done on purpose: searching notes or line items, and a header-wide box on every page (the nav is already full).
+
 ## 2026-10-21 - Round thirteen: keyboard focus and a public-site accessibility check
 
 Keith asked for the next round. Checks: axe-core over every public page (40 pages, phone and desktop: no violations); a Tab-through of 20 Command Center pages looking for controls with no visible focus indicator; an input-attribute scan (tel/email types, inputmode, autocomplete: already good); a read of the login and session code (rate limit, constant-time compare, SameSite=Lax cookie: no change needed). Fixes: `.internal-main :where(input,textarea,select):focus-visible` ring in `InternalLayout` (outranks the global `input:focus{outline:none}`); `.internal-brand span` colour `#33948f` (4.49 to 4.5+). Guards in `test-internal-mobile.mjs`; a keyboard-focus flow in the browser audit. Open for Keith: the public site's global `input:focus` rule has the same weakness on the estimate form; fixing it adds a visible ring on click as well as on keyboard focus, which is a design change.

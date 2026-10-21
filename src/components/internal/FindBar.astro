@@ -1,0 +1,110 @@
+---
+// "Find a customer": one box over leads, quotes and jobs (/internal/api/search). On the Dashboard and Today,
+// where Mark lands when a phone call comes in. The / key jumps to it on a keyboard.
+---
+<section class="find" role="search" aria-label="Find a customer">
+  <label for="find-input">Find a customer <kbd class="find-key" aria-hidden="true">/</kbd></label>
+  <input id="find-input" type="search" data-find-input name="q" maxlength="60" autocomplete="off" enterkeyhint="search" inputmode="search" placeholder="Name, phone, address or quote number" />
+  <p class="find-status" data-find-status role="status" aria-live="polite"></p>
+  <div class="find-results" data-find-results></div>
+</section>
+
+<script>
+  function initFind() {
+    const input = document.querySelector('[data-find-input]');
+    const status = document.querySelector('[data-find-status]');
+    const results = document.querySelector('[data-find-results]');
+    if (!(input instanceof HTMLInputElement) || !(status instanceof HTMLElement) || !(results instanceof HTMLElement) || input.dataset.bound === 'true') return;
+    input.dataset.bound = 'true';
+
+    const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const day = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+    const el = (tag: string, className = '', text = '') => { const n = document.createElement(tag); if (className) n.className = className; if (text) n.textContent = text; return n; };
+
+    type Lead = { id: number; name: string; phone: string; city: string; role: string; createdAt: string };
+    type Quote = { id: string; name: string; city: string; status: string; workType: string; totalCents: number | null; createdAt: string };
+    type Job = { id: string; name: string; city: string; status: string; scheduledDate: string; createdAt: string };
+
+    function row(href: string, title: string, detail: string): HTMLElement {
+      const li = el('li');
+      const a = el('a', 'find-row') as HTMLAnchorElement;
+      a.href = href;
+      a.append(el('strong', '', title || 'Unnamed'), el('span', '', detail));
+      li.append(a);
+      return li;
+    }
+    function group(title: string, rows: HTMLElement[]): HTMLElement | null {
+      if (!rows.length) return null;
+      const box = el('section', 'find-group');
+      box.append(el('h3', '', title));
+      const ul = el('ul');
+      ul.append(...rows);
+      box.append(ul);
+      return box;
+    }
+
+    function render(data: { query: string; leads: Lead[]; quotes: Quote[]; jobs: Job[] }) {
+      const leads = group('Leads', data.leads.map((l) => row(`/internal/leads?q=${encodeURIComponent((l.phone.replace(/\D/g, '') || l.name).slice(0, 60))}`, l.name, [l.city, l.phone, day(l.createdAt)].filter(Boolean).join(' · '))));
+      const quotes = group('Quotes', data.quotes.map((q) => row(`/internal/quotes/view?id=${encodeURIComponent(q.id)}`, q.name, [q.id, q.status, q.workType === 'siding' ? 'siding' : '', typeof q.totalCents === 'number' ? money.format(q.totalCents / 100) : ''].filter(Boolean).join(' · '))));
+      const jobs = group('Jobs', data.jobs.map((j) => row(`/internal/jobs/view?id=${encodeURIComponent(j.id)}`, j.name, [j.status, j.scheduledDate ? `on ${day(j.scheduledDate)}` : '', j.city].filter(Boolean).join(' · '))));
+      const groups = [leads, quotes, jobs].filter((g): g is HTMLElement => Boolean(g));
+      results.replaceChildren(...groups);
+      const total = data.leads.length + data.quotes.length + data.jobs.length;
+      status.textContent = total ? `${total} found` : `Nothing found for “${data.query}”. Try a phone number, a last name or a quote number.`;
+    }
+
+    let timer = 0;
+    let controller: AbortController | null = null;
+    async function search() {
+      const text = input.value.replace(/\s+/g, ' ').trim();
+      controller?.abort();
+      if (text.length < 2) { results.replaceChildren(); status.textContent = ''; return; }
+      controller = new AbortController();
+      status.textContent = 'Searching…';
+      try {
+        const response = await fetch(`/internal/api/search?q=${encodeURIComponent(text)}`, { headers: { accept: 'application/json' }, signal: controller.signal });
+        if (response.redirected || response.status === 401) { location.href = '/internal/login?next=' + encodeURIComponent(location.pathname); return; }
+        if (!response.ok) throw new Error('bad status');
+        const data = await response.json();
+        if (data.status === 'unavailable') throw new Error('unavailable');
+        render(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        results.replaceChildren();
+        status.textContent = 'Could not search. Check your signal and try again.';
+      }
+    }
+
+    input.addEventListener('input', () => { window.clearTimeout(timer); timer = window.setTimeout(search, 250); });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && input.value) { input.value = ''; void search(); }
+      if (event.key === 'Enter') { event.preventDefault(); window.clearTimeout(timer); void search(); }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName))) return;
+      event.preventDefault();
+      input.focus();
+    });
+  }
+  initFind();
+  document.addEventListener('astro:page-load', initFind);
+</script>
+
+<style>
+  .find { margin: 0 0 var(--space-m); padding: var(--space-s) var(--space-m); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper-raised); box-shadow: var(--shadow-sm); display: grid; gap: .4rem; }
+  .find label { font-size: var(--step--1); font-weight: 750; display: flex; align-items: center; gap: .5rem; }
+  .find-key { font: inherit; font-size: .72rem; font-weight: 700; border: 1px solid var(--line-strong); border-radius: .3rem; padding: 0 .35rem; color: var(--ink-soft); }
+  .find input { width: 100%; min-height: 3rem; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: .6rem .8rem; background: var(--paper); color: var(--ink); font: inherit; font-size: 1rem; box-sizing: border-box; }
+  .find-status { margin: 0; min-height: 1.2em; font-size: var(--step--1); color: var(--ink-soft); }
+  .find-results { display: grid; gap: var(--space-s); }
+  .find-results:empty { display: none; }
+  :global(.find-group h3) { margin: 0 0 .25rem; font-size: var(--step--2); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+  :global(.find-group ul) { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+  :global(.find-row) { display: grid; gap: .1rem; min-height: 2.75rem; padding: .55rem .75rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper); color: var(--ink); text-decoration: none; }
+  :global(.find-row:hover) { background: var(--accent-wash); }
+  :global(.find-row strong) { font-size: var(--step-0); }
+  :global(.find-row span) { font-size: var(--step--1); color: var(--ink-soft); }
+  @media (max-width: 680px) { .find-key { display: none; } }
+</style>

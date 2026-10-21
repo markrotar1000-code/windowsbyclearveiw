@@ -1,11 +1,14 @@
 ---
 import InternalLayout from '../../layouts/InternalLayout.astro';
+import FindBar from '../../components/internal/FindBar.astro';
 ---
 <InternalLayout title="Today">
   <div class="today-head">
     <div><p class="kicker">Daily operations</p><h1>Today</h1><p class="lede">Your next customer actions and scheduled work, in the order that matters.</p></div>
     <div class="head-actions"><a class="btn btn-ghost" href="/internal/">Dashboard</a><a class="btn btn-primary" href="/internal/follow-up">Add follow-up</a></div>
   </div>
+
+  <FindBar />
 
   <section class="today-command" aria-label="Today's command summary">
     <div class="command-copy"><span class="command-label">FIELD MODE</span><strong>Work the red items first.</strong><p class="phone-hide">Overdue follow-ups, today's commitments, then the next scheduled job.</p></div>
