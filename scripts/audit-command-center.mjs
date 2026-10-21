@@ -445,6 +445,17 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await tctx.close();
   }
   views += 3;
+  {
+    // Keyboard focus: a text field must show a ring (the site-wide `input:focus{outline:none}` left only a faint bottom border).
+    const kctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' });
+    const page = await kctx.newPage();
+    await page.goto(base + '/internal/quotes/new', { waitUntil: 'networkidle' }); await page.waitForTimeout(500);
+    await page.focus('input[name="name"]');
+    const ring = await page.evaluate(() => { const cs = getComputedStyle(document.activeElement); return cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 2; });
+    if (!ring) flowProblems.push('focus: a text field shows no focus ring');
+    await kctx.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
