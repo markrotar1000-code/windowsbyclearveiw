@@ -1,11 +1,13 @@
 ---
 import InternalLayout from '../../layouts/InternalLayout.astro';
+import FindBar from '../../components/internal/FindBar.astro';
 ---
 <InternalLayout title="Command Center">
   <div class="cc-hero">
     <div><p class="kicker">Daily operations</p><h1>Command Center</h1><p class="lede">See what needs attention, what is moving, and what can wait.</p></div>
     <div class="cc-hero-actions"><button class="btn btn-ghost" type="button" data-refresh>Refresh</button><a class="btn btn-primary" href="/internal/quotes/new">New quote</a></div>
   </div>
+  <FindBar />
   <section class="cc-first-run" data-first-run hidden aria-label="Getting started">
     <div><p class="kicker">Nothing here yet</p><h2>Add your first customer</h2><p>Estimate requests from the website show up here on their own. Add work you already have lined up yourself.</p></div>
     <div class="cc-first-actions"><a class="btn btn-primary" href="/internal/jobs/new">New general job</a><a class="btn btn-ghost" href="/internal/quotes/new">New window quote</a></div>

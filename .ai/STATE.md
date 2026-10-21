@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-21 - Find a customer (Dashboard and Today)
+
+Keith asked to continue on Command Center improvements. New: one search box over leads, quotes and jobs at the top of the Dashboard and Today, for the moment a customer phones and Mark needs their record. Name, phone in any format, address, city, email or quote/job number; results link to the quote, the job, or Leads filtered to that person. Read only (`/internal/api/search`), reuses existing tables, no schema change, no production step. Pressure test: small (one endpoint, one component), on the daily path and reusable, so not infrastructure ahead of revenue.
+
 ## 2026-10-21 - Command Center round thirteen: keyboard focus, public-site accessibility check
 
 Ran axe-core on all 40 public pages at phone and desktop width (clean) and tabbed through 20 Command Center pages. Fixed: text fields, selects and textareas had no visible focus ring (the site-wide `input:focus{outline:none}` left only a faint bottom border), so keyboard users could not see where they were; the Command Center now draws a 2 px ring. The "Command Center" brand subtitle on the dark header was 4.49:1, now above 4.5:1. Left for Keith: the same `input:focus` rule affects the public estimate form (a ring on click would change the look, so it was not touched). No production step.

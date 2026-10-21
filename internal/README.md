@@ -485,6 +485,10 @@ so keep the TTL short-ish; the compliant way to show *every* review later is the
 Business Profile API with owner OAuth (Keith manages the profile), which needs
 Google's API access approval.
 
+## Find a customer (Dashboard and Today)
+
+The box at the top of the Dashboard and Today searches leads, quotes and jobs at once (`GET /internal/api/search?q=`, read only, never cached). Type a name, a phone number in any format, an address, a city, an email or a quote or job number; two characters is enough. Names that start with the text come first, then the newest. Each result opens the record: a quote or job opens its page, a lead opens Leads already filtered (`/internal/leads?q=`). On a keyboard, `/` jumps to the box and Esc clears it. Nothing is stored or logged; a database without one of the tables just shows no results for it.
+
 ## Install on a phone, and offline use
 
 The Command Center is an installable app (PWA). Design and limits: `.ai/references/internal-pwa.md`.
