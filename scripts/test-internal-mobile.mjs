@@ -144,4 +144,7 @@ assert.ok(/class="visually-hidden">Quote</.test(read('src/pages/internal/quotes/
 assert.ok(!/opacity:\.58/.test(read('src/pages/internal/jobs/field.astro')), 'locked field gates are not dimmed with opacity (their text failed contrast)');
 assert.ok(!/class="an-table-wrap">/.test(read('src/pages/internal/analytics.astro')), 'every Analytics table scroller is keyboard-focusable and named');
 
+assert.ok(read('src/layouts/InternalLayout.astro').includes('.internal-main :where(input,textarea,select):focus-visible{outline:2px solid'), 'form fields in the Command Center show a focus ring (the global input:focus rule removes the outline)');
+assert.ok(read('src/layouts/InternalLayout.astro').includes('.internal-brand span{color:#33948f'), 'the brand subtitle meets 4.5:1 on the dark header');
+
 console.log('internal mobile: ok');

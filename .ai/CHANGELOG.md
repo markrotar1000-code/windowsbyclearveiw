@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-21 - Round thirteen: keyboard focus and a public-site accessibility check
+
+Keith asked for the next round. Checks: axe-core over every public page (40 pages, phone and desktop: no violations); a Tab-through of 20 Command Center pages looking for controls with no visible focus indicator; an input-attribute scan (tel/email types, inputmode, autocomplete: already good); a read of the login and session code (rate limit, constant-time compare, SameSite=Lax cookie: no change needed). Fixes: `.internal-main :where(input,textarea,select):focus-visible` ring in `InternalLayout` (outranks the global `input:focus{outline:none}`); `.internal-brand span` colour `#33948f` (4.49 to 4.5+). Guards in `test-internal-mobile.mjs`; a keyboard-focus flow in the browser audit. Open for Keith: the public site's global `input:focus` rule has the same weakness on the estimate form; fixing it adds a visible ring on click as well as on keyboard focus, which is a design change.
+
 ## 2026-10-20 - Round twelve: accessibility pass
 
 Keith asked for the next round; this one used a new tool. `scripts/audit-command-center.mjs` now runs axe-core (wcag2a/aa, 2.1 aa, best practice) on every internal page at 390 px when `npm i --no-save axe-core` has been run (not a dependency: the pass is skipped otherwise). First run found 15 issues on 8 pages, all fixed: `<main>` removed from five page bodies (the layout owns it), `ol.install-list` now a `div`, hidden `h1` on the quote page, contrast on Copilot's lede, the job-prep VERIFY callout (`#7f5600`) and Field mode locked gates (opacity replaced by a tint and dashed rail), `tabindex`/`role="region"`/unique `aria-label` on the five Analytics table scrollers and the Visualizer flow strip. `test-internal-mobile.mjs` guards each (and fails on any `<main` in `src/pages/internal`).

@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-21 - Command Center round thirteen: keyboard focus, public-site accessibility check
+
+Ran axe-core on all 40 public pages at phone and desktop width (clean) and tabbed through 20 Command Center pages. Fixed: text fields, selects and textareas had no visible focus ring (the site-wide `input:focus{outline:none}` left only a faint bottom border), so keyboard users could not see where they were; the Command Center now draws a 2 px ring. The "Command Center" brand subtitle on the dark header was 4.49:1, now above 4.5:1. Left for Keith: the same `input:focus` rule affects the public estimate form (a ring on click would change the look, so it was not touched). No production step.
+
 ## 2026-10-20 - Command Center round twelve: accessibility pass (axe-core)
 
 New method: axe-core on every Command Center page at phone width. Fixed what it found: nested `<main>` landmarks on Build plan, Approval, Visualizer, Field mode and Closeout; the install list was an `<ol>` of `<div>`s; the quote page had no level-one heading; the Copilot subtitle and the job-prep VERIFY callout missed text contrast; locked Field mode gates were dimmed with opacity so their text failed contrast (now tinted with a dashed rail); scrollable tables (Analytics, Visualizer flow) were not keyboard-reachable and are now named regions. The browser audit runs the axe pass when `axe-core` is installed (0 findings). No production step.
