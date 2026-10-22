@@ -145,8 +145,12 @@ function bindEstimate() {
       }
     } catch {}
   }
+  let sending = false;
+  let submitted = false;
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (sending || submitted) return;
+    sending = true;
     status.textContent = '';
     clearFieldErrors();
     trackIntent('estimate_form_attempt', false);
@@ -160,13 +164,17 @@ function bindEstimate() {
         if (result && typeof result === 'object' && result.fields && typeof result.fields === 'object') applyFieldErrors(result.fields);
         throw new Error(result && typeof result.error === 'string' ? result.error : 'Could not send. Please call ' + phoneDisplay + ' instead.');
       }
+      submitted = true;
       form.hidden = true;
       success.hidden = false;
       success.setAttribute('tabindex', '-1');
       success.focus({ preventScroll: true });
       success.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      try { window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: 'generate_lead', method: 'estimate_form_js' }); } catch {}
+      if (response.headers.get('x-clearview-lead-accepted') === '1') {
+        try { window.dataLayer = window.dataLayer || []; window.dataLayer.push({ event: 'generate_lead', method: 'estimate_form_js' }); } catch {}
+      }
     } catch (error) {
+      sending = false;
       trackIntent('estimate_form_error', false);
       try { if (widgetId !== null && window.turnstile) window.turnstile.reset(widgetId); } catch {}
       // A dropped connection throws a TypeError whose text is the browser's ("Failed to fetch"); show our own line instead.

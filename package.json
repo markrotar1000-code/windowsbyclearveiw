@@ -69,7 +69,7 @@
     "test:permit-leads": "node scripts/test-permit-leads.mjs",
     "test:mail-pilot": "node --disable-warning=ExperimentalWarning scripts/test-mail-pilot.mjs",
     "test:supplier-permits": "node --disable-warning=ExperimentalWarning scripts/test-supplier-permits.mjs",
-    "test:analytics": "node scripts/test-analytics.mjs && node --disable-warning=ExperimentalWarning scripts/test-analytics-pipeline.mjs && node --disable-warning=ExperimentalWarning scripts/test-intent.mjs && node --experimental-strip-types scripts/test-intent-client.mjs",
+    "test:analytics": "node --disable-warning=ExperimentalWarning scripts/test-analytics-collection.mjs && node scripts/test-analytics.mjs && node --disable-warning=ExperimentalWarning scripts/test-analytics-pipeline.mjs && node --disable-warning=ExperimentalWarning scripts/test-intent.mjs && node --experimental-strip-types scripts/test-intent-client.mjs",
     "test:estimate": "node --disable-warning=ExperimentalWarning scripts/test-estimate-endpoint.mjs",
     "test:review-request": "node --disable-warning=ExperimentalWarning scripts/test-review-request.mjs",
     "test:lead-links": "node --disable-warning=ExperimentalWarning scripts/test-lead-links.mjs",

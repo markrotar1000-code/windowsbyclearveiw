@@ -26,13 +26,14 @@ const TEMPLATES = {
   receipt: { id: 'estimate-received' },
 };
 
-function json(data, status = 200) {
+function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
+      ...headers,
     },
   });
 }
@@ -471,7 +472,9 @@ export async function onRequestPost(context) {
     }
   }
 
-  return asJson ? json({ ok: true }) : redirect(request, '/estimate/sent');
+  // The honeypot intentionally returns the same public success body, but is
+  // never a conversion. This non-personal marker exists only after delivery.
+  return asJson ? json({ ok: true }, 200, { 'x-clearview-lead-accepted': '1' }) : redirect(request, '/estimate/sent');
 }
 
 export async function onRequestGet() {

@@ -207,6 +207,9 @@ const breadcrumbSchema =
          astro:page-load listener at the bottom of this file. -->
     <script>
       (function (w, d, s, l, i) {
+        // Builds are also served on Pages previews and localhost. Only the
+        // public production hosts may load the production marketing container.
+        if (!['windowsbyclearview.com', 'www.windowsbyclearview.com'].includes(w.location.hostname)) return;
         w[l] = w[l] || [];
         w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
         var f = d.getElementsByTagName(s)[0],
@@ -231,15 +234,8 @@ const breadcrumbSchema =
     )}
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript
-      ><iframe
-        src="https://www.googletagmanager.com/ns.html?id=GTM-WGCFVHQM"
-        height="0"
-        width="0"
-        style="display:none;visibility:hidden"></iframe></noscript
-    >
-    <!-- End Google Tag Manager (noscript) -->
+    <!-- No noscript marketing iframe: prerendered HTML is shared by production
+         and preview hosts, where a runtime hostname check cannot run without JS. -->
     <a class="skip-link" href="#main">Skip to content</a>
     <Header pathname={path} />
     <main id="main" tabindex="-1" data-route={route}>
