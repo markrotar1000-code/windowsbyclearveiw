@@ -331,7 +331,7 @@ ok('gallery additions: every photo has a visual alt and caption, none claims a j
     assert.ok(meta, `${entry.caption}: image "${entry.image}" is not imported from src/assets/work`);
     assert.ok(meta.width === 3072 && meta.height === 4096, `${entry.caption}: expected a 3072x4096 original, got ${meta.width}x${meta.height}`);
   }
-  // Privacy: a customer's house photo must not carry GPS or device metadata (the "View full photo" link ships the original).
+  // Privacy: a customer's house photo must not carry GPS or device metadata (both the source and the optimized full photo must stay free of private metadata).
   for (const [name, meta] of originals) assert.ok(!meta.exif && !meta.xmp && !meta.iptc, `${name}: embedded EXIF/XMP/IPTC found. Strip it before committing a customer photo.`);
   assert.equal(galleryAdditions.length, 22, '12 first-batch + 10 from 2026-10-11');
 });
@@ -403,6 +403,28 @@ ok('every siding estimate CTA preserves its service and diagrams open their larg
       assert.ok(candidates.length && figure.includes(`href="${candidates[0][1]}"`), `${page}: full-size diagram must open the largest responsive file`);
     }
   }
+});
+
+// Opening a gallery addition must preserve native dimensions without downloading
+// the source JPEG. Check the actual published files, not a component string.
+const fullCards = [...pages.get('gallery').matchAll(/<figure class="gallery-addition[^\"]*"[^>]*>[\s\S]*?<\/figure>/g)].map(m => m[0]);
+let fullPhotoBytes = 0;
+let sourcePhotoBytes = 0;
+for (const [index, card] of fullCards.entries()) {
+  const href = /<a\b[^>]*href="([^\"]+)"/.exec(card)?.[1];
+  assert.match(href || '', /^\/_astro\/[^/]+\.webp$/, 'full photo must open a generated WebP');
+  const file = join(dist, href.slice(1));
+  const meta = await sharp(file).metadata();
+  const original = originals.get(galleryAdditions[index].image);
+  assert.equal(meta.width, original.width, 'full photo must preserve its source width');
+  assert.equal(meta.height, original.height, 'full photo must preserve its source height');
+  assert.ok(!meta.exif && !meta.xmp && !meta.iptc, 'optimized full photo must not expose embedded metadata');
+  fullPhotoBytes += statSync(file).size;
+  sourcePhotoBytes += statSync(join(root, 'src/data', importPaths.get(galleryAdditions[index].image))).size;
+}
+ok('gallery full photos preserve resolution and reduce total download size', () => {
+  assert.equal(fullCards.length, galleryAdditions.length);
+  assert.ok(fullPhotoBytes <= sourcePhotoBytes * 0.7, `full-photo total ${fullPhotoBytes} must be at least 30% smaller than source total ${sourcePhotoBytes}`);
 });
 
 console.log(`PASS  image delivery (${groups} groups, ${pages.size} pages)`);
