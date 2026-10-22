@@ -1,5 +1,14 @@
 # Project context — Clearview Windows
 
+## 2026-10-22 - Audit link recheck and gallery full-photo delivery
+
+Rechecked the audit's municipal 404s live. Ridgefield Home Improvement currently returns 200 and works in Chrome, so retained its correct URL. Battle Ground's legacy FAQ.aspx?QID=275 now redirects; the permit guide links directly to the verified current /m/faq?cat=56#question-275 answer. Confirmed the same-size exemption in the official answer. No permit claims, FAQs, titles or descriptions changed. A scan of 34 public pages found 13 unique external anchor destinations and no repeatable 404. Camas and La Center rejected the automated client but both worked in Chrome; retained their official sources.
+
+GalleryAddition now opens a generated quality-85 WebP at the full native resolution instead of the source JPEG. The 22 full photos total 16,801,528 bytes versus 25,873,822 source bytes (35.1% less). Thumbnails, source photos, captions and alt text are unchanged. Six full photos still exceed 1 MB; preserved native resolution and quality rather than claiming the warning is eliminated. Existing build pruning removes only unreferenced originals. A built-file regression check verifies full native dimensions, no embedded private metadata, generated-file existence and at least 30% total size reduction.
+
+Validation: link-only baseline passed all 63 suite/build steps; image build and 20 image-delivery groups passed. Final combined suite/hosted checks are recorded with the release. Ask index dry run found 50 source chunks; a real rebuild was attempted and refused because local Cloudflare AI credentials are absent. The checked-in Gemini index does not contain this permit guide or either old municipal URL, so this link-only change cannot leave a stale URL in it. Broader Ask content coverage/re-embedding remains a separate follow-up.
+
+
 ## 2026-10-22 - Production analytics and confirmed lead collection
 
 The production marketing container now loads only on windowsbyclearview.com and www.windowsbyclearview.com. Pages aliases, previews, local hosts and lookalike suffixes are excluded by an executable runtime hostname check. Removed the noscript iframe because shared prerendered HTML cannot enforce that check without JavaScript.

@@ -65,7 +65,7 @@ Permits depend on the city and whether the opening changes. We talk through perm
 
 - [Clark County: Residential permits](https://clark.wa.gov/community-development/residential-permits) and the county's [roofing, siding and windows permit handout](https://clark.wa.gov/sites/default/files/media/document/2023-08/roof-siding-windows-app-fillable.pdf)
 - [City of Camas: Building FAQs and resources](https://www.cityofcamas.us/com-dev/page/building-faqs-resources)
-- [City of Battle Ground: When is a permit required?](https://www.cityofbg.org/FAQ.aspx?QID=275)
+- [City of Battle Ground: When is a permit required?](https://www.cityofbg.org/m/faq?cat=56#question-275)
 - [City of Ridgefield: Home improvement](https://ridgefieldwa.us/186/Home-Improvement)
 - [City of La Center: Building](https://ci.lacenter.wa.us/city-departments/community-development/building/)
 - [Washington State Energy Code, residential (chapter 51-11R WAC)](https://app.leg.wa.gov/wac/default.aspx?cite=51-11R&full=true): section R503.1.1.1 and Table R402.1.3
