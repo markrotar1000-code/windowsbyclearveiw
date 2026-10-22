@@ -1,5 +1,14 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-22 - Production analytics and confirmed lead collection
+
+The production marketing container now loads only on windowsbyclearview.com and www.windowsbyclearview.com. Pages aliases, previews, local hosts and lookalike suffixes are excluded by an executable runtime hostname check. Removed the noscript iframe because shared prerendered HTML cannot enforce that check without JavaScript.
+
+The static /estimate/sent page no longer emits generate_lead on visits or refreshes. Both forms require x-clearview-lead-accepted: 1 before sending the existing generate_lead event. Only the final delivered-response branch sets that non-personal marker; honeypot and error responses never do. Both forms block overlapping and repeat submits after success, with retry allowed after failure. No customer fields or record IDs go to GA4. No-JS inquiries remain counted in D1; events are accepted submissions, not qualified customers or sales.
+
+Validation: all 63 suite/build steps passed, plus executable host isolation and both-form conversion tests. Endpoint tests cover real success, honeypot, validation and delivery failure. Live GTM method parameter forwarding was prepared separately; deployment and GA4 receipt require verification. Existing historical data and the GA4 internal-traffic Testing filter are preserved. No production customer inquiry submitted.
+
+
 ## 2026-10-21 - Find a customer (Dashboard and Today)
 
 Keith asked to continue on Command Center improvements. New: one search box over leads, quotes and jobs at the top of the Dashboard and Today, for the moment a customer phones and Mark needs their record. Name, phone in any format, address, city, email or quote/job number; results link to the quote, the job, or Leads filtered to that person. Read only (`/internal/api/search`), reuses existing tables, no schema change, no production step. Pressure test: small (one endpoint, one component), on the daily path and reusable, so not infrastructure ahead of revenue.
