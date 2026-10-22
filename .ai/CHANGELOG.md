@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-22 - Text and Directions
+
+Added `tenDigits`, `smsUrl` and `directionsUrl` (`src/lib/contact-links.ts`, `npm run test:contact-links`, in CI): numbers in any format become one `sms:+1...` link and junk gives none; directions need a street address, are percent-encoded (`&`, `#`) and always point at `google.com/maps`. Wired into `leads.astro`, `today.astro`, `follow-up.astro`, `jobs/view.astro` (44 px `.detail-action` pills) and `jobs/field.astro`. The browser audit adds a link flow (job page Directions and Text, 44 px targets, no overflow; Field mode Directions; a Text action on Leads). Not added on purpose: Text on the permit supplier list (see the supplier-permits contract), and an "on my way" message (needs an SMS provider).
+
 ## 2026-10-22 - Siding pricing list removed from the public page
 
 Owner direction: all siding is priced by the square foot with labor and materials included. Removed the `spec-table` list from `src/pages/siding.astro` and the `showMoney` branches (they said "labor rates, the siding itself is a separate cost", which is no longer true); the pricing section and the cost FAQ now say materials and labor are included in the square foot price. `scripts/test-siding-page.mjs` now asserts the list and every "labor only" phrase are gone, no dollar figure prints, and the new sentence is present. `.ai/references/public-copy-positioning.md` (the copy source of truth) and the header of `src/data/siding.ts` record the new rule and mark the old labor-only rates as internal and VERIFY.

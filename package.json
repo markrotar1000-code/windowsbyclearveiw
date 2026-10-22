@@ -35,6 +35,7 @@
     "test:siding-work": "node --disable-warning=ExperimentalWarning scripts/test-siding-work.mjs",
     "test:form-patterns": "node scripts/test-form-patterns.mjs",
     "test:load-failed": "node scripts/test-load-failed.mjs",
+    "test:contact-links": "node --disable-warning=ExperimentalWarning scripts/test-contact-links.mjs",
     "test:find": "node --disable-warning=ExperimentalWarning scripts/test-find.mjs",
     "test:visitor-errors": "node scripts/test-visitor-errors.mjs",
     "test:a11y-names": "node scripts/test-a11y-names.mjs",

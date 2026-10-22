@@ -477,6 +477,22 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.close();
   }
   views += 1;
+  {
+    const page = await open('contact-links');
+    await page.goto(base + '/internal/jobs/view?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(700);
+    const dir = await page.locator('[data-directions]').getAttribute('href');
+    if (!/^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=1%20Main%20St%2C%20Camas$/.test(dir || '') || (await page.locator('[data-directions]').isHidden())) flowProblems.push('links: the job page has no Directions to the job address');
+    if ((await page.locator('[data-text-link]').getAttribute('href')) !== 'sms:+13605550100') flowProblems.push('links: the job page has no Text link for the customer');
+    const tall = await page.locator('[data-directions], [data-text-link]').evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().height < 44).length);
+    if (tall) flowProblems.push('links: Text or Directions is under 44 px tall');
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) flowProblems.push('links: Text and Directions overflow the job page');
+    await page.goto(base + '/internal/jobs/field?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!((await page.locator('[data-directions]').getAttribute('href')) || '').includes('google.com/maps/dir')) flowProblems.push('links: Field mode has no Directions');
+    await page.goto(base + '/internal/leads', { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!(await page.locator('.ld-action[href^="sms:+1"]').count())) flowProblems.push('links: a lead with a phone has no Text action');
+    await page.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
