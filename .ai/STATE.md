@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-22 - Siding page: pricing list removed
+
+Keith (from Mark): remove the per-type "Labor priced per square foot" list (new construction, existing home, board and batten, cedar, tear-off and plywood, dry rot) from `/siding`, because all siding is priced by the square foot with labor and materials included. The pricing section now says so in one sentence and keeps the square-foot definition; the "How much does siding cost?" answer says materials and labor are both in the square foot price (it also feeds the page's FAQ structured data). No dollar figure appears anywhere. VERIFY for Keith/Mark: the internal siding quote builder still uses the earlier labor-only rates ($2 to $4 per sq ft) and labels them "labor"; if the all-in rate differs, those numbers and labels need Mark's confirmation. The dry-rot FAQ answer (extra labor, its own line) was left because it was not part of the removed area.
+
 ## 2026-10-22 - Production analytics and confirmed lead collection
 
 The production marketing container now loads only on windowsbyclearview.com and www.windowsbyclearview.com. Pages aliases, previews, local hosts and lookalike suffixes are excluded by an executable runtime hostname check. Removed the noscript iframe because shared prerendered HTML cannot enforce that check without JavaScript.

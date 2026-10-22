@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-22 - Siding pricing list removed from the public page
+
+Owner direction: all siding is priced by the square foot with labor and materials included. Removed the `spec-table` list from `src/pages/siding.astro` and the `showMoney` branches (they said "labor rates, the siding itself is a separate cost", which is no longer true); the pricing section and the cost FAQ now say materials and labor are included in the square foot price. `scripts/test-siding-page.mjs` now asserts the list and every "labor only" phrase are gone, no dollar figure prints, and the new sentence is present. `.ai/references/public-copy-positioning.md` (the copy source of truth) and the header of `src/data/siding.ts` record the new rule and mark the old labor-only rates as internal and VERIFY.
+
 ## 2026-10-22 - Production analytics and confirmed lead collection
 
 The production marketing container now loads only on windowsbyclearview.com and www.windowsbyclearview.com. Pages aliases, previews, local hosts and lookalike suffixes are excluded by an executable runtime hostname check. Removed the noscript iframe because shared prerendered HTML cannot enforce that check without JavaScript.
