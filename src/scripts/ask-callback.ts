@@ -145,8 +145,12 @@ function bindDialog(dialog: HTMLDialogElement): void {
     });
   });
 
+  let sending = false;
+  let submitted = false;
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (sending || submitted) return;
+    sending = true;
     trackIntent('callback_form_attempt', false);
     clearErrors();
     const data = new FormData(form);
@@ -169,11 +173,13 @@ function bindDialog(dialog: HTMLDialogElement): void {
         if (body?.fields && typeof body.fields === 'object') showFieldErrors(body.fields as Record<string, unknown>);
         throw new Error(typeof body?.error === 'string' ? body.error : 'Could not send.');
       }
+      submitted = true;
       form.hidden = true;
       success.hidden = false;
       success.querySelector<HTMLElement>('[data-callback-close]')?.focus();
-      pushEvent({ ...SUCCESS_EVENT });
+      if (response.headers.get('x-clearview-lead-accepted') === '1') pushEvent({ ...SUCCESS_EVENT });
     } catch (error) {
+      sending = false;
       trackIntent('callback_form_error', false);
       // A TypeError is the browser reporting a network failure; its text is not for visitors.
       status.textContent = visitorMessage(error, 'Could not send. Please call us instead.');

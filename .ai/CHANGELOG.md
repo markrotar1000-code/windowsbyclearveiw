@@ -1,5 +1,14 @@
 # ICM Changelog
 
+## 2026-10-22 - Production analytics and confirmed lead collection
+
+The production marketing container now loads only on windowsbyclearview.com and www.windowsbyclearview.com. Pages aliases, previews, local hosts and lookalike suffixes are excluded by an executable runtime hostname check. Removed the noscript iframe because shared prerendered HTML cannot enforce that check without JavaScript.
+
+The static /estimate/sent page no longer emits generate_lead on visits or refreshes. Both forms require x-clearview-lead-accepted: 1 before sending the existing generate_lead event. Only the final delivered-response branch sets that non-personal marker; honeypot and error responses never do. Both forms block overlapping and repeat submits after success, with retry allowed after failure. No customer fields or record IDs go to GA4. No-JS inquiries remain counted in D1; events are accepted submissions, not qualified customers or sales.
+
+Validation: all 63 suite/build steps passed, plus executable host isolation and both-form conversion tests. Endpoint tests cover real success, honeypot, validation and delivery failure. Live GTM method parameter forwarding was prepared separately; deployment and GA4 receipt require verification. Existing historical data and the GA4 internal-traffic Testing filter are preserved. No production customer inquiry submitted.
+
+
 ## 2026-10-21 - Find a customer
 
 Added `functions/internal/_lib/find.mjs` (query cleaning, LIKE with escaped wildcards, phone matched by digits, six per kind, names that start with the text first, a missing table reads as empty), `functions/internal/api/search.js`, `src/components/internal/FindBar.astro` (debounced, aborts stale requests, nodes only, `/` shortcut, 44 px rows) on the Dashboard and Today, and `?q=` on Leads. `scripts/test-find.mjs` (`npm run test:find`, in CI) runs it on real SQLite; the PWA test lists the endpoint as never cached; the browser audit adds a Find flow. Not done on purpose: searching notes or line items, and a header-wide box on every page (the nav is already full).

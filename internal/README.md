@@ -606,3 +606,9 @@ Verification: `npm run test:google-tools` exercises real handlers/SQLite, quota 
 ### Session binding compatibility (2026-10-16 audit)
 
 The production Pages configuration currently names its signing secret `INTERNAL_SESSION_SECRE` (missing the final T). Login and middleware accept that existing binding through the shared `sessionSecret()` resolver. `INTERNAL_SESSION_SECRET` takes precedence if present. Do not create a different key just to correct the name: that would invalidate sessions. A future configuration correction should preserve the existing key material; this audit did not read or rotate it.
+
+### Production collection guard (2026-10-22)
+
+Production GTM loads only on `windowsbyclearview.com` and `www.windowsbyclearview.com`, never Pages aliases, previews or localhost. The guard affects future collection and preserves historical records. Test analytics in an isolated fixture or property.
+
+Both forms send `generate_lead` only after a successful JSON response with `x-clearview-lead-accepted: 1`. Honeypot responses and direct/refresh `/estimate/sent` views are not conversions. JavaScript-disabled inquiries remain in D1. GTM `GA4 Event - generate_lead` forwards `method` through `DLV - Lead method` (Data Layer key `method`, version 2). No customer fields or identifiers are forwarded. Raw event counts, users, sessions and key events differ in scope; an accepted submission is not a qualified lead or sale.

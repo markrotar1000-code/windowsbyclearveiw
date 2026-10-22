@@ -48,7 +48,7 @@ async function submit(env, fields) {
   const pending = [];
   const response = await onRequestPost({ request, env, waitUntil: (p) => pending.push(p) });
   await Promise.all(pending);
-  return { status: response.status, body: await response.json() };
+  return { status: response.status, body: await response.json(), accepted: response.headers.get('x-clearview-lead-accepted') };
 }
 
 const base = { name: 'Pat Doe', phone: '(360) 555-0100', city: 'Camas', email: 'pat@example.com' };
@@ -155,4 +155,19 @@ const base = { name: 'Pat Doe', phone: '(360) 555-0100', city: 'Camas', email: '
   assert(leadCount(env.QUOTES_DB) === 4, 'the same inquiry sent long afterwards is a new lead');
 }
 
+// The conversion marker distinguishes real delivered requests from the honeypot's
+// deliberately identical success body. Errors must never carry the marker.
+{
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
+  const valid = await submit(env, base);
+  const trap = await submit(env, { ...base, company: 'bot' });
+  const invalid = await submit(env, { ...base, phone: '1' });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response('{}', { status: 500 });
+  const failed = await submit(env, { ...base, notes: 'delivery failure' });
+  globalThis.fetch = realFetch;
+  assert(valid.accepted === '1', 'delivered submission carries the conversion marker');
+  assert(trap.body.ok === true && trap.accepted === null, 'honeypot keeps its success body without a conversion marker');
+  assert(invalid.accepted === null && failed.accepted === null, 'invalid and undelivered requests cannot count as conversions');
+}
 console.log('estimate endpoint tests passed');
