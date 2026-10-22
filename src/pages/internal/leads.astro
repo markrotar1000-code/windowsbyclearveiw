@@ -36,6 +36,7 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
 
 <script>
   import { bindWorkTypeFilter, workTypeBadge } from '../../lib/work-type';
+  import { smsUrl } from '../../lib/contact-links';
   function initLeads() {
     const list = document.querySelector('[data-list]');
     if (!(list instanceof HTMLElement) || list.dataset.bound === 'true') return;
@@ -154,6 +155,7 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
                   : `<a class="ld-action ld-action-primary" href="/internal/quotes/new?leadId=${leadId}${kind === 'siding' ? '&type=siding' : ''}">${kind === 'siding' ? 'Start siding quote' : 'Start quote'}</a>`}
                 <a class="ld-action" href="/internal/follow-up?leadId=${leadId}">Add follow-up</a>
                 ${phoneHref ? `<a class="ld-action" href="${phoneHref}">Call</a>` : ''}
+                ${smsUrl(lead.phone) ? `<a class="ld-action" href="${smsUrl(lead.phone)}">Text</a>` : ''}
                 ${lead.email ? `<a class="ld-action" href="mailto:${escapeHtml(lead.email)}">Email</a>` : ''}
               </div>
               ${renderNotes(lead.notes)}

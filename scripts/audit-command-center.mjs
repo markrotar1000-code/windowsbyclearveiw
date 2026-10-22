@@ -477,6 +477,37 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.close();
   }
   views += 1;
+  {
+    const page = await open('contact-links');
+    await page.goto(base + '/internal/jobs/view?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(700);
+    const dir = await page.locator('[data-directions]').getAttribute('href');
+    if (!/^https:\/\/www\.google\.com\/maps\/dir\/\?api=1&destination=1%20Main%20St%2C%20Camas$/.test(dir || '') || (await page.locator('[data-directions]').isHidden())) flowProblems.push('links: the job page has no Directions to the job address');
+    if ((await page.locator('[data-text-link]').getAttribute('href')) !== 'sms:+13605550100') flowProblems.push('links: the job page has no Text link for the customer');
+    const tall = await page.locator('[data-directions], [data-text-link]').evaluateAll((els) => els.filter((e) => e.getBoundingClientRect().height < 44).length);
+    if (tall) flowProblems.push('links: Text or Directions is under 44 px tall');
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) flowProblems.push('links: Text and Directions overflow the job page');
+    await page.goto(base + '/internal/jobs/field?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!((await page.locator('[data-directions]').getAttribute('href')) || '').includes('google.com/maps/dir')) flowProblems.push('links: Field mode has no Directions');
+    await page.goto(base + '/internal/leads', { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!(await page.locator('.ld-action[href^="sms:+1"]').count())) flowProblems.push('links: a lead with a phone has no Text action');
+    await page.close();
+  }
+  views += 1;
+  {
+    const page = await open('siding-builder');
+    await page.goto(base + '/internal/quotes/new?type=siding', { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    const options = await page.locator('[data-siding-rate] option').allInnerTexts();
+    if (!options.length || options.some((t) => /\$|\d/.test(t))) flowProblems.push('siding builder: a siding type carries a price');
+    await page.fill('[data-siding-area]', '1200'); await page.click('[data-siding-add]'); await page.waitForTimeout(300);
+    if ((await page.locator('[data-siding-price]').evaluate((e) => e.getAttribute('aria-invalid'))) === null && !(await page.locator('.qb-problem, .line-problem, [role="alert"]').count())) flowProblems.push('siding builder: adding a line with no price says nothing');
+    await page.fill('[data-siding-price]', '9.5'); await page.click('[data-siding-add]'); await page.waitForTimeout(500);
+    const body = await page.locator('body').innerText();
+    if (!/\$11,400(\.00)?/.test(body)) flowProblems.push('siding builder: 1200 sq ft at $9.50 does not total $11,400');
+    if (/Labor starting rates|separate line|Dry rot adds labor of/.test(body)) flowProblems.push('siding builder: old labor-only wording is still on the page');
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) flowProblems.push('siding builder: overflows the phone screen');
+    await page.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();
