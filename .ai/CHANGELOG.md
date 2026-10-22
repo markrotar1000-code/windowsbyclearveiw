@@ -1,5 +1,14 @@
 # ICM Changelog
 
+## 2026-10-22 - Audit link recheck and gallery full-photo delivery
+
+Rechecked the audit's municipal 404s live. Ridgefield Home Improvement currently returns 200 and works in Chrome, so retained its correct URL. Battle Ground's legacy FAQ.aspx?QID=275 now redirects; the permit guide links directly to the verified current /m/faq?cat=56#question-275 answer. Confirmed the same-size exemption in the official answer. No permit claims, FAQs, titles or descriptions changed. A scan of 34 public pages found 13 unique external anchor destinations and no repeatable 404. Camas and La Center rejected the automated client but both worked in Chrome; retained their official sources.
+
+GalleryAddition now opens a generated quality-85 WebP at the full native resolution instead of the source JPEG. The 22 full photos total 16,801,528 bytes versus 25,873,822 source bytes (35.1% less). Thumbnails, source photos, captions and alt text are unchanged. Six full photos still exceed 1 MB; preserved native resolution and quality rather than claiming the warning is eliminated. Existing build pruning removes only unreferenced originals. A built-file regression check verifies full native dimensions, no embedded private metadata, generated-file existence and at least 30% total size reduction.
+
+Validation: link-only baseline passed all 63 suite/build steps; image build and 20 image-delivery groups passed. Final combined suite/hosted checks are recorded with the release. Ask index dry run found 50 source chunks; a real rebuild was attempted and refused because local Cloudflare AI credentials are absent. The checked-in Gemini index does not contain this permit guide or either old municipal URL, so this link-only change cannot leave a stale URL in it. Broader Ask content coverage/re-embedding remains a separate follow-up.
+
+
 ## 2026-10-22 - Siding pricing list removed from the public page
 
 Owner direction: all siding is priced by the square foot with labor and materials included. Removed the `spec-table` list from `src/pages/siding.astro` and the `showMoney` branches (they said "labor rates, the siding itself is a separate cost", which is no longer true); the pricing section and the cost FAQ now say materials and labor are included in the square foot price. `scripts/test-siding-page.mjs` now asserts the list and every "labor only" phrase are gone, no dollar figure prints, and the new sentence is present. `.ai/references/public-copy-positioning.md` (the copy source of truth) and the header of `src/data/siding.ts` record the new rule and mark the old labor-only rates as internal and VERIFY.

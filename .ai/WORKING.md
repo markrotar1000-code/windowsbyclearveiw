@@ -1,5 +1,10 @@
 # Clearview ICM — Working Context
 
+## 2026-10-22 - Audit repair scope
+
+Reviewed: the permit guide's Sources links, the two municipal audit destinations, Camas/La Center browser accessibility, 13 unique external anchors across 34 public pages, and GalleryAddition's full-photo links. Changed: one Battle Ground destination URL and full-photo delivery for 22 gallery additions. No substantive public copy or FAQ changes. Not reviewed in this batch: remaining structured-data classifications, keyword/content expansion, backlink acquisition or physical-device performance. Ask index rebuild requires unavailable local AI credentials; the index currently omits this guide.
+
+
 ## 2026-10-12 - "Window installation" on the public pages (public-copy-sweep)
 
 Mark wants window installation on the site as a search term. Reviewed and changed: the eight city pages (H1, `metaTitle`, description, one sentence of "What we do here"), `/areas`, `/replacement`, `/estimate` (description), the home page (title, `site.metaDescription`, hero line) and the footer blurb. Titles and descriptions were changed on the owner's say-so (Mark, relayed by Keith). Reviewed and unchanged: `/process`, `/new-construction`, `/siding`, `/sliding-glass-doors`, `/about`, `/ask` (already say installation). Not reviewed and deliberately untouched: gallery (photo scope), guides and every FAQ (Ask index rebuild needs `GEMINI_API_KEY`), `/window-features`, `/reviews`, legal pages. Open for the owner (`VERIFY`): none needed, no new business fact was added; the sentences only reword work already described. Validation: `npm run test:all` 58/58 (`test:seo` rule for city titles rewritten, new check that `/`, `/replacement`, `/areas` say "installation"); phone screenshots at 390 and 320 px show the longer H1 wrapping without clipping.
