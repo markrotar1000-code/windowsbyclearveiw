@@ -56,29 +56,14 @@ assert.deepEqual(rates, { newConstruction: 2, existingHome: 3, boardAndBattenNew
 const dryRotSource = stripTypeScriptTypes(readFileSync(join(root, 'src/data/siding.ts'), 'utf8'));
 const dryRot = (await import(`data:text/javascript,${encodeURIComponent(dryRotSource)}`)).sidingDryRot;
 assert.deepEqual(dryRot, { low: 1500, high: 3000 }, "dry-rot range matches the owner's figures");
-const publicPricing = /export const publicPricing = true/.test(readFileSync(join(root, 'src/data/pricing.ts'), 'utf8'));
-if (!publicPricing) {
-  // Owner direction 2026-10-09: the rates stay in src/data/siding.ts but no dollar figure is printed.
-  assert.ok(!/\$\s?\d/.test(text), 'siding page prints no dollar figure while public pricing is off');
-  for (const label of ['New construction', 'Existing home', 'Board and batten, new construction', 'Board and batten, existing home', 'Cedar siding', 'Tear-off and new plywood', 'Dry rot']) {
-    assert.ok(text.includes(label), `${label} row is still listed`);
-  }
-  assert.ok(/Labor priced per square foot/.test(text) && /Adds labor, depending on severity/.test(text), 'rows say how the work is priced without a number');
-}
-if (publicPricing) assert.deepEqual([...new Set([...text.matchAll(/\$\s?(\d+(?:,\d{3})*(?:\.\d+)?)/g)].map((m) => m[1]))].sort(), ['1,500', '2', '3', '3,000', '4'], 'only the owner figures appear');
-for (const [label, line] of publicPricing ? [
-  ['New construction', 'Labor starts at $2 per square foot'],
-  ['Existing home', 'Labor starts at $3 per square foot'],
-  ['Board and batten, new construction', 'Labor starts at $3 per square foot'],
-  ['Board and batten, existing home', 'Labor starts at $4 per square foot'],
-  ['Cedar siding', 'Labor starts at $4 per square foot on any job'],
-  ['Tear-off and new plywood', 'Labor is $2 per square foot'],
-  ['Dry rot', 'Adds $1,500 to $3,000 in labor, depending on severity'],
-] : []) {
-  assert.ok(text.includes(`${label} ${line}`), `${label}: "${line}"`);
-}
+// Owner direction 2026-10-22: all siding is priced by the square foot with the labor AND the materials in that price,
+// so the per-type labor list (and its dry-rot row) is gone from the public page, and no dollar figure is printed.
+// The labor rates above stay in src/data/siding.ts for the internal quote builder only.
+assert.ok(!/\$\s?\d/.test(text), 'siding page prints no dollar figure');
+assert.ok(!/Labor priced per square foot|Adds labor, depending on severity|Labor starts at|Labor is \$|siding itself is a separate cost/.test(text), 'the labor-only price list is gone and nothing says the siding is a separate cost');
+for (const label of ['Tear-off and new plywood', 'Cedar siding', 'Board and batten, existing home']) assert.ok(!new RegExp(`${label}\\s*(?:Labor|Adds)`).test(text), `${label} is not a price row any more`);
+assert.ok(/All siding is priced by the square foot\. The price includes the materials and the labor\./.test(text), 'the page says every siding job is priced by the square foot with materials and labor included');
 assert.ok(/A square foot is total wall area: height times width/.test(text), 'square foot is defined as total wall area');
-assert.ok(publicPricing ? /siding itself is a separate cost/.test(text) && /not a quote/.test(text) : /We price the job by the square foot\. The materials and labor are included in the quote\./.test(text), 'public rates are labor-only starting rates with material separate; without public pricing the job is priced by the square foot, materials and labor included');
 assert.ok(!/\$\d+[^.]*\binstalled\b/i.test(text.replace(/installed to the manufacturer/g, '')), 'rates are never called installed prices');
 
 // Warranty: the manufacturer's. The only length on the page is James Hardie's own 30 years (a year count
