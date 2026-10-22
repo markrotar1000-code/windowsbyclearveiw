@@ -93,3 +93,9 @@ The next code changes should make routing and stage transitions explicit without
 Embedded an optional Blender-backed viewer on /window-features, using site tokens and the existing estimate scope handoff. Four v005 GLBs and posters; client navigation cleanup and error fallback. Fixed an Astro transitive advisory and Windows regression-test portability. All 46 test:all steps pass, including build. Implementation/audit: docs/WINDOW-STUDIO.md. Awaiting owner/installer visual review; no production publication.
 
 Public copy scope reviewed: new WindowStudio component and estimate carry-over hint. Existing page metadata and business facts unchanged. Other public pages not reviewed in this task. Illustration awaiting owner/installer review.
+
+## 2026-10-22 - SPA page-view and referrer repair
+
+Live GTM's JS - Safe Referrer read document.referrer for every event, so client-side navigation reused the original entry referrer. BaseLayout now sets clearviewPageReferrer to the previous public route before emitting spa_page_view. The matching GTM variable source is documented in docs/GTM-SPA-REFERRER.js; it falls back to document.referrer before initialization and strips queries/fragments in both cases. No event names, campaign variables, conversions or production-host guards change.
+
+Page views now capture title, location and referrer synchronously on astro:page-load rather than in an idle callback that could observe a later route. A repeated event for the same main element is ignored, while a newly rendered back/forward visit counts. Regression tests execute the actual tracker for initial/direct/invalid referrers, duplicate events, consecutive navigation and back visits, and execute the GTM variable's fallback/privacy behavior. This fixes future navigation pathing; it does not reconcile the historical GA4/GSC discrepancy or rewrite earlier data. Deployment and actual GA4 receipt are recorded with the release.

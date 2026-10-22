@@ -8,6 +8,13 @@ Deleted src/data/siding.ts. `src/pages/internal/quotes/new.astro`: the siding ca
 
 Added `tenDigits`, `smsUrl` and `directionsUrl` (`src/lib/contact-links.ts`, `npm run test:contact-links`, in CI): numbers in any format become one `sms:+1...` link and junk gives none; directions need a street address, are percent-encoded (`&`, `#`) and always point at `google.com/maps`. Wired into `leads.astro`, `today.astro`, `follow-up.astro`, `jobs/view.astro` (44 px `.detail-action` pills) and `jobs/field.astro`. The browser audit adds a link flow (job page Directions and Text, 44 px targets, no overflow; Field mode Directions; a Text action on Leads). Not added on purpose: Text on the permit supplier list (see the supplier-permits contract), and an "on my way" message (needs an SMS provider).
 
+## 2026-10-22 - SPA page-view and referrer repair
+
+Live GTM's JS - Safe Referrer read document.referrer for every event, so client-side navigation reused the original entry referrer. BaseLayout now sets clearviewPageReferrer to the previous public route before emitting spa_page_view. The matching GTM variable source is documented in docs/GTM-SPA-REFERRER.js; it falls back to document.referrer before initialization and strips queries/fragments in both cases. No event names, campaign variables, conversions or production-host guards change.
+
+Page views now capture title, location and referrer synchronously on astro:page-load rather than in an idle callback that could observe a later route. A repeated event for the same main element is ignored, while a newly rendered back/forward visit counts. Regression tests execute the actual tracker for initial/direct/invalid referrers, duplicate events, consecutive navigation and back visits, and execute the GTM variable's fallback/privacy behavior. This fixes future navigation pathing; it does not reconcile the historical GA4/GSC discrepancy or rewrite earlier data. Deployment and actual GA4 receipt are recorded with the release.
+
+
 ## 2026-10-22 - Audit link recheck and gallery full-photo delivery
 
 Rechecked the audit's municipal 404s live. Ridgefield Home Improvement currently returns 200 and works in Chrome, so retained its correct URL. Battle Ground's legacy FAQ.aspx?QID=275 now redirects; the permit guide links directly to the verified current /m/faq?cat=56#question-275 answer. Confirmed the same-size exemption in the official answer. No permit claims, FAQs, titles or descriptions changed. A scan of 34 public pages found 13 unique external anchor destinations and no repeatable 404. Camas and La Center rejected the automated client but both worked in Chrome; retained their official sources.

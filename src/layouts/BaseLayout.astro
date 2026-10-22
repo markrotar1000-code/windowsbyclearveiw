@@ -315,19 +315,41 @@ const breadcrumbSchema =
       // "spa_page_view" custom event (not GTM's built-in Page View trigger,
       // which only fires on real/hard loads and would miss every in-site
       // navigation the ClientRouter performs).
+      // A page-load event can fire twice for the same rendered document.
+      // Count each new main element once, while allowing back/forward visits.
+      let trackedPage: Element | null = null;
+      let previousPage = '';
       function trackPageView() {
+        const page = document.querySelector('main');
+        if (!page || page === trackedPage) return;
+        trackedPage = page;
+        const pageLocation = window.location.origin + window.location.pathname;
+        let referrer = previousPage;
+        if (!referrer && document.referrer) {
+          try {
+            const source = new URL(document.referrer);
+            if (['https:', 'http:'].includes(source.protocol)) referrer = source.origin + source.pathname;
+          } catch { /* An invalid referrer must not break navigation. */ }
+        }
+        // GTM's JS - Safe Referrer reads this before falling back to the
+        // original document.referrer. Never expose query strings/fragments.
+        (window as Window & { clearviewPageReferrer?: string }).clearviewPageReferrer = referrer;
+        previousPage = pageLocation;
         // @ts-expect-error — initialized by the GTM snippet in <head>.
         window.dataLayer = window.dataLayer || [];
         // @ts-expect-error — see above.
         window.dataLayer.push({
           event: 'spa_page_view',
           page_title: document.title,
-          page_location: window.location.origin + window.location.pathname,
+          page_location: pageLocation,
           page_path: window.location.pathname,
+          page_referrer: referrer,
         });
       }
 
-      document.addEventListener('astro:page-load', () => whenIdle(trackPageView));
+      // Capture the title/location/referrer together when Astro finishes the
+      // swap, before another navigation or idle callback can change them.
+      document.addEventListener('astro:page-load', trackPageView);
 
       // Per-visitor journey, kept entirely client-side until someone submits
       // the estimate form. Two small storage items, same spirit as the cost
