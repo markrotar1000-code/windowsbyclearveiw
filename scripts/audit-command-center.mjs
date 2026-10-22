@@ -493,6 +493,21 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.close();
   }
   views += 1;
+  {
+    const page = await open('siding-builder');
+    await page.goto(base + '/internal/quotes/new?type=siding', { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    const options = await page.locator('[data-siding-rate] option').allInnerTexts();
+    if (!options.length || options.some((t) => /\$|\d/.test(t))) flowProblems.push('siding builder: a siding type carries a price');
+    await page.fill('[data-siding-area]', '1200'); await page.click('[data-siding-add]'); await page.waitForTimeout(300);
+    if ((await page.locator('[data-siding-price]').evaluate((e) => e.getAttribute('aria-invalid'))) === null && !(await page.locator('.qb-problem, .line-problem, [role="alert"]').count())) flowProblems.push('siding builder: adding a line with no price says nothing');
+    await page.fill('[data-siding-price]', '9.5'); await page.click('[data-siding-add]'); await page.waitForTimeout(500);
+    const body = await page.locator('body').innerText();
+    if (!/\$11,400(\.00)?/.test(body)) flowProblems.push('siding builder: 1200 sq ft at $9.50 does not total $11,400');
+    if (/Labor starting rates|separate line|Dry rot adds labor of/.test(body)) flowProblems.push('siding builder: old labor-only wording is still on the page');
+    if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)) flowProblems.push('siding builder: overflows the phone screen');
+    await page.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();

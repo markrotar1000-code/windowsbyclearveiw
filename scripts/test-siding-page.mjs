@@ -13,7 +13,6 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stripTypeScriptTypes } from 'node:module';
 import { withoutCredentialDetail } from './_lib/credential-detail.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -49,16 +48,17 @@ const invented = [
 ];
 for (const [re, label] of invented) assert.ok(!re.test(text), `siding page must not state ${label}`);
 
-// Prices: exactly the owner's three labor rates, labelled as labor, material separate, starting rates.
-const ratesSource = stripTypeScriptTypes(readFileSync(join(root, 'src/data/siding.ts'), 'utf8'));
-const rates = (await import(`data:text/javascript,${encodeURIComponent(ratesSource)}`)).sidingLabor;
-assert.deepEqual(rates, { newConstruction: 2, existingHome: 3, boardAndBattenNewConstruction: 3, boardAndBattenExistingHome: 4, cedar: 4, tearOffPlywood: 2 }, "rates match the owner's figures");
-const dryRotSource = stripTypeScriptTypes(readFileSync(join(root, 'src/data/siding.ts'), 'utf8'));
-const dryRot = (await import(`data:text/javascript,${encodeURIComponent(dryRotSource)}`)).sidingDryRot;
-assert.deepEqual(dryRot, { low: 1500, high: 3000 }, "dry-rot range matches the owner's figures");
+// Prices: there are none. Owner direction 2026-10-22: all siding is priced by the square foot, materials and labor included, and
+// no siding dollar figure is kept anywhere in the product: not on the public page, not in a data file, not as a preset in the
+// internal quote builder (Mark types the price per square foot on each quote).
+assert.ok(!existsSync(join(root, 'src/data/siding.ts')), 'the old siding labor-rate file (src/data/siding.ts) is gone');
+const builder = readFileSync(join(root, 'src/pages/internal/quotes/new.astro'), 'utf8');
+assert.ok(!/sidingLabor|sidingDryRot|data\/siding/.test(builder), 'the quote builder imports no siding rates');
+assert.ok(!/\{ id: '(?:labor-new|labor-existing|bb-new|bb-existing|cedar|tearoff)'[^}]*rate:/.test(builder), 'no siding preset carries a rate');
+assert.ok(/data-siding-price/.test(builder), 'the builder asks for the price per square foot');
+assert.ok(!/Dry rot adds labor of/.test(builder) && !/Labor starting rates/.test(builder) && !/siding material is a separate line/.test(builder), 'the builder hint no longer quotes dry-rot dollars, labor-only rates or a separate material line');
 // Owner direction 2026-10-22: all siding is priced by the square foot with the labor AND the materials in that price,
 // so the per-type labor list (and its dry-rot row) is gone from the public page, and no dollar figure is printed.
-// The labor rates above stay in src/data/siding.ts for the internal quote builder only.
 assert.ok(!/\$\s?\d/.test(text), 'siding page prints no dollar figure');
 assert.ok(!/Labor priced per square foot|Adds labor, depending on severity|Labor starts at|Labor is \$|siding itself is a separate cost/.test(text), 'the labor-only price list is gone and nothing says the siding is a separate cost');
 for (const label of ['Tear-off and new plywood', 'Cedar siding', 'Board and batten, existing home']) assert.ok(!new RegExp(`${label}\\s*(?:Labor|Adds)`).test(text), `${label} is not a price row any more`);

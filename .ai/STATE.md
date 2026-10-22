@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-22 - No siding dollar figures anywhere
+
+Keith (from Mark): remove any dollar pricing from the siding; it should just say priced by the square foot and what that includes. The public page already printed no figure; the remaining figures were the earlier labor-only rates (`src/data/siding.ts`, now deleted) that preset the internal siding quote builder and its hint ("labor starting rates", a dry-rot dollar range, "siding material is a separate line"). The builder now asks for the kind of work, **Price per sq ft ($)** (typed by Mark each time) and the wall area; nothing is preset, and the hint says materials and labor are included. Figures were also removed from `.ai/WORKING.md`, `HANDOFF.md` and the copy reference. VERIFY for Mark: on a siding quote he must now type the per-square-foot price himself (it is not remembered between quotes). No production step.
+
 ## 2026-10-22 - Text and Directions links
 
 Keith asked to keep improving Command Center UX. Pressure test: two small, daily-path links, no new data, no schema. New `src/lib/contact-links.ts`: a **Text** button (`sms:+1...`) next to Call on Leads, Today and Follow-up and beside the phone on the job page; a **Directions** button (Google Maps) beside the address on the job page and in Field mode's header. A number that is not a 10-digit US number, or a job with no street address (a city alone), gets no button. Customer numbers only: the licensed supplier permit list still never links a homeowner's number. No production step.
