@@ -1,4 +1,6 @@
-# ICM Changelog
+#Dependency follow-up: lockfile resolves Zod 4.6.7, patching GHSA-mrhx-c7xc-m3w5 (affected below 4.6.6). npm audit reports zero vulnerabilities; no claim of a demonstrated public-site exploit.
+
+ ICM Changelog
 
 ## 2026-10-23 - Follow-up hero image discovery and shared mark delivery
 

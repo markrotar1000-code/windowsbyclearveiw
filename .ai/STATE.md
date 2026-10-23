@@ -4,6 +4,8 @@
 
 Follow-up: #287 is live as 55b873b; accessibility reached 100, but the first post-release mobile run still reported 8.0s LCP and 71 performance. A follow-up preloads the same responsive hero candidates in the head, uses synchronous decoding, removes phone photo transitions and delivers the shared logo mark as a 20,866-byte WebP. Do not claim an improved performance score before measuring this follow-up.
 
+Dependency follow-up: lockfile resolves Zod 4.6.7, patching GHSA-mrhx-c7xc-m3w5 (affected below 4.6.6). npm audit reports zero vulnerabilities; no claim of a demonstrated public-site exploit.
+
 Homepage text/actions/credentials render immediately. The responsive photo is high-priority and visible by default, including without JS. Phones <=640px, reduced motion, Save-Data and 2G/3G skip decorative video; desktop requests one optimized 643,683-byte MP4. The reveal is the same five-second take at 1280x720, original sources retained. Binding is idempotent and pauses on page swap. Estimate security-check errors now offer retry and clear on recovery without clearing inputs or unrelated errors; token verification and lead tracking remain unchanged. Executable tests and release evidence accompany the branch. Gallery full-photo compression and real-user Web Vitals remain follow-ups.
 
 ## 2026-10-23 - Quote to paid: one path, one Next button, folding Build Plan
