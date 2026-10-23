@@ -243,7 +243,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
             actions.append(button(`Link ${s.name}${when ? ` (${when})` : ''} · same ${s.matchedOn.join(' + ')}`, () => save(s.id)));
           }
         } else {
-          line.textContent = 'Not linked to a website inquiry (no inquiry with the same phone or email).';
+          // Nothing to link and nothing to say: stay out of the way.
+          panel.hidden = true;
         }
       } catch {
         panel.hidden = true;
