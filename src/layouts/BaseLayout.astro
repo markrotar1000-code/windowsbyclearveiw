@@ -220,12 +220,50 @@ const breadcrumbSchema =
         if (!['windowsbyclearview.com', 'www.windowsbyclearview.com'].includes(w.location.hostname)) return;
         w[l] = w[l] || [];
         w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-        var f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s),
-          dl = l != 'dataLayer' ? '&l=' + l : '';
-        j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-        f.parentNode.insertBefore(j, f);
+        // Queue page views immediately, but keep container download/evaluation
+        // out of the first hero paint. The same events/tags still run in order.
+        // Interaction/unload and a bounded fallback preserve short-visit capture.
+        var started = false;
+        var fallback;
+        var hero;
+        function loadContainer() {
+          if (started) return;
+          started = true;
+          w.clearTimeout(fallback);
+          ['pointerdown', 'keydown', 'pagehide'].forEach(function (type) {
+            w.removeEventListener(type, loadContainer);
+          });
+          if (hero) {
+            hero.removeEventListener('load', afterPaint);
+            hero.removeEventListener('error', afterPaint);
+          }
+          var f = d.getElementsByTagName(s)[0],
+            j = d.createElement(s),
+            dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true;
+          j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        }
+        function afterPaint() {
+          // A frame boundary between callbacks lets the visible page paint
+          // before GTM can evaluate the marketing tags on the main thread.
+          w.requestAnimationFrame(function () {
+            w.requestAnimationFrame(loadContainer);
+          });
+        }
+        function ready() {
+          hero = d.getElementById('hero-static');
+          if (hero && !hero.complete) {
+            hero.addEventListener('load', afterPaint, { once: true });
+            hero.addEventListener('error', afterPaint, { once: true });
+          } else afterPaint();
+        }
+        ['pointerdown', 'keydown', 'pagehide'].forEach(function (type) {
+          w.addEventListener(type, loadContainer, { once: true, passive: true });
+        });
+        fallback = w.setTimeout(loadContainer, 2000);
+        if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', ready, { once: true });
+        else ready();
       })(window, document, 'script', 'dataLayer', 'GTM-WGCFVHQM');
     </script>
     <ClientRouter />

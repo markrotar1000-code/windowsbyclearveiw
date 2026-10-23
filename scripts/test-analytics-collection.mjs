@@ -6,12 +6,49 @@ import { stripTypeScriptTypes } from 'node:module';
 const read = path => fs.readFileSync(path, 'utf8');
 const layout = read('src/layouts/BaseLayout.astro');
 const loader = layout.match(/\(function \(w, d, s, l, i\)[\s\S]*?'GTM-WGCFVHQM'\);/)[0];
-for (const hostname of ['windowsbyclearview.com', 'www.windowsbyclearview.com', 'localhost', '127.0.0.1', 'windowsbyclearveiw-416.pages.dev', 'abc.windowsbyclearveiw-416.pages.dev', 'windowsbyclearveiw.pages.dev', 'windowsbyclearview.com.example.org']) {
-  const loaded = [];
-  const window = { location: { hostname } };
-  const document = { createElement: () => ({}), getElementsByTagName: () => [{ parentNode: { insertBefore: tag => loaded.push(tag.src) } }] };
+function loaderHarness(hostname, { pendingHero = false, loadingDocument = false } = {}) {
+  const loaded = [], frames = [], timers = new Map(), listeners = {}, heroListeners = {};
+  const hero = { complete: !pendingHero, addEventListener: (n, f) => { heroListeners[n] = f; }, removeEventListener: n => { delete heroListeners[n]; } };
+  const window = {
+    location: { hostname },
+    requestAnimationFrame: fn => frames.push(fn),
+    setTimeout: fn => { timers.set(1, fn); return 1; }, clearTimeout: id => timers.delete(id),
+    addEventListener: (n, fn) => { listeners[n] = fn; }, removeEventListener: n => { delete listeners[n]; },
+  };
+  const document = {
+    readyState: loadingDocument ? 'loading' : 'interactive', getElementById: () => hero,
+    addEventListener: (n, fn) => { listeners[n] = fn; },
+    createElement: () => ({}), getElementsByTagName: () => [{ parentNode: { insertBefore: tag => loaded.push(tag.src) } }],
+  };
   vm.runInNewContext(loader, { window, document });
-  assert.equal(loaded.length, ['windowsbyclearview.com', 'www.windowsbyclearview.com'].includes(hostname) ? 1 : 0, hostname);
+  return { loaded, frames, timers, listeners, heroListeners, window };
+}
+for (const hostname of ['windowsbyclearview.com', 'www.windowsbyclearview.com', 'localhost', '127.0.0.1', 'windowsbyclearveiw-416.pages.dev', 'abc.windowsbyclearveiw-416.pages.dev', 'windowsbyclearveiw.pages.dev', 'windowsbyclearview.com.example.org']) {
+  const h = loaderHarness(hostname);
+  assert.equal(h.loaded.length, 0, 'container never blocks the initial paint');
+  if (!['windowsbyclearview.com', 'www.windowsbyclearview.com'].includes(hostname)) {
+    assert.equal(h.frames.length, 0, hostname); assert.equal(h.timers.size, 0); continue;
+  }
+  h.window.dataLayer.push({ event: 'spa_page_view', page_path: '/' }, { event: 'generate_lead' });
+  h.frames.shift()(); assert.equal(h.loaded.length, 0, 'allow a rendered frame');
+  h.frames.shift()(); assert.equal(h.loaded.length, 1);
+  assert.deepEqual(Array.from(h.window.dataLayer, e => e.event), ['gtm.js', 'spa_page_view', 'generate_lead'], 'queued tracking remains ordered');
+  assert.equal(h.timers.size, 0, 'clear the fallback after loading');
+}
+for (const trigger of ['pointerdown', 'keydown', 'pagehide', 'fallback', 'image-load', 'image-error']) {
+  const h = loaderHarness('windowsbyclearview.com', { pendingHero: true, loadingDocument: true });
+  h.listeners.DOMContentLoaded();
+  assert.equal(h.frames.length, 0, 'wait for the visible hero');
+  const fallback = h.timers.get(1);
+  if (trigger.startsWith('image-')) {
+    h.heroListeners[trigger === 'image-load' ? 'load' : 'error']();
+    h.frames.shift()(); h.frames.shift()();
+  } else if (trigger === 'fallback') fallback();
+  else h.listeners[trigger]();
+  fallback();
+  while (h.frames.length) h.frames.shift()();
+  assert.equal(h.loaded.length, 1, `${trigger}: initialize once, including fallback races`);
+  assert.ok(!h.listeners.pointerdown && !h.listeners.keydown && !h.listeners.pagehide);
 }
 assert.ok(!layout.includes('ns.html?id='), 'a noscript iframe must not bypass the hostname guard');
 assert.ok(!read('src/pages/estimate/sent.astro').includes("event: 'generate_lead'"), 'direct/refresh confirmation-page views are not conversions');
