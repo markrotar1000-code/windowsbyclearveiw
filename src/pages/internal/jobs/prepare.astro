@@ -1,7 +1,9 @@
 ---
 import InternalLayout from '../../../layouts/InternalLayout.astro';
+import FlowBar from '../../../components/internal/FlowBar.astro';
 ---
 <InternalLayout title="Job Prep">
+  <FlowBar by="job" />
   <div class="head"><div><p class="kicker">Operations</p><h1>Job prep & closeout</h1><p class="lede" data-subtitle>Loading project…</p></div><div class="actions"><a class="btn btn-ghost" data-job-link href="/internal/jobs">Job</a><a class="btn btn-primary" data-photos-link href="#">Photos</a></div></div>
   <p class="error" data-error hidden role="alert"></p>
   <section class="summary-grid" data-summary><article class="summary-card"><span>Customer</span><strong data-customer>—</strong><small data-location>—</small></article><article class="summary-card"><span>Schedule</span><strong data-schedule>Not scheduled</strong><small data-window>—</small></article><article class="summary-card"><span>Progress</span><strong data-progress>0%</strong><small data-progress-detail>0 of 0 complete</small></article><article class="summary-card"><span>Quoted total</span><strong data-total>—</strong><small>Source quote</small></article></section>

@@ -508,6 +508,31 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.close();
   }
   views += 1;
+  {
+    const page = await open('flow');
+    const quotes = (await (await fetch(base + '/internal/api/quotes')).json()).quotes;
+    const draft = quotes.find((x) => x.status === 'draft' && x.work_type === 'windows');
+    await page.goto(base + '/internal/quotes/view?id=' + draft.id, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!(await page.locator('.flow-step[aria-current="step"]').count())) flowProblems.push('flow: a draft quote has no current step');
+    if (!/Build/.test(await page.locator('.flow-actions .btn-primary').first().innerText())) flowProblems.push('flow: a draft window quote does not point at the Build Plan');
+    await page.goto(base + '/internal/quotes/build-plan?quoteId=' + draft.id, { waitUntil: 'networkidle' }); await page.waitForTimeout(1200);
+    if (!(await page.locator('.flow-here').count())) flowProblems.push('flow: the Build Plan page offers a button to itself instead of saying "you are on this step"');
+    const folded = await page.locator('.bp-card.is-collapsed').count();
+    if (folded < 3) flowProblems.push('plan: sections are not folded on a phone (' + folded + ')');
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    if (height > 6500) flowProblems.push('plan: the Build Plan is still ' + height + ' px tall on a phone');
+    const head = page.locator('.bp-card > .card-head').first();
+    if ((await head.getAttribute('aria-expanded')) !== 'false') flowProblems.push('plan: the first section does not start folded on a phone');
+    await head.click(); await page.waitForTimeout(200);
+    if ((await head.getAttribute('aria-expanded')) !== 'true') flowProblems.push('plan: tapping a folded section does not open it');
+    await page.click('[data-bp-collapse]'); if ((await page.locator('.bp-card:not(.is-collapsed)').count()) !== 1) flowProblems.push('plan: Collapse all leaves sections open');
+    await page.click('[data-bp-expand]'); if (await page.locator('.bp-card.is-collapsed').count()) flowProblems.push('plan: Expand all leaves sections folded');
+    if (!/\d+ items?/.test(await page.locator('.card-count').first().innerText())) flowProblems.push('plan: a section head shows no item count');
+    await page.goto(base + '/internal/jobs/view?id=' + ids.j1, { waitUntil: 'networkidle' }); await page.waitForTimeout(900);
+    if (!(await page.locator('.flow-step[aria-current="step"]').count())) flowProblems.push('flow: a job has no current step');
+    await page.close();
+  }
+  views += 1;
   views += 12;
   for (const f of flowProblems) findings.push(`flow / ${f}`);
   await ctx.close();

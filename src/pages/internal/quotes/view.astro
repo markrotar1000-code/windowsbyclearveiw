@@ -1,9 +1,11 @@
 ---
 import InternalLayout from '../../../layouts/InternalLayout.astro';
+import FlowBar from '../../../components/internal/FlowBar.astro';
 import { site, telHref, mailHref } from '../../../data/site';
 import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 ---
 <InternalLayout title="Quote">
+  <FlowBar by="quote" />
   <div class="qv-toolbar" data-toolbar hidden>
     <a class="qv-back" href="/internal/quotes">&larr; All quotes</a>
     <div class="qv-toolbar-actions">
@@ -16,10 +18,6 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   </div>
   <p class="qv-error" data-delete-error hidden role="alert"></p>
   <p class="qv-error" data-job-error hidden role="alert"></p>
-  <section class="qv-next no-print" data-next-panel hidden aria-label="Next step">
-    <p class="qv-lead-line" data-next-line></p>
-    <div class="qv-lead-actions" data-next-actions></div>
-  </section>
   <section class="qv-share no-print" data-share-panel hidden aria-label="Customer signing link">
     <div class="qv-share-head">
       <p class="qv-lead-line" data-share-line></p>
@@ -342,47 +340,6 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       }
     }
 
-    // "What do I do now?" for a draft quote: window quotes need an approved Build Plan before they can be
-    // signed (on paper or on screen), and nothing on this page used to link to it.
-    async function loadNextStep(quote: any) {
-      const panel = document.querySelector('[data-next-panel]');
-      const line = document.querySelector('[data-next-line]');
-      const actions = document.querySelector('[data-next-actions]');
-      if (!(panel instanceof HTMLElement) || !(line instanceof HTMLElement) || !(actions instanceof HTMLElement)) return;
-      actions.replaceChildren();
-      if (quote.status !== 'draft') { panel.hidden = true; return; }
-      const how = quote.signature_method === 'digital' ? 'sign it on screen below' : 'print it, get it signed in pen, then tap "Confirm it\'s signed" at the bottom';
-      const anchor = (label: string, href: string, primary = false) => {
-        const a = document.createElement('a');
-        a.className = primary ? 'btn btn-primary' : 'btn btn-ghost';
-        a.href = href;
-        a.textContent = label;
-        return a;
-      };
-      panel.hidden = false;
-      if (quote.work_type === 'siding') {
-        line.textContent = `Siding quotes skip the Build Plan. Check the price, then ${how}.`;
-        return;
-      }
-      const planHref = `/internal/quotes/build-plan?quoteId=${encodeURIComponent(quote.id)}`;
-      const approveHref = `/internal/quotes/build-plan-approval?quoteId=${encodeURIComponent(quote.id)}`;
-      let status = '';
-      try {
-        const r = await fetch(`/internal/api/build-plan-state?quoteId=${encodeURIComponent(quote.id)}`);
-        if (r.ok) { const d = await r.json(); status = d.stale ? 'stale' : String(d.status || ''); }
-      } catch { /* fall through to the generic prompt */ }
-      if (status === 'approved') {
-        line.textContent = `Build Plan approved. Check the price, then ${how}.`;
-        actions.append(anchor('View Build Plan', planHref));
-      } else if (status === 'stale') {
-        line.textContent = 'The quote changed after its Build Plan was saved. Open the Build Plan, save it again, then approve it. You cannot sign this quote until then.';
-        actions.append(anchor('Open Build Plan', planHref, true));
-      } else {
-        line.textContent = 'Next: finish the Build Plan and approve it. This quote cannot be signed until the plan is approved.';
-        actions.append(anchor('Open Build Plan', planHref, true), anchor('Review & approve', approveHref));
-      }
-    }
-
     // On-screen price editing for an unsigned quote. The printed contract below stays plain text; this panel is
     // no-print. Saving sends the whole quote back through the same PUT the edit form uses, so the server stays
     // the one place that recomputes totals and revokes a customer link that was sent with the old numbers.
@@ -558,7 +515,6 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
       loadLeadLink(quote.id);
       loadShareLink(quote.id);
-      loadNextStep(quote);
 
       set('[data-quote-id]', quote.id);
       set('[data-quote-type]', workTypeLabel(quote.work_type));
@@ -1246,15 +1202,6 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     font-size: var(--step--2);
     color: var(--ink-faint);
     text-align: center;
-  }
-
-  .qv-next {
-    border: 1px solid var(--line);
-    border-left: 4px solid var(--accent, var(--ink));
-    border-radius: var(--radius);
-    background: var(--paper-raised);
-    padding: var(--space-s);
-    margin-bottom: var(--space-s);
   }
 
   @media print {

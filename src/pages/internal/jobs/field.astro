@@ -1,7 +1,9 @@
 ---
 import InternalLayout from '../../../layouts/InternalLayout.astro';
+import FlowBar from '../../../components/internal/FlowBar.astro';
 ---
 <InternalLayout title="Field Mode">
+  <FlowBar by="job" />
   <div class="field-head"><div><p class="kicker">ClearView Command Center · Field execution</p><h1 data-title>Field mode</h1><p class="lede" data-subtitle>One opening at a time. Verify it. Build it. Prove it.</p></div><div class="actions"><a class="btn btn-ghost" data-directions href="#" target="_blank" rel="noopener" hidden>Directions</a><a class="btn btn-ghost" data-job-link href="/internal/jobs">Job workspace</a><a class="btn btn-ghost" data-photos href="#">Photo log</a></div></div>
   <p class="error" data-error hidden role="alert"></p>
   <section class="stop-card" data-stop hidden><strong>STOP · No production snapshot attached</strong><p>This job cannot be executed from a live quote/build-plan editor. Attach the approved Build Plan snapshot first.</p><a class="btn btn-primary btn-small" data-plan-link href="#">Open Build Plan</a></section>

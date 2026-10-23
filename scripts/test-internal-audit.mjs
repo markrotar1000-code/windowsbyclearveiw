@@ -216,11 +216,11 @@ const planRow = (env, id) => env.QUOTES_DB.prepare('SELECT * FROM quote_build_pl
 // ── 6. Saved quote: next step, phone layout and the printed pen copy ───────
 {
   const view = read('src/pages/internal/quotes/view.astro');
-  // Nothing on the saved quote used to link to the Build Plan, and a window quote cannot be signed without it.
-  assert.ok(view.includes('data-next-panel') && view.includes('loadNextStep(quote)'), 'a draft quote shows a "next step" panel');
-  assert.ok(view.includes('/internal/quotes/build-plan?quoteId=') && view.includes('/internal/quotes/build-plan-approval?quoteId='), 'it links to the Build Plan and to its approval');
-  assert.ok(view.includes("quote.work_type === 'siding'") && view.includes('Siding quotes skip the Build Plan'), 'a siding quote is told it has no plan');
-  assert.ok(!view.includes('Approve the Build Plan before sending a signing link.'), 'the duplicate blocked message is gone (the next-step panel says it)');
+  // The "what do I do now?" panel is now the shared FlowBar (stepper + one Next button), tested in test-flow.mjs: it links to the
+  // Build Plan and its approval for a draft window quote, and tells a siding quote it has no plan.
+  assert.ok(view.includes('<FlowBar by="quote"'), 'the saved quote shows the path and the next step');
+  assert.ok(!view.includes('data-next-panel') && !view.includes('loadNextStep'), 'the old page-local next-step panel is gone (the FlowBar replaces it)');
+  assert.ok(!view.includes('Approve the Build Plan before sending a signing link.'), 'the duplicate blocked message is gone (the next step says it)');
   // Phone: "$1,00 / 0" split across two lines was measured at 390 px.
   assert.ok(/contract-items td:not\(:first-child\)[\s\S]{0,160}white-space: nowrap/.test(view), 'quantity, unit and total never wrap');
   // Print: the signature page must name the quote and total, keep the cancellation notice with the signature, and have a company line.

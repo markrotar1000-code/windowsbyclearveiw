@@ -1,7 +1,9 @@
 ---
 import InternalLayout from '../../../layouts/InternalLayout.astro';
+import FlowBar from '../../../components/internal/FlowBar.astro';
 ---
 <InternalLayout title="Job Closeout">
+  <FlowBar by="job" />
   <div class="head"><div><p class="kicker">Operations · final handoff</p><h1 data-title>Job closeout</h1><p class="lede" data-subtitle>Reconcile the field record before the project leaves production.</p></div><div class="actions"><a class="btn btn-ghost" data-job href="/internal/jobs">Job workspace</a><a class="btn btn-ghost" data-field href="#">Field mode</a></div></div>
   <p class="error" data-error hidden role="alert"></p>
   <div class="closeout" data-main hidden>

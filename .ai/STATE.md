@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-23 - Quote to paid: one path, one Next button, folding Build Plan
+
+Keith: the quote and job flow still feels rough. Walked it on a phone (lead, quote builder, saved quote, Build Plan): the real problem was that nothing said where a customer was or what to do next, each page knew only itself, and the Build Plan was 13,000 px long. Added a shared path card (steps from quote to paid, the current one marked, one Next button, including Create the job in place) to every quote and job page, driven by `/internal/api/flow`; the quote page's old page-local "next step" panel is gone. The Build Plan's six sections fold (item counts in the heads; on a phone only Openings and Do-not-guess start open): 13,000 px down to about 6,700. No production step.
+
 ## 2026-10-22 - No siding dollar figures anywhere
 
 Keith (from Mark): remove any dollar pricing from the siding; it should just say priced by the square foot and what that includes. The public page already printed no figure; the remaining figures were the earlier labor-only rates (src/data/siding.ts (deleted 2026-10-22), now deleted) that preset the internal siding quote builder and its hint ("labor starting rates", a dry-rot dollar range, "siding material is a separate line"). The builder now asks for the kind of work, **Price per sq ft ($)** (typed by Mark each time) and the wall area; nothing is preset, and the hint says materials and labor are included. Figures were also removed from `.ai/WORKING.md`, `HANDOFF.md` and the copy reference. VERIFY for Mark: on a siding quote he must now type the per-square-foot price himself (it is not remembered between quotes). No production step.
