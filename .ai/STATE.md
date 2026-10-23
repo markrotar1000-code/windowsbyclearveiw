@@ -1,5 +1,11 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-23 - Responsive service tiles and logo sizes
+
+#289 is live as a1782f9 (Cloudflare 1c298b44-63f5-423f-a8da-be23b95cdf96). Production mobile PSI at 3:17 PM measured 91 performance / LCP 2.3s / accessibility 100, versus 66 / 8.0s immediately before; GA4 page_view dispatch received HTTP 204. This is lab/transport evidence, not field-CWV or a verified lead receipt.
+
+Home service image sizes now follow the actual 900px one-column breakpoint and max(frame width, frame height * source aspect ratio), with the 320-460px height clamp retained. This avoids the desktop crop multiplier on phones and fixes undersized images at 801-900px. Header/footer/kicker marks select 64/128/256px WebPs for their rendered sizes; new files are 2,582 / 6,786 bytes, originals retained. Browser checks at 390/850/1440px verify expected file selection and no overflow. Photo quality, framing and full-gallery downloads remain unchanged. Full suite and hosted/production checks accompany release.
+
 ## 2026-10-23 - Let the hero paint before marketing evaluation
 
 Hosted builds exposed the concurrent Astro 7.4.0 update requiring Node >=22.22.0 while repo/CI still pinned 22.19.0. Raised .node-version, package engines and CI pins to 22.22.0 so the already-merged dependency can deploy; no runtime binding/security changes.

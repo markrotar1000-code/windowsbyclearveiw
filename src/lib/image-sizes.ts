@@ -158,3 +158,14 @@ function splitTopLevel(list: string): string[] {
 export function tileSizes(sizes: string, source: ImageLike, frame: FrameName): string {
   return scaleSizes(sizes, coverScale(source, FRAMES[frame]));
 }
+
+/** Home service tiles: one column through 900px; height clamps from 320 to 460px.
+ * Cover needs max(frame width, frame height * source ratio). Do not apply the
+ * narrow four-column crop multiplier to a full-width phone/tablet frame.
+ */
+export function serviceTileSizes(image: ImageLike): string {
+  const { width, height } = dimensionsOf(image);
+  const ratio = width > 0 && height > 0 ? width / height : 1;
+  const ceil = (n: number) => Math.ceil(n * 100) / 100;
+  return `(max-width: 900px) max(calc(100vw - 48px), ${ceil(320 * ratio)}px), max(min(300px, 25vw), clamp(${ceil(320 * ratio)}px, ${ceil(32 * ratio)}vw, ${ceil(460 * ratio)}px))`;
+}

@@ -19,7 +19,9 @@ const { compact = false } = Astro.props;
 >
   <img
     class="brand-mark"
-    src="/logo/icon-mark@256.webp"
+    src="/logo/icon-mark@128.webp"
+    srcset="/logo/icon-mark@64.webp 64w, /logo/icon-mark@128.webp 128w, /logo/icon-mark@256.webp 256w"
+    sizes={compact ? '34px' : '38px'}
     width="256"
     height="256"
     alt=""
