@@ -1,5 +1,13 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-23 - Verified mobile LCP and captured GTM page context
+
+#289 and #290 are live (runtime code through 84f363f). Production mobile LCP fell from 8.0s to 2.3s in two post-fix PSI runs; performance 91 then 90, accessibility/best-practices/SEO 100. Final responsive image opportunity is 4KiB versus 156KiB. Both code batches passed all 66 local checks, separate builds, GitHub CI and hosted/production checks. #290 production deployment: 336f3560-8c52-4725-bdfb-bd2a34a84241.
+
+GTM-WGCFVHQM version 16 is Live: Preserve captured page context for queued SPA views (3:30 PM PDT). Four new Version 2 DLVs map page_title/page_location/page_path/page_referrer; Google Analytics GA4 Event now uses these captured payload values instead of live browser variables. Exactly four variables and one tag changed from a clean workspace. Same events/triggers, consent and lead acceptance. Home -> replacement -> estimate emitted three correct page_view locations/titles/referrers, each HTTP 204; this is transport evidence, not GA4 processed attribution or a new conversion. JS - Safe Referrer remains for other tags; do not restore it as the page_view mapping.
+
+Remaining: vendor JS/cache opportunities; enhanced-measurement scroll showed original entry URL with a later title during SPA navigation and needs separate context repair; earlier full-gallery warnings retain original detail. No physical phone, full manual accessibility certification, field-CWV or new accepted lead checked. Evidence report and sanitized request artifact are in the task outputs.
+
 ## 2026-10-23 - Responsive service tiles and logo sizes
 
 #289 is live as a1782f9 (Cloudflare 1c298b44-63f5-423f-a8da-be23b95cdf96). Production mobile PSI at 3:17 PM measured 91 performance / LCP 2.3s / accessibility 100, versus 66 / 8.0s immediately before; GA4 page_view dispatch received HTTP 204. This is lab/transport evidence, not field-CWV or a verified lead receipt.
