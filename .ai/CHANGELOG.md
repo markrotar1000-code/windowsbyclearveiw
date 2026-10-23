@@ -2,6 +2,8 @@
 
 ## 2026-10-23 - Let the hero paint before marketing evaluation
 
+Hosted builds exposed the concurrent Astro 7.4.0 update requiring Node >=22.22.0 while repo/CI still pinned 22.19.0. Raised .node-version, package engines and CI pins to 22.22.0 so the already-merged dependency can deploy; no runtime binding/security changes.
+
 The unchanged #288 preview without the production GTM container measured mobile 98 / LCP 1.9s versus production 70 / 8.0s. Browser traces also show Google/Meta work competing during loading. The GTM bootstrap still initializes the same ordered dataLayer immediately, but waits for the hero load/error and two animation frames before inserting the asynchronous container. Pointer/keyboard interaction, pagehide and a 2s bound can start it earlier; all paths deduplicate and remove listeners. Other routes wait only for the initial frame boundaries. No tag, event, consent setting, conversion gate or hostname guard changes. Tests execute paint ordering, queued page/lead events, pending/failed image, fallback and interaction races. Actual production performance and GA dispatch require release verification; do not infer them from local tests.
 
  ICM Changelog
