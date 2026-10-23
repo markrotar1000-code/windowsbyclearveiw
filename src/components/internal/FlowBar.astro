@@ -1,0 +1,131 @@
+---
+// "Where is this customer on the way from quote to paid, and what do I do now?" A row of steps and one Next button,
+// from /internal/api/flow (functions/internal/_lib/flow.mjs). Shown on every quote and job page, so Mark never has
+// to remember which page comes next. `by` says which URL parameter names the record: a quote page or a job page.
+interface Props { by: 'quote' | 'job' }
+const { by } = Astro.props;
+---
+<section class="flow no-print" data-flow data-flow-by={by} data-flow-loading aria-label="Quote to payment" aria-busy="true">
+  <ol class="flow-steps" data-flow-steps tabindex="0" aria-label="Steps from quote to paid"></ol>
+  <div class="flow-next" data-flow-next>
+    <p class="flow-hint" data-flow-hint></p>
+    <div class="flow-actions" data-flow-actions></div>
+  </div>
+  <p class="flow-error" data-flow-error role="alert" hidden></p>
+</section>
+
+<script>
+  import { loadFailureMessage } from '../../lib/load-failed';
+
+  function initFlow() {
+    const root = document.querySelector('[data-flow]');
+    if (!(root instanceof HTMLElement) || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+    const params = new URLSearchParams(location.search);
+    const by = root.dataset.flowBy === 'job' ? 'job' : 'quote';
+    const id = (by === 'job' ? params.get('jobId') || params.get('id') : params.get('quoteId') || params.get('id')) || '';
+    if (!id) { root.hidden = true; return; }
+
+    // Sit under the page's title block, so the customer's name comes first and the path second. (The quote page has no visible
+    // title above its contract, so there the card stays at the top.)
+    const title = document.querySelector('.internal-main h1:not(.visually-hidden)');
+    let block: Element | null = title;
+    while (block && block.parentElement && !block.parentElement.matches('.internal-main')) block = block.parentElement;
+    if (block && block !== root && block.parentElement?.matches('.internal-main')) block.after(root);
+
+    const stepsEl = root.querySelector('[data-flow-steps]') as HTMLElement;
+    const hintEl = root.querySelector('[data-flow-hint]') as HTMLElement;
+    const actionsEl = root.querySelector('[data-flow-actions]') as HTMLElement;
+    const errorEl = root.querySelector('[data-flow-error]') as HTMLElement;
+    const el = (tag: string, className = '', text = '') => { const n = document.createElement(tag); if (className) n.className = className; if (text) n.textContent = text; return n; };
+
+    type Step = { key: string; label: string; state: 'done' | 'current' | 'todo' };
+    type Next = { key: string; label: string; hint: string; href?: string; action?: string; quoteId?: string; also?: { label: string; href: string }[] };
+    type Flow = { steps: Step[]; next: Next | null; note: string };
+
+    function render(flow: Flow) {
+      stepsEl.replaceChildren(...flow.steps.map((s, i) => {
+        const li = el('li', `flow-step flow-${s.state}`);
+        if (s.state === 'current') li.setAttribute('aria-current', 'step');
+        li.append(el('span', 'flow-dot', s.state === 'done' ? '✓' : String(i + 1)), el('span', 'flow-label', s.label));
+        return li;
+      }));
+      actionsEl.replaceChildren();
+      errorEl.hidden = true;
+      if (flow.next) {
+        const next = flow.next;
+        hintEl.textContent = next.hint;
+        if (next.action === 'create-job') {
+          const button = el('button', 'btn btn-primary', next.label) as HTMLButtonElement;
+          button.type = 'button';
+          button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = 'Creating…';
+            errorEl.hidden = true;
+            try {
+              const response = await fetch('/internal/api/jobs', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quoteId: next.quoteId }) });
+              const result = await response.json().catch(() => ({}));
+              if (!response.ok || !result.id) throw new Error(result.error || 'Could not create the job.');
+              location.href = `/internal/jobs/view?id=${encodeURIComponent(result.id)}`;
+            } catch (error) {
+              errorEl.textContent = loadFailureMessage(error);
+              errorEl.hidden = false;
+              button.disabled = false;
+              button.textContent = next.label;
+            }
+          });
+          actionsEl.append(button);
+        } else if (next.href) {
+          const target = new URL(next.href, location.href);
+          if (target.pathname === location.pathname) {
+            // Already on the page where this step happens: say so instead of offering a button to the same page.
+            const here = el('p', 'flow-here');
+            here.append(el('strong', '', 'You are on this step: '), next.label);
+            actionsEl.append(here);
+          } else {
+            const link = el('a', 'btn btn-primary', next.label) as HTMLAnchorElement;
+            link.href = next.href;
+            actionsEl.append(link);
+          }
+        }
+        for (const extra of next.also || []) { const a = el('a', 'btn btn-ghost', extra.label) as HTMLAnchorElement; a.href = extra.href; actionsEl.append(a); }
+      } else {
+        hintEl.textContent = flow.note || '';
+      }
+      root.removeAttribute('data-flow-loading');
+      root.setAttribute('aria-busy', 'false');
+      root.hidden = false;
+      // On a phone the step row scrolls sideways: bring the current step into view.
+      const current = stepsEl.querySelector('[aria-current="step"]');
+      if (current instanceof HTMLElement && stepsEl.scrollWidth > stepsEl.clientWidth) stepsEl.scrollLeft = Math.max(0, current.offsetLeft - 24);
+    }
+
+    fetch(`/internal/api/flow?${by === 'job' ? 'jobId' : 'quoteId'}=${encodeURIComponent(id)}`, { headers: { accept: 'application/json' } })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (data && data.status === 'ok') render(data as Flow); else root.hidden = true; })
+      .catch(() => { root.hidden = true; /* guidance only: the page works without it */ });
+  }
+  initFlow();
+  document.addEventListener('astro:page-load', initFlow);
+</script>
+
+<style>
+  .flow { margin: 0 0 var(--space-m); padding: var(--space-s) var(--space-m); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--paper-raised); box-shadow: var(--shadow-sm); display: grid; gap: var(--space-s); }
+  .flow[hidden] { display: none; }
+  /* Reserve the card's height while it loads so the page does not jump when it arrives. */
+  .flow[data-flow-loading] { min-height: 7.5rem; }
+  .flow-steps { list-style: none; margin: 0; padding: 0 0 .15rem; display: flex; gap: .35rem; overflow-x: auto; scrollbar-width: none; }
+  .flow-steps::-webkit-scrollbar { display: none; }
+  :global(.flow-step) { flex: none; display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .65rem .3rem .3rem; border-radius: 999px; border: 1px solid var(--line); font-size: var(--step--1); font-weight: 650; color: var(--ink-soft); background: var(--paper); }
+  :global(.flow-dot) { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--line); color: var(--ink); font-size: .72rem; font-weight: 800; }
+  :global(.flow-done) :global(.flow-dot) { background: var(--accent); color: var(--on-dark); }
+  :global(.flow-current) { border-color: var(--ink); color: var(--ink); background: var(--paper-raised); }
+  :global(.flow-current) :global(.flow-dot) { background: var(--ink); color: var(--on-dark); }
+  .flow-next { display: flex; align-items: center; justify-content: space-between; gap: var(--space-s); flex-wrap: wrap; }
+  .flow-hint { margin: 0; flex: 1 1 14rem; font-size: var(--step--1); color: var(--ink-soft); }
+  .flow-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .flow-actions :global(.btn) { min-height: 2.75rem; }
+  :global(.flow-here) { margin: 0; font-size: var(--step--1); color: var(--ink); }
+  .flow-error { margin: 0; color: var(--danger); font-size: var(--step--1); }
+  @media (max-width: 520px) { .flow-next { display: grid; } .flow-actions :global(.btn) { flex: 1 1 8rem; justify-content: center; } }
+</style>

@@ -485,6 +485,10 @@ so keep the TTL short-ish; the compliant way to show *every* review later is the
 Business Profile API with owner OAuth (Keith manages the profile), which needs
 Google's API access approval.
 
+## Quote to paid: the path and the Next button
+
+Every quote and job page (quote, Build Plan, approval, job, prep, field mode, closeout) opens with the same card: the steps from quote to paid, the current one marked, and one button for what to do now. A window quote goes Quote, Build plan, Approved, Signed, Job, Scheduled, Installing, Closed, Paid; a siding quote skips the plan and the installing step; a general job starts at Job. The card is computed from the records that already exist (`GET /internal/api/flow?quoteId=` or `?jobId=`, read only; the rules live in `functions/internal/_lib/flow.mjs`), so it never disagrees with the quote, the plan, the job or the payments. A stale Build Plan is saved again before it can be approved; a signed quote offers **Create the job** right on the card; before the install date the button is Prepare for the install, on the day it is Open field mode. A deposit does not mark a job Paid until the job is closed. On the Build Plan page, each of the six sections folds and shows its item count; on a phone only Openings and Do-not-guess start open.
+
 ## Find a customer (Dashboard and Today)
 
 The box at the top of the Dashboard and Today searches leads, quotes and jobs at once (`GET /internal/api/search?q=`, read only, never cached). Type a name, a phone number in any format, an address, a city, an email or a quote or job number; two characters is enough. Names that start with the text come first, then the newest. Each result opens the record: a quote or job opens its page, a lead opens Leads already filtered (`/internal/leads?q=`). On a keyboard, `/` jumps to the box and Esc clears it. Nothing is stored or logged; a database without one of the tables just shows no results for it.
