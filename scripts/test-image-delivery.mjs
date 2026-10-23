@@ -222,6 +222,11 @@ ok('the home hero photo is offered up to 2560 px', () => {
   assert.ok(widestCandidate(tag) >= 2560, 'hero-static needs a 2560 px candidate for retina laptops and phones');
   assert.match(attr(tag, 'sizes') ?? '', /\(max-width: 640px\) \d+vw, 100vw/);
   assert.equal(attr(tag, 'fetchpriority'), 'high', 'the first-paint hero photo must load before decorative video');
+  assert.equal(attr(tag, 'decoding'), 'sync', 'the visible hero must not wait for idle decoding');
+  const preload = [...pages.get('index').matchAll(/<link\b[^>]*>/g)].map(m => m[0]).find(t => attr(t, 'as') === 'image' && attr(t, 'rel') === 'preload');
+  assert.ok(preload, 'home must discover its responsive hero in the head');
+  assert.equal(attr(preload, 'imagesrcset'), attr(tag, 'srcset'), 'preload candidates must match the image to avoid duplicate downloads');
+  assert.equal(attr(preload, 'imagesizes'), attr(tag, 'sizes'));
 });
 
 // A guide graphic is offered at 2000 px (the Canva exports are 2000 px wide). The vinyl vs fiberglass, double-pane and flashing graphics are the

@@ -1,6 +1,10 @@
-# Project context — Clearview Windows
+#Dependency follow-up: lockfile resolves Zod 4.6.7, patching GHSA-mrhx-c7xc-m3w5 (affected below 4.6.6). npm audit reports zero vulnerabilities; no claim of a demonstrated public-site exploit.
+
+ Project context — Clearview Windows
 
 ## 2026-10-23 - Homepage loading and estimate security recovery
+
+Follow-up to #287 (merged 55b873b): production mobile accessibility is now 100, but its first repeat reported performance 71 / LCP 8.0s. Current follow-up adds an exact responsive head preload and synchronous hero decode, disables phone photo transitions, and replaces the shared 84KB PNG mark with a 20,866-byte WebP while preserving the source. The score remains a measurement question, not an assumed success.
 
 Direct mobile Lighthouse baseline was 73 performance, 8.0s LCP and 4,752 KiB total, with 3,403.5 KiB across both hero formats. VideoHero now shows the responsive image immediately/high priority, removes the extra poster and delays no customer text. Phones <=640px and constrained/reduced-motion connections never assign a video source. Desktop keeps the original five-second reveal via one new 643,683-byte H.264 asset at 1280x720; original files remain. One binding per element prevents duplicate starts; navigation pauses the old clip. Removing the copy fade also keeps credentials readable immediately.
 

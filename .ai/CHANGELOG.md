@@ -1,4 +1,10 @@
-# ICM Changelog
+#Dependency follow-up: lockfile resolves Zod 4.6.7, patching GHSA-mrhx-c7xc-m3w5 (affected below 4.6.6). npm audit reports zero vulnerabilities; no claim of a demonstrated public-site exploit.
+
+ ICM Changelog
+
+## 2026-10-23 - Follow-up hero image discovery and shared mark delivery
+
+After #287, production Lighthouse mobile accessibility improved from 96 to 100, but the first follow-up run still reported 8.0s LCP (now the static image) and 71 performance. Do not claim the lab performance issue resolved from the video-byte savings alone. Preload the exact responsive home image candidates in the head, decode it synchronously and disable unused photo fades on phones. Shared brand/kicker marks now use a 20,866-byte quality-90 WebP instead of the 84,023-byte PNG; source PNG and layout remain. Build checks assert preload/image candidate identity and asset budget. New hosted and production measurements accompany this follow-up.
 
 ## 2026-10-23 - Immediate homepage content and recoverable security check
 
