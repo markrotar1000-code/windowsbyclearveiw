@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-23 - Quote page: no empty website-inquiry banner
+
+`src/pages/internal/quotes/view.astro`: the website-inquiry panel is hidden when the quote is not linked and no inquiry shares its phone or email (it used to print a "Not linked" line on every such quote). It still shows when linked, and when there are exact-match suggestions to link.
+
 ## 2026-10-23 - Quote to paid path and folding Build Plan
 
 Added `functions/internal/_lib/flow.mjs` (`computeFlow`, `readFlow`, `pacificDate`), `functions/internal/api/flow.js`, `src/components/internal/FlowBar.astro` on seven pages. `npm run test:flow` (in CI): the pure path for windows, siding and general jobs; stale plan; deposit does not mean paid; cancelled; Pacific date; then the same answers from real SQLite records through the real quote, job and payment handlers; then page wiring. Replaced the quote page's own next-step panel (test-internal-audit updated). Found by the browser audit while building it: the bar must not use `data-loading` (the pages use that attribute for their own Loading line); dynamically built classes need `:global`. Build Plan sections fold (`bindSections` in `build-plan.astro`); the browser audit asserts the phone height is under 6,500 px, folding works, Expand/Collapse all work, and the path card is on a quote and a job. Not done, on purpose: merging identical lines in the quote builder, tucking the website-inquiry banner on the quote page away, and auto-advancing after a step (Mark stays in control).
