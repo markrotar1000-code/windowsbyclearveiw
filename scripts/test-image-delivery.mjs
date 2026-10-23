@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const lib = await import(pathToFileURL(`${root}src/lib/image-sizes.ts`).href);
-const { FRAMES, SLOT_SIZES, LEAD_PHOTO_WIDTHS, TILE_WIDTHS, CROPPED_TILE_WIDTHS, HARD_CROP, coverScale, scaleSizes, tileSizes, tileWidths, frameForGroup, isLandscape, dimensionsOf } = lib;
+const { FRAMES, SLOT_SIZES, LEAD_PHOTO_WIDTHS, TILE_WIDTHS, CROPPED_TILE_WIDTHS, HARD_CROP, coverScale, scaleSizes, tileSizes, tileWidths, frameForGroup, isLandscape, dimensionsOf, serviceTileSizes } = lib;
 
 let groups = 0;
 const ok = (name, fn) => {
@@ -433,3 +433,16 @@ ok('gallery full photos preserve resolution and reduce total download size', () 
 });
 
 console.log(`PASS  image delivery (${groups} groups, ${pages.size} pages)`);
+
+ok('home service sizing matches the 900px layout and actual cover needs', () => {
+  assert.equal(serviceTileSizes({ width: 900, height: 1200 }), '(max-width: 900px) max(calc(100vw - 48px), 240px), max(min(300px, 25vw), clamp(240px, 24vw, 345px))');
+  assert.equal(serviceTileSizes({ width: 1200, height: 900 }), '(max-width: 900px) max(calc(100vw - 48px), 426.67px), max(min(300px, 25vw), clamp(426.67px, 42.67vw, 613.34px))');
+  for (const width of [320, 390, 768, 900, 901, 1024, 1440, 1920]) {
+    for (const ratio of [0.75, 4/3]) {
+      const declared = width <= 900 ? Math.max(width - 48, Math.ceil(320 * ratio * 100) / 100) : Math.max(Math.min(300, width / 4), Math.max(320 * ratio, Math.min(32 * ratio * width / 100, 460 * ratio)));
+      const actualWidth = width <= 900 ? width - 60 : Math.min(300, (width - 60) / 4);
+      const actualHeight = Math.max(320, Math.min(width * .32, 460));
+      assert.ok(declared + .01 >= Math.max(actualWidth, actualHeight * ratio), `${width}: enough source pixels for cover`);
+    }
+  }
+});

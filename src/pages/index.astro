@@ -8,7 +8,7 @@ import FacebookIcon from '../components/icons/FacebookIcon.astro';
 import { Image } from 'astro:assets';
 import { site } from '../data/site';
 import { findWork, sidingTilePhoto } from '../data/work';
-import { coverScale, scaleSizes } from '../lib/image-sizes';
+import { serviceTileSizes } from '../lib/image-sizes';
 import { patioSliderPhoto, recentWorkPhotos } from '../data/gallery-additions';
 
 const replacementTile = findWork('gray-lap-siding-triple-hung')!;
@@ -19,13 +19,6 @@ const sidingTile = sidingTilePhoto;
 // docs/GALLERY-PHOTOS-2026-10-11.md). It is a Clearview job photo (Keith, 2026-10-11) kept out of
 // workPhotos so it is not shown twice on /gallery; see gallery-additions.ts.
 const slidingDoorsTile = patioSliderPhoto;
-
-// A service tile's frame is about 300 x 460 on a desktop (four across) and 341 x 320 on a phone.
-// 0.65 is the narrower ratio, so a landscape photo (the new-build tile) is asked for
-// at a width that covers the taller frame instead of being stretched to it.
-const SERVICE_TILE_RATIO = 0.65;
-const serviceTileSizes = (photo: { image: Parameters<typeof coverScale>[0] }) =>
-  scaleSizes('(max-width: 800px) 100vw, 25vw', coverScale(photo.image, SERVICE_TILE_RATIO));
 
 const serviceLinks = [
   { slug: 'vancouver', label: 'Vancouver' },
@@ -94,7 +87,7 @@ const signs = [
             alt=""
             widths={[400, 640, 900, 1200, 1600]}
             width={900}
-            sizes={serviceTileSizes(replacementTile)}
+            sizes={serviceTileSizes(replacementTile.image)}
             format="webp"
             quality={72}
           />
@@ -109,7 +102,7 @@ const signs = [
             alt=""
             widths={[400, 640, 900, 1200, 1600]}
             width={900}
-            sizes={serviceTileSizes(newBuildTile)}
+            sizes={serviceTileSizes(newBuildTile.image)}
             format="webp"
             quality={72}
           />
@@ -124,7 +117,7 @@ const signs = [
             alt=""
             widths={[400, 640, 900, 1200, 1600]}
             width={900}
-            sizes={serviceTileSizes(sidingTile)}
+            sizes={serviceTileSizes(sidingTile.image)}
             format="webp"
             quality={72}
           />
@@ -139,7 +132,7 @@ const signs = [
             alt=""
             widths={[400, 640, 900, 1200, 1600]}
             width={900}
-            sizes={serviceTileSizes(slidingDoorsTile)}
+            sizes={serviceTileSizes(slidingDoorsTile.image)}
             format="webp"
             quality={72}
           />
