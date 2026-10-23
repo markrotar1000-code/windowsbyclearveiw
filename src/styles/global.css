@@ -594,29 +594,9 @@ input:focus, textarea:focus, select:focus {
   position: relative;
   z-index: 1;
   padding: 6rem 0 4rem;
-  /* A beat of black-and-mark-only before the page's own words land, rather
-     than both appearing in the same instant the video starts assembling
-     itself. Reduced-motion drops straight to the end state below. */
-  opacity: 0;
-  animation: video-copy-in 900ms var(--ease-out) 4.1s forwards;
-}
-
-@keyframes video-copy-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .video-copy {
-    opacity: 1;
-    animation: none;
-  }
+  /* Contact actions and credentials must be readable from the first paint,
+     independent of decorative video, autoplay policy or connection speed. */
+  opacity: 1;
 }
 
 .video-copy h1,

@@ -13,6 +13,7 @@ import '../styles/estimate-form.css';
   <label>Project notes <span class="field-hint">optional, but it saves a round of back-and-forth</span><span class="field-hint field-hint-prefilled" data-notes-prefilled-hint hidden>Project details carried over — edit as needed</span><textarea name="notes" rows="4" maxlength="2000" placeholder="Roughly how many windows, which rooms, and anything you have already noticed — fogged glass, drafts, a sill that feels soft."></textarea></label>
   {site.turnstileSiteKey && <div class="turnstile-slot" data-turnstile data-sitekey={site.turnstileSiteKey}></div>}
   <button class="btn btn-primary" type="submit" data-submit>Send estimate request</button><p class="form-status" data-status role="alert"></p>
+  <button class="btn btn-secondary" type="button" data-security-retry hidden>Retry security check</button>
   <p class="fine-print">We use this to call you back about the work — no lists, no resale, no follow-up sequence. We will not text you unless you ask us to. See the <a href="/legal/privacy">privacy policy</a>; submitting this form is a request for contact, not a contract (<a href="/legal/terms">terms</a>).</p>
 </form>
 <div class="form-success" data-success hidden><p class="kicker">Received</p><h2>We have the request.</h2><p>We will follow up, usually the same day. If you would rather talk now, call <a href={telHref()}>{site.phoneDisplay}</a>.</p></div>
@@ -23,6 +24,7 @@ import { readIntent, trackIntent } from "../scripts/intent-tracking";
 import { visitorMessage } from "../lib/visitor-errors";
 import { retainedEstimateParams } from "../lib/estimate-link";
 import { keepPhoneTogether } from "../lib/phone";
+import { securityFeedback } from "../lib/security-feedback";
 // These messages are written by script, so the build-time check cannot see them: keep the number on one line here.
 const phoneDisplay = keepPhoneTogether(site.phoneDisplay);
 function bindEstimate() {
@@ -83,11 +85,27 @@ function bindEstimate() {
   // client-side navigation. Tokens are single use, so the widget is reset after every failed send.
   const slot = form.querySelector('[data-turnstile]');
   let widgetId = null;
+  const security = securityFeedback(status, form.querySelector('[data-security-retry]'), () => {
+    try {
+      if (widgetId !== null && window.turnstile) {
+        window.turnstile.reset(widgetId);
+      } else {
+        if (!window.turnstile) {
+          document.querySelector('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]')?.remove();
+          const script = document.createElement('script');
+          script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+          script.async = true;
+          document.head.appendChild(script);
+        }
+        renderTurnstile(0);
+      }
+    } catch { security.fail('The security check could not load. Please call ' + phoneDisplay + ' instead.'); }
+  });
   function renderTurnstile(attempts) {
     if (!(slot instanceof HTMLElement) || widgetId !== null) return;
     if (!window.turnstile) {
       if (attempts < 40) setTimeout(() => renderTurnstile(attempts + 1), 250);
-      else status.textContent = 'The security check did not load. Please call ' + phoneDisplay + ' instead.';
+      else security.fail('The security check did not load. Please call ' + phoneDisplay + ' instead.');
       return;
     }
     // The normal widget is a fixed 300 px and the compact one 150 px (Cloudflare has no size between, and
@@ -100,7 +118,8 @@ function bindEstimate() {
     widgetId = window.turnstile.render(slot, {
       sitekey: slot.dataset.sitekey,
       size: room < 300 ? 'compact' : 'normal',
-      'error-callback': () => { status.textContent = 'The security check could not load. Please call ' + phoneDisplay + ' instead.'; },
+      'error-callback': () => { security.fail('The security check could not load. Please call ' + phoneDisplay + ' instead.'); },
+      callback: () => { security.ready(); },
     });
   }
   renderTurnstile(0);

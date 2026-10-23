@@ -6,6 +6,7 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "test:public-loading": "node --disable-warning=ExperimentalWarning scripts/test-public-loading.mjs",
     "dev": "astro dev",
     "build": "astro build && node scripts/prune-unused-image-originals.mjs",
     "preview": "astro preview",

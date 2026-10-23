@@ -1,5 +1,11 @@
 # ICM Changelog
 
+## 2026-10-23 - Immediate homepage content and recoverable security check
+
+Removed the 4.1-second hero-copy delay, including the credential fade. The responsive hero photo is visible/high priority from first paint; there is no duplicate poster. Phones at <=640px, reduced-motion, Save-Data and 2G/3G connections do not assign a video URL. Desktop requests one 643,683-byte, 1280x720 H.264 faststart copy of the existing five-second reveal (original sources retained), binds once and pauses before navigation. Playback failure/end settles on the photo. No marketing claims, analytics events or full-gallery downloads changed.
+
+Estimate Turnstile failures expose Retry security check without reloading or clearing fields. A recovered widget clears its own warning while preserving unrelated server errors. Missing-API retry reloads only the official widget script; server token verification is unchanged. New executable loading tests cover motion/network states, duplicate binding, fallback/navigation and warning recovery. Existing analytics VM now executes the imported feedback helper. Validation and hosted/production results accompany the release.
+
 ## 2026-10-23 - Quote page: no empty website-inquiry banner
 
 `src/pages/internal/quotes/view.astro`: the website-inquiry panel is hidden when the quote is not linked and no inquiry shares its phone or email (it used to print a "Not linked" line on every such quote). It still shows when linked, and when there are exact-match suggestions to link.
