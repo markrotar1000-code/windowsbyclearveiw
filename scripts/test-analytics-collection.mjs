@@ -77,6 +77,9 @@ function harness(kind) {
   };
   let code = kind === 'estimate' ? read('src/components/EstimateForm.astro').split('<script>')[1].split('</script>')[0] : read('src/scripts/ask-callback.ts');
   code = code.replace(/^import[\s\S]*?;\s*/gm, '');
+  // Execute the imported feedback helper too; this harness strips imports
+  // because it runs the real Astro form script in an isolated VM.
+  if (kind === 'estimate') code = read('src/lib/security-feedback.ts').replace('export function', 'function') + '\n' + code;
   vm.runInNewContext(stripTypeScriptTypes(code), context);
   return { form, window, pending, submit: () => form.listeners.submit({ preventDefault() {} }) };
 }

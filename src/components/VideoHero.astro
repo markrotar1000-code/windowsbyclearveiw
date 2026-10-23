@@ -20,23 +20,11 @@ const insetPhoto = findWork('blue-pair-installday');
 // project root — where "public/" always lives — is process.cwd() in both
 // `astro dev` and `astro build`.
 //
-// The original brand-reveal take plays once when the hero first mounts,
-// then crossfades into the static hero photo below (the same image used
-// as the video's poster, so there is no visible jump at the handoff).
-// Earlier versions cycled randomly through logo-reveal-1..4 forever; that
-// novelty wasn't worth losing a settled, static first impression, so this
-// only ever plays variant 1. The other takes stay in public/video/ unused
-// for now rather than deleted, in case they find a home elsewhere.
-const HERO_VIDEO = 'logo-reveal-1';
+// Variant 1, re-encoded at 1280x720 / H.264 CRF 27 with faststart (643,683
+// bytes). The original sources remain unchanged. Phones and constrained
+// connections use the responsive photo; desktop plays this reveal once.
+const HERO_VIDEO = 'logo-reveal-1-optimized';
 const hasVideo = existsSync(join(process.cwd(), `public/video/${HERO_VIDEO}.mp4`));
-
-// The poster has to be a plain URL, so render one through the image pipeline.
-const poster = await getImage({
-  src: heroPhoto.image,
-  width: 1200,
-  format: 'webp',
-  quality: 70,
-});
 
 // The static photo is what the hero settles on, and it fills the whole stage with
 // `object-fit: cover`. The source is a tall portrait, so on a phone the stage is
@@ -60,13 +48,11 @@ const heroStatic = await getImage({
       <video
         class="hero-media"
         id="hero-video"
-        poster={poster.src}
+        data-src={`/video/${HERO_VIDEO}.mp4`}
         muted
         playsinline
-        preload="metadata"
+        preload="none"
       >
-        <source src={`/video/${HERO_VIDEO}.webm`} type="video/webm" />
-        <source src={`/video/${HERO_VIDEO}.mp4`} type="video/mp4" />
       </video>
       <img
         class="hero-static"
@@ -76,7 +62,7 @@ const heroStatic = await getImage({
         sizes="(max-width: 640px) 160vw, 100vw"
         alt=""
         decoding="async"
-        fetchpriority="low"
+        fetchpriority="high"
       />
       <div class="video-wash"></div>
     </div>
@@ -187,33 +173,47 @@ width={440}
   function calmHero() {
     const stage = document.querySelector('.video-stage');
     const video = document.getElementById('hero-video');
-    if (!(stage instanceof HTMLElement) || !(video instanceof HTMLVideoElement)) return;
+    if (!(stage instanceof HTMLElement) || !(video instanceof HTMLVideoElement) || video.dataset.bound) return;
+    video.dataset.bound = 'true';
 
-    const settleOnStatic = () => stage.classList.add('is-static');
+    const settleOnStatic = () => {
+      stage.classList.remove('is-playing');
+      stage.classList.add('is-static');
+    };
 
     // No autoplay attribute: a static one would start the clip before this
     // check runs, and would play for people with JS off who never opted in.
     // Reduced motion skips the animation entirely and lands straight on the
     // static photo, rather than freezing mid-reveal.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    // Phone visitors get the responsive photo immediately, without downloading
+    // decorative video. Desktop keeps the reveal on connections that can afford it.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+        window.matchMedia('(max-width: 640px)').matches || connection?.saveData ||
+        ['slow-2g', '2g', '3g'].includes(connection?.effectiveType || '')) {
       video.pause();
       settleOnStatic();
       return;
     }
 
-    // Plays the single reveal take once, then crossfades to the static hero
-    // photo on the `ended` event. `{ once: true }` covers the guard a
-    // dataset flag used to handle, and a fresh video element is rendered on
-    // every real page load/navigation, so this can't double-fire.
+    // A fresh video element is rendered on each navigation. The dataset guard
+    // also prevents initial binding plus astro:page-load from starting it twice.
     video.addEventListener('ended', settleOnStatic, { once: true });
+    video.addEventListener('error', settleOnStatic, { once: true });
+    video.addEventListener('playing', () => stage.classList.add('is-playing'), { once: true });
 
     // If autoplay is blocked, or the file fails to load, land on the static
     // photo instead of leaving a frozen first frame.
+    video.src = video.dataset.src || '';
     video.play().catch(settleOnStatic);
   }
 
   calmHero();
   document.addEventListener('astro:page-load', calmHero);
+  document.addEventListener('astro:before-swap', () => {
+    const video = document.getElementById('hero-video');
+    if (video instanceof HTMLVideoElement) video.pause();
+  });
 </script>
 
 <style>
@@ -226,13 +226,10 @@ width={440}
      full-bleed it reads as soft. Framed at an honest size, against a large
      dark field and large type, it reads as deliberate.
      ─────────────────────────────────────────────────────────────────────── */
-  /* Crossfade target for the reveal video. `.hero-media`'s own positioning
-     (absolute, inset:0, object-fit:cover) is defined globally alongside
-     `.video-stage`/`.video-wash`; this only adds the fade behavior, scoped
-     here since `.hero-static` exists only in this component. The image is
-     the exact same photo already used as the video's `poster`, so settling
-     on it is invisible rather than a jump-cut to a different shot. */
+  /* The responsive photo is visible first and remains the fallback. Desktop
+     fades the reveal over it only once playback actually starts. */
   .hero-media {
+    opacity: 0;
     transition: opacity 1100ms ease;
   }
 
@@ -245,7 +242,7 @@ width={440}
     /* The hero photo is a tall portrait; 45% keeps both window groups in the
        wide desktop crop instead of sky and gable alone. */
     object-position: 50% 45%;
-    opacity: 0;
+    opacity: 1;
     transition: opacity 1100ms ease;
     pointer-events: none;
   }
@@ -253,6 +250,9 @@ width={440}
   .video-stage.is-static .hero-media {
     opacity: 0;
   }
+
+  .video-stage.is-playing:not(.is-static) .hero-media { opacity: 1; }
+  .video-stage.is-playing:not(.is-static) .hero-static { opacity: 0; }
 
   .video-stage.is-static .hero-static {
     opacity: 1;

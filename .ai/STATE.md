@@ -1,5 +1,9 @@
 # ICM State â€” 2026-10-01
 
+## 2026-10-23 - Public loading repair
+
+Homepage text/actions/credentials render immediately. The responsive photo is high-priority and visible by default, including without JS. Phones <=640px, reduced motion, Save-Data and 2G/3G skip decorative video; desktop requests one optimized 643,683-byte MP4. The reveal is the same five-second take at 1280x720, original sources retained. Binding is idempotent and pauses on page swap. Estimate security-check errors now offer retry and clear on recovery without clearing inputs or unrelated errors; token verification and lead tracking remain unchanged. Executable tests and release evidence accompany the branch. Gallery full-photo compression and real-user Web Vitals remain follow-ups.
+
 ## 2026-10-23 - Quote to paid: one path, one Next button, folding Build Plan
 
 Keith: the quote and job flow still feels rough. Walked it on a phone (lead, quote builder, saved quote, Build Plan): the real problem was that nothing said where a customer was or what to do next, each page knew only itself, and the Build Plan was 13,000 px long. Added a shared path card (steps from quote to paid, the current one marked, one Next button, including Create the job in place) to every quote and job page, driven by `/internal/api/flow`; the quote page's old page-local "next step" panel is gone. The Build Plan's six sections fold (item counts in the heads; on a phone only Openings and Do-not-guess start open): 13,000 px down to about 6,700. No production step.

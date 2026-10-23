@@ -1,5 +1,11 @@
 # Project context — Clearview Windows
 
+## 2026-10-23 - Homepage loading and estimate security recovery
+
+Direct mobile Lighthouse baseline was 73 performance, 8.0s LCP and 4,752 KiB total, with 3,403.5 KiB across both hero formats. VideoHero now shows the responsive image immediately/high priority, removes the extra poster and delays no customer text. Phones <=640px and constrained/reduced-motion connections never assign a video source. Desktop keeps the original five-second reveal via one new 643,683-byte H.264 asset at 1280x720; original files remain. One binding per element prevents duplicate starts; navigation pauses the old clip. Removing the copy fade also keeps credentials readable immediately.
+
+Estimate failures now offer a security-check retry without clearing entered values; widget success clears only the security warning. The real backend token/lead acceptance gates remain. Local Chrome verified zero phone video requests, one optimized desktop request and immediate text/photo opacity. New executable loading/recovery tests and the full suite guard this batch. Production performance and release checks are recorded separately; do not infer a delivered lead from widget recovery. Full-resolution gallery warnings and broader field-performance collection remain separate.
+
 ## 2026-10-22 - SPA page-view and referrer repair
 
 Live GTM's JS - Safe Referrer read document.referrer for every event, so client-side navigation reused the original entry referrer. BaseLayout now sets clearviewPageReferrer to the previous public route before emitting spa_page_view. The matching GTM variable source is documented in docs/GTM-SPA-REFERRER.js; it falls back to document.referrer before initialization and strips queries/fragments in both cases. No event names, campaign variables, conversions or production-host guards change.

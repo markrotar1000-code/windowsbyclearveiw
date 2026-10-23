@@ -221,7 +221,7 @@ ok('the home hero photo is offered up to 2560 px', () => {
   assert.ok(tag, 'hero-static image not found');
   assert.ok(widestCandidate(tag) >= 2560, 'hero-static needs a 2560 px candidate for retina laptops and phones');
   assert.match(attr(tag, 'sizes') ?? '', /\(max-width: 640px\) \d+vw, 100vw/);
-  assert.equal(attr(tag, 'fetchpriority'), 'low', 'the settle-on photo must not compete with the video and poster');
+  assert.equal(attr(tag, 'fetchpriority'), 'high', 'the first-paint hero photo must load before decorative video');
 });
 
 // A guide graphic is offered at 2000 px (the Canva exports are 2000 px wide). The vinyl vs fiberglass, double-pane and flashing graphics are the
