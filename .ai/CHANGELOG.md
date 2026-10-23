@@ -1,3 +1,11 @@
+## 2026-10-23 - Live GA4 automatic scroll context repair
+
+GTM-WGCFVHQM version 17 is Live (3:56:41 PM PDT). New setup-only Google Tag - SPA context update (55) sets update=true, send_page_view=false, and captured page_location/page_title/page_referrer DLVs before existing Google Analytics GA4 Event (4). Exactly two tags changed. Initial privacy/campaign flags, conversion gates and non-production blocking remain. No runtime source or Pages deployment change.
+
+Live baseline reproduced stale homepage location on replacement scroll. Preview verified three setup/page-view executions across home -> replacement -> siding with no extra page views. Fresh non-debug production verified correct replacement and independently siding 90% scroll locations, titles and homepage referrers, HTTP 204; one page view per visited route. Initial production checks retained older behavior before a fresh uncached container load; temporary cache bypass was restored. GA4 property 552113896 Realtime scroll/page_location showed replacement (2); this QA window includes prior failing tests and is not a customer baseline. Historical attribution is not rewritten. test:analytics and test:ask-handoff (23 groups) passed.
+
+Scope limit: enhanced scroll did not repeat on the next virtual route after already firing in the same document; this change repairs context and does not implement a custom per-route depth counter. Ahrefs tag 18 is Once per page; extra Meta-generated GA4 tags 32/33 stay paused. Google/Meta/Ahrefs cache estimates are vendor-controlled; first-party hashed assets already have one-year immutable caching. Gallery first six items use responsive WebP thumbnails with separate full-photo links, so original detail was retained. Remaining physical-device, field-CWV and full manual accessibility checks are unverified. Evidence/report: task outputs/clearview-scroll-context-repair-report-2026-10-23.md.
+
 #Dependency follow-up: lockfile resolves Zod 4.6.7, patching GHSA-mrhx-c7xc-m3w5 (affected below 4.6.6). npm audit reports zero vulnerabilities; no claim of a demonstrated public-site exploit.
 
 ## 2026-10-23 - Verified mobile LCP and captured GTM page context
