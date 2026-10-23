@@ -15,6 +15,8 @@ const { by } = Astro.props;
 </section>
 
 <script>
+  import { loadFailureMessage } from '../../lib/load-failed';
+
   function initFlow() {
     const root = document.querySelector('[data-flow]');
     if (!(root instanceof HTMLElement) || root.dataset.bound === 'true') return;
@@ -66,7 +68,7 @@ const { by } = Astro.props;
               if (!response.ok || !result.id) throw new Error(result.error || 'Could not create the job.');
               location.href = `/internal/jobs/view?id=${encodeURIComponent(result.id)}`;
             } catch (error) {
-              errorEl.textContent = error instanceof Error ? error.message : 'Could not create the job.';
+              errorEl.textContent = loadFailureMessage(error);
               errorEl.hidden = false;
               button.disabled = false;
               button.textContent = next.label;
