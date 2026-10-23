@@ -1,5 +1,9 @@
 # ICM Changelog
 
+## 2026-10-23 - Follow-up hero image discovery and shared mark delivery
+
+After #287, production Lighthouse mobile accessibility improved from 96 to 100, but the first follow-up run still reported 8.0s LCP (now the static image) and 71 performance. Do not claim the lab performance issue resolved from the video-byte savings alone. Preload the exact responsive home image candidates in the head, decode it synchronously and disable unused photo fades on phones. Shared brand/kicker marks now use a 20,866-byte quality-90 WebP instead of the 84,023-byte PNG; source PNG and layout remain. Build checks assert preload/image candidate identity and asset budget. New hosted and production measurements accompany this follow-up.
+
 ## 2026-10-23 - Immediate homepage content and recoverable security check
 
 Removed the 4.1-second hero-copy delay, including the credential fade. The responsive hero photo is visible/high priority from first paint; there is no duplicate poster. Phones at <=640px, reduced-motion, Save-Data and 2G/3G connections do not assign a video URL. Desktop requests one 643,683-byte, 1280x720 H.264 faststart copy of the existing five-second reveal (original sources retained), binds once and pauses before navigation. Playback failure/end settles on the photo. No marketing claims, analytics events or full-gallery downloads changed.

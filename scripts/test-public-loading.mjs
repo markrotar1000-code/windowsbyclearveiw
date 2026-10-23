@@ -49,6 +49,7 @@ const copy = css.match(/\.video-copy\s*\{([^}]+)\}/)[1];
 assert.match(copy, /opacity: 1/);
 assert.ok(!/animation:/.test(copy), 'customer content must never wait for decorative video');
 assert.ok(statSync('public/video/logo-reveal-1-optimized.mp4').size < 700_000);
+assert.ok(statSync('public/logo/icon-mark@256.webp').size < 25_000, 'shared decorative mark stays within its delivery budget');
 
 class Element {
   hidden = true;

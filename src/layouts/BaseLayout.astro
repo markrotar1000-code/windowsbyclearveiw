@@ -63,6 +63,12 @@ const canonical = new URL(path === '/' ? '/' : path, site.url).toString();
 // the cases that genuinely need an ancestor.
 const route = (path === '/' ? 'home' : path.replace(/^\/|\/$/g, '').replace(/\//g, '-')) || 'home';
 const pageTitle = exactTitle || title.includes(site.shortName) ? title : `${title} | ${site.shortName}`;
+// Discover the visible home image before tag scripts and the rest of the body.
+// Match VideoHero's candidates exactly so the preload is reused, not duplicated.
+const homeHero = path === '/' ? await getImage({
+  src: heroPhoto.image, widths: [828, 1200, 1600, 2000, 2560], width: 1600,
+  format: 'webp', quality: 66,
+}) : null;
 
 // OpenGraph.xyz provides the published Clearview social-card template.
 // Keep the template/version here so every page uses the same published design
@@ -183,6 +189,8 @@ const breadcrumbSchema =
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
+    {homeHero && <link rel="preload" as="image" href={homeHero.src}
+      imagesrcset={homeHero.srcSet.attribute} imagesizes="(max-width: 640px) 160vw, 100vw" fetchpriority="high" />}
     <!-- The page's primary hero image remains same-origin; social previews use
          the published OpenGraph.xyz CDN template above. Keep this preload
          focused on the visible page image rather than the remote OG card. -->
