@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import { getHeroBg } from '../lib/hero-bg';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
+import ServiceActions from '../components/ServiceActions.astro';
 import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES } from '../lib/image-sizes';
 import { pricing, showPublicPrices } from '../data/pricing';
@@ -161,17 +162,14 @@ const schema = {
   ogImageAlt={ogPhoto.alt}
   schema={schema}
 >
-  <section class="page-hero page-hero-photo" style={`background-image: linear-gradient(180deg, color-mix(in srgb, var(--black) 58%, transparent), color-mix(in srgb, var(--black) 88%, transparent)), url(${heroBg.src})`}>
+  <section class="page-hero page-hero-photo service-hero" style={`--hero-photo: url(${heroBg.src}); --hero-position: center 40%`}>
     <div class="wrap">
       <p class="kicker">Services</p>
       <h1>Sliding glass doors in Clark County and beyond</h1>
       <p class="lede">
         Sliding glass door installation for Washington homes. Call for your quote today!
       </p>
-      <div class="hero-actions">
-        <a class="btn btn-light" href="/estimate?scope=Sliding%20glass%20door">Get a written quote</a>
-        <a class="btn btn-ghost btn-on-dark" href="#configurations">See configurations</a>
-      </div>
+      <ServiceActions estimateHref="/estimate?scope=Sliding%20glass%20door" extraHref="#configurations" extraLabel="See door options" />
       <p class="hero-note">
         Looking for a hinged pair instead of a slider? We install French doors too — ask on
         the same call. Replacing a window instead? See <a href="/replacement">window replacement</a>.
@@ -362,14 +360,7 @@ const schema = {
     background-position: center;
   }
 
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-s);
-    margin: var(--space-m) 0 0;
-  }
-
-  .hero-note {
+.hero-note {
     margin: var(--space-m) 0 0;
     max-width: 44rem;
     font-size: var(--step--1);

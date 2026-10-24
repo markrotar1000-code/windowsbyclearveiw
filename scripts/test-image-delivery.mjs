@@ -296,7 +296,7 @@ ok('the home sliding-glass-doors tile and the doors-page hero use the patio slid
   assert.ok((attr(tileImg, 'src') ?? '').includes(PATIO), 'the home sliding-glass-doors tile must show the patio slider photo');
   assert.ok(widestCandidate(tileImg) >= 1600, 'the home tile tops out below 1600 px (a 3:4 tile at 3x needs it)');
   const doors = pages.get('sliding-glass-doors');
-  const hero = /<section class="page-hero page-hero-photo"[^>]*style="([^"]*)"/.exec(doors)?.[1] ?? '';
+  const hero = /<section class="page-hero page-hero-photo(?: service-hero)?"[^>]*style="([^"]*)"/.exec(doors)?.[1] ?? '';
   assert.ok(hero.includes(PATIO), 'the /sliding-glass-doors hero background must be the patio slider photo');
   // The hero uses it as a wash background (not an <img>); its one <img> is the first card of the installs grid.
   assert.equal(images(doors).filter((tag) => (attr(tag, 'src') ?? '').includes(PATIO)).length, 1, 'the patio photo should be the hero background plus one <img>, the first installs-grid card');

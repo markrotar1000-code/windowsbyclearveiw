@@ -2,6 +2,7 @@
 import { getHeroBg } from '../lib/hero-bg';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
+import ServiceActions from '../components/ServiceActions.astro';
 import FaqAccordion from '../components/FaqAccordion.astro';
 import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES, frameForGroup } from '../lib/image-sizes';
@@ -157,17 +158,14 @@ const schema = {
   ogImageAlt={heroPhoto.alt}
   schema={schema}
 >
-  <section class="page-hero page-hero-photo" style={`background-image: linear-gradient(180deg, color-mix(in srgb, var(--black) 58%, transparent), color-mix(in srgb, var(--black) 88%, transparent)), url(${heroBg.src})`}>
+  <section class="page-hero page-hero-photo service-hero" style={`--hero-photo: url(${heroBg.src}); --hero-position: center 40%`}>
     <div class="wrap">
       <p class="kicker">Services</p>
       <h1>Siding installation in Clark County and beyond</h1>
       <p class="lede">
         Fiber cement and wood siding for Washington homes. Call for your quote today!
       </p>
-      <div class="hero-actions">
-        <a class="btn btn-light" href="/estimate?service=siding&scope=House%20siding">Get a written estimate</a>
-        <a class="btn btn-ghost btn-on-dark" href="#materials">See what we install</a>
-      </div>
+      <ServiceActions estimateHref="/estimate?service=siding&scope=House%20siding" extraHref="#materials" extraLabel="See what we install" />
       <p class="hero-note">
         Want windows replaced on the same job? We can, if you ask. See{' '}
         <a href="/replacement">window replacement</a> and mention it in your request.
@@ -194,6 +192,25 @@ const schema = {
       </div>
     </div>
   </section>
+
+  {sidingWork.length > 0 && (
+    <section class="section section-sunk" id="work">
+      <div class="wrap" data-reveal>
+        <p class="rule-label">Real siding jobs</p>
+        <h2>Siding work, as it goes on.</h2>
+        <p class="lede">
+          Photos from our siding jobs. Some were taken mid-job, so you can see the wrap and the
+          wall under the siding as well as the finished look.
+        </p>
+        <div class="work-grid siding-work">
+          {sidingWork.map((photo) => (
+            <WorkCard image={photo.image} alt={photo.alt} caption={photo.caption} kind={workKindLabel(photo.kind)} sizes={SLOT_SIZES.autoFill} frame={sidingFrame} />
+          ))}
+        </div>
+        <p class="section-link"><a href="/gallery#siding">See them in the gallery</a></p>
+      </div>
+    </section>
+  )}
 
   <section class="section section-sunk" id="pricing">
     <div class="wrap" data-reveal>
@@ -263,24 +280,7 @@ const schema = {
     </div>
   </section>
 
-  {sidingWork.length > 0 && (
-    <section class="section section-sunk" id="work">
-      <div class="wrap" data-reveal>
-        <p class="rule-label">Real siding jobs</p>
-        <h2>Siding work, as it goes on.</h2>
-        <p class="lede">
-          Photos from our siding jobs. Some were taken mid-job, so you can see the wrap and the
-          wall under the siding as well as the finished look.
-        </p>
-        <div class="work-grid siding-work">
-          {sidingWork.map((photo) => (
-            <WorkCard image={photo.image} alt={photo.alt} caption={photo.caption} kind={workKindLabel(photo.kind)} sizes={SLOT_SIZES.autoFill} frame={sidingFrame} />
-          ))}
-        </div>
-        <p class="section-link"><a href="/gallery#siding">See them in the gallery</a></p>
-      </div>
-    </section>
-  )}
+
 
   <section class="section">
     <div class="wrap" data-reveal>
@@ -332,14 +332,7 @@ const schema = {
     opacity: 0.75;
   }
 
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-s);
-    margin: var(--space-m) 0 0;
-  }
-
-  .hero-note {
+.hero-note {
     margin: var(--space-m) 0 0;
     max-width: 44rem;
     font-size: var(--step--1);

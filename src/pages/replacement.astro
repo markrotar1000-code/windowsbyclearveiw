@@ -4,6 +4,7 @@ import { getHeroBg } from '../lib/hero-bg';
 import vinylFiberglassGraphic from '../assets/guides/vinyl-fiberglass-guide.png';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
+import ServiceActions from '../components/ServiceActions.astro';
 import WorkCard from '../components/WorkCard.astro';
 import { SLOT_SIZES } from '../lib/image-sizes';
 import { replacementWork, findWork, workKindLabel } from '../data/work';
@@ -71,13 +72,14 @@ const spec = [
   ogImageAlt={ogPhoto.alt}
   schema={schema}
 >
-  <section class="page-hero page-hero-photo" style={`background-image: linear-gradient(180deg, color-mix(in srgb, var(--black) 58%, transparent), color-mix(in srgb, var(--black) 88%, transparent)), url(${heroBg.src})`}>
+  <section class="page-hero page-hero-photo service-hero" style={`--hero-photo: url(${heroBg.src}); --hero-position: center 40%`}>
     <div class="wrap">
       <p class="kicker">Services</p>
       <h1>Window replacement in Clark county and beyond</h1>
       <p class="lede">
         Window replacement for Washington homes. Call for your quote today!
       </p>
+      <ServiceActions />
       <p class="hero-note">
         Framing a new build or an addition instead? See <a href="/new-construction">new construction window installs</a>.
         Replacing a patio door? See <a href="/sliding-glass-doors">sliding glass doors</a>.
@@ -109,6 +111,25 @@ const spec = [
       <p class="section-link">
         <a href="/guides/what-your-openings-need">How we decide what each opening needs</a>
       </p>
+    </div>
+  </section>
+
+  <section class="section section-sunk">
+    <div class="wrap is-wide" data-reveal>
+      <p class="rule-label">Our work</p>
+      <h2>Finished replacement jobs.</h2>
+      <div class="work-grid">
+        {replacementWork.slice(0, 6).map((photo) => (
+          <WorkCard
+            image={photo.image}
+            alt={photo.alt}
+            caption={photo.caption}
+            kind={workKindLabel(photo.kind)}
+            sizes={SLOT_SIZES.autoFill}
+          />
+        ))}
+      </div>
+      <p class="section-link"><a href="/gallery">See the full gallery</a></p>
     </div>
   </section>
 
@@ -169,24 +190,7 @@ width={1536}
     </div>
   </section>
 
-  <section class="section section-sunk">
-    <div class="wrap is-wide" data-reveal>
-      <p class="rule-label">Our work</p>
-      <h2>Finished replacement jobs.</h2>
-      <div class="work-grid">
-        {replacementWork.slice(0, 6).map((photo) => (
-          <WorkCard
-            image={photo.image}
-            alt={photo.alt}
-            caption={photo.caption}
-            kind={workKindLabel(photo.kind)}
-            sizes={SLOT_SIZES.autoFill}
-          />
-        ))}
-      </div>
-      <p class="section-link"><a href="/gallery">See the full gallery</a></p>
-    </div>
-  </section>
+
 
   <CtaBar
     heading="Get your zero pressure estimate."
