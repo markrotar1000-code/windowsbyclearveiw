@@ -7,7 +7,7 @@
 //   npm run build
 //   CHROMIUM_PATH=/path/to/chrome node scripts/audit-command-center.mjs [--serve]    (--serve: just run the server on :4440)
 //
-// Add --flows-only to run just the interaction checks (including measurement editing and local photo capture).
+// Add --flows-only for interactions only; --reports-only limits layout/failure checks to Analytics and Permits.
 //
 // The seed goes through the handlers themselves (quotes, signed plans, jobs, payments, tasks) plus leads with
 // messy values: a 1,800-character note, an HTML-looking name, long emails and links with no spaces. That is what
@@ -118,6 +118,10 @@ const sets = [
 ].map((set) => ({ ...set, invoice: 'INV-' + set.quote.replace(/^Q-/, '') }));
 const pages = [];
 (function walk(dir) { for (const f of fs.readdirSync(dir)) { const p = path.join(dir, f); if (fs.statSync(p).isDirectory()) walk(p); else if (f.endsWith('.html') && f !== 'login.html') pages.push('/internal/' + path.relative(dist + '/internal', p).split(path.sep).join('/').replace(/\.html$/, '').replace(/(^|\/)index$/, '')); } })(dist + '/internal');
+if (process.argv.includes('--reports-only')) {
+  const reports = pages.filter((url) => ['/internal/analytics', '/internal/permits'].includes(url));
+  pages.splice(0, pages.length, ...reports);
+}
 const query = (url, set) => {
   const q = new URLSearchParams();
   if (/quotes\/(view|build-plan|build-plan-approval|build-plan-visualizer)/.test(url)) { q.set('id', set.quote); q.set('quoteId', set.quote); }
