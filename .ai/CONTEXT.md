@@ -23,6 +23,7 @@ It does not replace application code or D1.
 | Finish, sign off and close a job | `workflows/job-closeout/` |
 | Review or write customer-facing copy and graphics | `workflows/public-copy-sweep/` |
 | Add or verify a GA4/GTM/Meta event | `workflows/analytics-events/` |
+| Format current quote lines for a supplier pricing request | `workflows/quote-supplier-list/` |
 | Turn Mark's spoken or typed walk-through notes into draft quote lines | `workflows/quote-dictation/` |
 | Ship a change, or touch domain/mail | `workflows/deploy-check/` |
 | Refresh or load the direct-mail pilot list (Command Center > Mail pilot) | `workflows/mail-pilot/` |

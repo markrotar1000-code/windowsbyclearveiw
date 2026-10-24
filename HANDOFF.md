@@ -1,3 +1,7 @@
+## 2026-10-24 — Supplier-ready quote list
+
+The quote builder now has a Format for supplier button. It previews selected current/unsaved line labels and quantities; sizes already in labels carry through. Mark can exclude labor/repairs and add explicit units/specifications/reference/message, then copy, download text/CSV, open an email draft, or use native Share where available. Structured prices/totals/discounts, customer fields, line descriptions and internal/rough notes are excluded; no AI, new API, auto-send, purchase order or quote mutation. Missing product facts remain to confirm. Changed source lines/type or invalid typed quantities disable sharing until regeneration, which retains supplier edits for surviving lines. Preview-only details are not persisted. CSV formula protection and bounded email fallback are tested. Contract: .ai/workflows/quote-supplier-list/CONTEXT.md. Validation/hosted release checks in progress.
+
 ## 2026-10-24 — Owner-requested sheathing wording
 
 Changed the first site-preparation checklist line on /new-construction to exactly: Have the sheathing and house wrap installed. The second line and other sections remain unchanged. No metadata, FAQ, guide index or business-fact changes.

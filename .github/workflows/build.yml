@@ -33,6 +33,7 @@ jobs:
       - run: npm run test:siding-work
       - run: npm run test:recent-fixes
       - run: npm run test:public-terminology
+      - run: npm run test:supplier-list
       - run: npm run test:quote-dictation
       - run: npm run test:plan-extras
       - run: npm run test:dimensions

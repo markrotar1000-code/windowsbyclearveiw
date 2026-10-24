@@ -1,0 +1,53 @@
+---
+---
+<fieldset class="qb-block supplier-block" data-supplier-root>
+  <legend>Supplier list</legend>
+  <p class="est-hint">Turn the current quote lines into a list for your supplier. Customer prices, contact details and internal notes are not added.</p>
+  <button type="button" class="btn btn-ghost" data-supplier-open aria-expanded="false" aria-controls="supplier-panel">Format for supplier</button>
+  <div id="supplier-panel" data-supplier-panel hidden>
+    <p class="supplier-help">Uncheck labor, repairs and any lines the supplier does not need. Add sizes and product details below, then review the formatted list before sharing. This requests pricing; it does not place an order.</p>
+    <details class="supplier-options">
+      <summary>Choose lines and add supplier details</summary>
+      <label>Reference (optional)<input type="text" data-supplier-reference maxlength="120" placeholder="Quote or project reference" /></label>
+      <div class="supplier-lines" data-supplier-lines></div>
+      <label>Message to supplier (optional)<textarea data-supplier-message rows="3" maxlength="2000" placeholder="Anything else the supplier should know"></textarea></label>
+    </details>
+    <label>Formatted supplier list<textarea data-supplier-output rows="10" readonly spellcheck="false"></textarea></label>
+    <p class="supplier-status" data-supplier-status role="status" aria-live="polite"></p>
+    <div class="supplier-actions">
+      <button type="button" class="btn btn-primary" data-supplier-copy>Copy list</button>
+      <button type="button" class="btn btn-ghost" data-supplier-download>Download text</button>
+      <button type="button" class="btn btn-ghost" data-supplier-csv>Download CSV</button>
+      <button type="button" class="btn btn-ghost" data-supplier-share hidden>Share</button>
+      <a class="btn btn-ghost" data-supplier-email aria-disabled="true">Open email draft</a>
+    </div>
+    <p class="est-hint" data-supplier-email-hint hidden>This list is too long for an email link. Copy it into your email or attach the text/CSV download.</p>
+    <p class="est-hint">Supplier details entered here stay in this preview while the page is open. Copy or download the list to keep it. Nothing is sent automatically.</p>
+  </div>
+</fieldset>
+<style>
+  .supplier-block { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-m); display: grid; gap: var(--space-s); }
+  .supplier-block legend { font-weight: 600; padding-inline: var(--space-2xs); }
+  [data-supplier-open] { justify-self: start; white-space: normal; }
+  [data-supplier-panel] { margin-top: var(--space-m); }
+  [data-supplier-panel][hidden] { display: none; }
+  .supplier-help { font-size: var(--step--1); color: var(--ink-soft); }
+  .supplier-options { border-block: 1px solid var(--line); margin-block: var(--space-s); padding-block: var(--space-xs); }
+  .supplier-options summary { cursor: pointer; font-weight: 600; padding-block: .5rem; }
+  .supplier-options[open] summary { margin-bottom: var(--space-s); }
+  .supplier-lines { display: grid; gap: var(--space-s); margin-block: var(--space-m); }
+  .supplier-block :global(label) { display: grid; gap: .35rem; margin-bottom: var(--space-s); font-size: var(--step--1); font-weight: 500; }
+  .supplier-block :global(input[type='text']), .supplier-block :global(textarea) { width: 100%; min-width: 0; padding: .65rem .75rem; font: inherit; font-size: 1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper-raised); color: var(--ink); box-sizing: border-box; }
+  .supplier-lines :global(.supplier-line) { padding: var(--space-s); border: 1px solid var(--line); border-radius: var(--radius-lg); min-width: 0; }
+  .supplier-lines :global(.supplier-choice) { display: flex; align-items: flex-start; gap: .7rem; margin-bottom: var(--space-xs); }
+  .supplier-lines :global(.supplier-choice input) { width: 1.25rem; height: 1.25rem; flex: none; margin-top: .2rem; }
+  .supplier-lines :global(.supplier-choice span) { overflow-wrap: anywhere; }
+  .supplier-lines :global(.supplier-quantity) { display: block; color: var(--ink-soft); font-weight: 400; font-size: var(--step--1); }
+  .supplier-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+  .supplier-actions .btn { white-space: normal; text-align: center; }
+  .supplier-actions [hidden] { display: none; }
+  .supplier-actions [aria-disabled='true'] { opacity: .55; cursor: default; }
+  .supplier-status { overflow-wrap: anywhere; font-size: var(--step--1); }
+  .supplier-block [data-supplier-output] { font-family: ui-monospace, monospace; line-height: 1.5; }
+  @media (max-width: 640px) { .supplier-actions { display: grid; grid-template-columns: minmax(0, 1fr); } }
+</style>

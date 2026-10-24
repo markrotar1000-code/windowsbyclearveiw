@@ -1,5 +1,6 @@
 ---
 import InternalLayout from '../../../layouts/InternalLayout.astro';
+import SupplierList from '../../../components/internal/SupplierList.astro';
 import { pricing } from '../../../data/pricing';
 
 // Everything the client script needs to compute a suggested price, in one
@@ -169,6 +170,8 @@ const catalog = {
       </div>
     </fieldset>
 
+    <SupplierList />
+
     <fieldset class="qb-block">
       <legend>Signature</legend>
       <div class="qb-sig-choice">
@@ -192,6 +195,7 @@ const catalog = {
 
 <script>
   import { formatCents } from '../../../lib/money';
+  import { bindSupplierList } from '../../../scripts/supplier-list';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
   import { suggestedUnitPrice } from '../../../lib/quote-pricing';
   import { extractSizes, formatSize } from '../../../../functions/_lib/dimensions.mjs';
@@ -256,6 +260,10 @@ const catalog = {
     // Windows or siding. Chosen here for a new quote (the ?type=siding link, a siding inquiry, or the radios)
     // and locked for an existing draft: the server refuses to change a saved quote's type.
     let workType: WorkType = searchParams.get('type') === 'siding' ? 'siding' : 'windows';
+    const supplierList = bindSupplierList(form, () => ({
+      lines: items, workType, reference: editId || '',
+      valid: [...form.querySelectorAll<HTMLInputElement>('[data-line-qty]')].every(input => wholeQuantity(input.value) !== null),
+    }));
     const sidingRateSelect = form.querySelector('[data-siding-rate]');
     const sidingAreaInput = form.querySelector('[data-siding-area]');
     const sidingPriceInput = form.querySelector('[data-siding-price]');
@@ -450,6 +458,7 @@ const catalog = {
       });
 
       updateTotals();
+      supplierList.checkForChanges();
     }
 
     discountInput.addEventListener('input', updateTotals);
