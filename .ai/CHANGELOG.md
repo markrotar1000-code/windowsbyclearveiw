@@ -1,3 +1,11 @@
+## 2026-10-24 — Separate permit research from Analytics
+
+Supplier permit list and public Permit leads now live together at /internal/permits with a Permits navigation entry on desktop and in the phone More menu. Analytics no longer renders either list, includes the contact dialog, or requests either permit endpoint; requests-to-revenue, lead-source reporting and GA4 remain. The new page retains summary charts, explicit list loading, group filtering, spreadsheet download, builder connections and do-not-contact/call-log controls. Existing authenticated endpoints, D1 data and no-store boundaries are unchanged; no supplier data was loaded or copied into git. Expired permit fetches return to login with the Permits return path. Navigation and separation guards plus the relocated browser contact flow cover the move.
+
+The new-construction installation section now says From plans to install. Its paragraph uses plain plans/window sizes/written estimate/manufacturer expected delivery time/building schedule wording per public-copy-positioning.md. Only that heading and paragraph changed; no metadata, schema, business facts or timing promises changed.
+
+Validation: all 66 test:all steps passed; terminology and SEO checks passed after the copy edit. Separate build, browser and hosted release checks pending.
+
 ## 2026-10-23 - Live GA4 automatic scroll context repair
 
 GTM-WGCFVHQM version 17 is Live (3:56:41 PM PDT). New setup-only Google Tag - SPA context update (55) sets update=true, send_page_view=false, and captured page_location/page_title/page_referrer DLVs before existing Google Analytics GA4 Event (4). Exactly two tags changed. Initial privacy/campaign flags, conversion gates and non-production blocking remain. No runtime source or Pages deployment change.

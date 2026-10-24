@@ -1,3 +1,7 @@
+## 2026-10-24 — New-construction section copy
+
+Reviewed the installation-sequence heading and introductory paragraph only against public-copy-positioning.md. Heading is now From plans to install. Subtext uses plans, window sizes/styles, written estimate, manufacturer expected delivery time and building schedule. Other new-construction copy, metadata, FAQs and structured data were not reviewed or changed in this pass. No new business facts or timing promises introduced.
+
 # Clearview ICM — Working Context
 
 ## 2026-10-22 - Audit repair scope

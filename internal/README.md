@@ -245,7 +245,7 @@ added as Viewer, the Data API not enabled, or a wrong property ID.
 
 ## Permit leads (Analytics page, public records)
 
-The **Permit leads** section of `/internal/analytics` shows building permits from
+The **Permit leads** section of `/internal/permits` shows building permits from
 Clark County and the City of Vancouver, joined to county assessor parcels and WA L&I
 contractor licenses. It is research data in three tables (`permit_prospects`,
 `permit_builders`, `permit_import_meta`, created on first use), not leads: nothing in
@@ -296,7 +296,7 @@ data.wa.gov dataset `m8qx-ubtq`. Tests: `npm run test:permit-leads`.
 
 ## Supplier permit list (Analytics page, licensed weekly report)
 
-The **Supplier permit list** section of `/internal/analytics` shows the weekly permit report Mark's supplier shares
+The **Supplier permit list** section of `/internal/permits` shows the weekly permit report Mark's supplier shares
 (Construction Monitor: Portland, Vancouver and Salem metro), joined to Clark County parcels, sales and WA L&I contractor
 licenses and compared with the Permit leads and Mail pilot lists. It is research data in two tables (`supplier_permits`,
 `supplier_import_meta`, created by the SQL file itself), not leads: nothing in them is a customer, quote or job until a
