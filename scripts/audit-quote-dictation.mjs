@@ -234,5 +234,44 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await ctx.close(); ok('a clip with no audio ends cleanly');
 }
 
+// 12. Sizes heard are listed in the standard form as soon as they are in the notes, and land on the quote line.
+{
+  const { ctx, page } = await open({ transcripts: ['Kitchen two double-hungs 35 1/2 x 47 3/4.'], drafts: [{ lines: [{ type: 'window', openingId: 'double-hung', materialId: 'vinyl', brandId: 'cascade', method: 'fin', quantity: 2, room: 'Kitchen', size: '35 1/2 x 47 3/4', note: '', heard: '' }] }] });
+  await page.route('**/internal/api/quote-dictation', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: 'Kitchen two double-hungs 35 1/2 x 47 3/4.', sizes: ['35 1/2 x 47 3/4'], roundedSizes: 0 }) }));
+  await page.click('[data-rec-toggle]'); await page.click('[data-rec-toggle]');
+  await page.waitForFunction(() => document.querySelectorAll('.qb-items tbody tr').length === 1);
+  assert.match(await page.textContent('[data-sizes-heard]'), /Sizes heard \(width x height, inches\):\s*35 1\/2 x 47 3\/4/);
+  assert.deepEqual(await rows(page), ['Kitchen: Double-hung — Vinyl — Cascade — fin — 35 1/2 x 47 3/4']);
+  await page.fill('[data-rough-notes]', 'Den, picture window thirty six by forty eight and a half');
+  assert.match(await page.textContent('[data-sizes-heard]'), /36 x 48 1\/2/, 'typed words are read the same way');
+  await ctx.close(); ok('sizes heard are listed the standard way and appear on the quote line');
+}
+
+// 13. Measurements: type 35-1/2, see 35 1/2; fraction buttons; exact area; a bad size is marked, not saved.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(`${base}/internal/tools/measurements`);
+  await page.click('[data-empty-add]');
+  const width = page.locator('input[data-field=width]'); const height = page.locator('input[data-field=height]');
+  await width.fill('35-1/2'); await width.blur();
+  assert.equal(await width.inputValue(), '35 1/2', 'a dash fraction is rewritten with a slash when the field is left');
+  await height.fill('47'); await page.click('[data-frac="3/4"]');
+  assert.equal(await height.inputValue(), '47 3/4', 'a fraction button adds the fraction to the size being typed');
+  await page.click('[data-frac="1/2"]');
+  assert.equal(await height.inputValue(), '47 1/2', 'a second tap replaces the fraction');
+  await page.click('[data-frac="3/4"]'); await height.blur();
+  assert.match(await page.textContent('.area-cell'), /11\.77 sq ft/, 'area uses the exact size (35.5 x 47.75 / 144)');
+  await width.fill('abc'); await width.blur();
+  assert.equal(await width.getAttribute('aria-invalid'), 'true');
+  assert.match(await page.textContent('[data-save-state]'), /not understood/);
+  await page.reload();
+  assert.equal(await page.locator('input[data-field=width]').inputValue(), '35 1/2', 'the last good size is what was saved');
+  assert.equal(await page.locator('input[data-field=height]').inputValue(), '47 3/4');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('Measurements takes 35 1/2, shows 35 1/2, and never saves a size it did not understand');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');

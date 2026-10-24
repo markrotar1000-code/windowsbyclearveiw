@@ -8,6 +8,8 @@
 // The id lists below are kept equal to src/data/pricing.ts by hand (Pages Functions never import from
 // src/); `test:quote-dictation` fails if they drift.
 
+import { extractSizes, formatSize, sizeKey } from '../../_lib/dimensions.mjs';
+
 export const OPENING_IDS = ['slider', 'double-hung', 'single-hung', 'picture', 'casement', 'awning', 'bay-bow', 'sliding-door', 'french-door'];
 export const MATERIAL_IDS = ['vinyl', 'fiberglass'];
 export const BRAND_IDS = ['cascade', 'milgard'];
@@ -28,7 +30,7 @@ export function extractionPrompt() {
     'Shape: {"customer":{"name":"","phone":"","address":"","city":""},"lines":[{"type":"window"|"custom","openingId":"","materialId":"","brandId":"","method":"","quantity":1,"room":"","size":"","label":"","note":"","heard":""}]}',
     `openingId must be one of: ${OPENING_IDS.join(', ')}. materialId one of: ${MATERIAL_IDS.join(', ')} or "". brandId one of: ${BRAND_IDS.join(', ')} or "". method one of: ${METHODS.join(', ')} ("fin" = full-frame/fin install) or "".`,
     'Use type "window" for a window or door that fits the openingId list. Use type "custom" (with a short label) for anything else Mark mentions: trim, rot repair, siding, paint, haul-away, a discount. Never use type "custom" for a price.',
-    'Rules: copy only what the notes say. Leave a field "" when the notes do not say it. NEVER output a price, a cost, or a dollar amount. NEVER invent a size, count, brand or material; "size" is only a width-by-height the notes literally state, as written (e.g. "36x48"). "heard" is the exact short phrase from the notes this line came from. One line per distinct kind of opening per room; quantity is how many of that opening.',
+    'Rules: copy only what the notes say. Leave a field "" when the notes do not say it. NEVER output a price, a cost, or a dollar amount. NEVER invent a size, count, brand or material. "size" is only a width-by-height the notes literally state, in inches with fractions written with a slash (e.g. "35 1/2 x 47 3/4"); never convert, round or combine numbers. "heard" is the exact short phrase from the notes this line came from, and it must include the size words when the notes give a size for that opening. One line per distinct kind of opening per room; quantity is how many of that opening.',
     'Customer fields only if the notes state them. Ignore small talk. If nothing is quotable, return {"customer":{},"lines":[]}.',
   ].join('\n');
 }
@@ -47,29 +49,8 @@ export function parseModelJson(text) {
   }
 }
 
-function numbersIn(text) {
-  return String(text).match(/\d+(?:\.\d+)?/g) || [];
-}
-
 // Lower case, punctuation and spacing flattened: "Two double-hungs, 36 by 48." matches "two double hungs 36 by 48".
 export const normalize = (text) => String(text ?? '').toLowerCase().replace(/[^a-z0-9.]+/g, ' ').replace(/\.(?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
-
-const ONES = { zero: 0, oh: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19 };
-const TENS = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
-
-/** Numbers spoken as words ("thirty six", "forty-eight", "twelve"), as digit strings, so a size Mark said aloud still counts as said. */
-export function spokenNumbers(text) {
-  const words = normalize(text).split(' ');
-  const found = [];
-  for (let i = 0; i < words.length; i += 1) {
-    const w = words[i];
-    if (w in TENS) {
-      const next = words[i + 1];
-      if (next in ONES && ONES[next] >= 1 && ONES[next] <= 9) { found.push(String(TENS[w] + ONES[next])); i += 1; } else found.push(String(TENS[w]));
-    } else if (w in ONES) found.push(String(ONES[w]));
-  }
-  return found;
-}
 
 /**
  * Validates model output against the notes. Returns { lines, customer, dropped } and never throws.
@@ -80,7 +61,7 @@ export function validateDraft(raw, notes) {
   if (!raw || typeof raw !== 'object') return out;
   const text = String(notes ?? '');
   const flat = normalize(text);
-  const digitsInNotes = new Set([...numbersIn(text), ...spokenNumbers(text)]);
+  const noteSizes = new Map(extractSizes(text).map((size) => [sizeKey(size), size]));
 
   const c = raw.customer && typeof raw.customer === 'object' ? raw.customer : {};
   const phoneDigits = clean(c.phone, 40).replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
@@ -105,9 +86,16 @@ export function validateDraft(raw, notes) {
     const heardRaw = clean(item.heard, 160);
     const heardFlat = normalize(heardRaw);
     const heard = heardFlat && flat.includes(heardFlat) ? heardRaw : '';
-    // A size is a measurement: keep it only when every number in it appears in the notes as typed digits.
-    let size = clean(item.size, 40);
-    if (size && !(/^\d{1,3}(?:\.\d+)?\s*(?:x|×|by)\s*\d{1,3}(?:\.\d+)?$/i.test(size) && numbersIn(size).every((n) => digitsInNotes.has(n)))) size = '';
+    // A size is a measurement, so code (not the model) decides what it is: it must be a width-by-height that the notes
+    // actually contain, compared as exact sixteenths of an inch, and it is always written back the standard way.
+    // If the model left it out but the evidence phrase holds exactly one size, that size is the line's size.
+    const claimed = extractSizes(clean(item.size, 60))[0];
+    const inNotes = claimed ? noteSizes.get(sizeKey(claimed)) : null;
+    // Only when the model gave no size at all: a size it claimed that the notes do not contain is dropped, never swapped.
+    const fromHeard = !claimed && heard ? extractSizes(heard) : [];
+    const sizeSource = inNotes || (fromHeard.length === 1 ? noteSizes.get(sizeKey(fromHeard[0])) : null);
+    const size = sizeSource ? formatSize(sizeSource) : '';
+    const sizeRounded = Boolean(sizeSource?.rounded);
 
     if (item.type === 'window') {
       const openingId = pick(item.openingId, OPENING_IDS);
@@ -121,6 +109,7 @@ export function validateDraft(raw, notes) {
         quantity,
         room,
         size,
+        sizeRounded,
         note,
         heard,
       });
@@ -128,7 +117,7 @@ export function validateDraft(raw, notes) {
       const label = clean(item.label, 120);
       if (!label) { out.dropped += 1; continue; }
       // Custom lines come back unpriced: Mark types the number.
-      out.lines.push({ type: 'custom', label, quantity, room, size, note, heard });
+      out.lines.push({ type: 'custom', label, quantity, room, size: '', sizeRounded: false, note, heard });
     } else {
       out.dropped += 1;
     }
