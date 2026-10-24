@@ -5,6 +5,18 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 
+# The Command Center needs the microphone for quote dictation (Rough notes). The site-wide policy above would block
+# it for every browser regardless of the user's settings, so internal pages replace it: microphone for this origin
+# only, camera and location still off. `!` removes the header inherited from /* first (a plain second line would be
+# merged into a duplicate policy). Public pages keep microphone=().
+/internal
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), interest-cohort=()
+
+/internal/*
+  ! Permissions-Policy
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), interest-cohort=()
+
 # Astro fingerprints everything under /_astro, so it can be cached forever.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
