@@ -26,6 +26,7 @@ Mission: a trustworthy operating system for Clearview Windows & Trim LLC, not me
 | Customer-facing copy, guides, graphics | `.ai/workflows/public-copy-sweep/`, `.ai/references/public-copy-positioning.md` | internal specialists |
 | GA4, GTM, Meta events | `.ai/workflows/analytics-events/` | copy references |
 | Ship, deploy, domain or mail change | `.ai/workflows/deploy-check/` | analytics, specialists |
+| Rough notes / voice dictation into the quote builder | `.ai/workflows/quote-dictation/` | build-plan stages; audio, transcripts or customer data in chat or git |
 | Direct-mail pilot: refresh the list, read or load Mail pilot data | `.ai/workflows/mail-pilot/` | quote workflows; address data in chat or git |
 | Supplier permit list: parse the weekly report, enrich it, load or read it | `.ai/workflows/supplier-permits/` | quote workflows; the report, its rows or phone numbers in chat or git |
 | `/ask` routing or specialists | `.ai/references/ask-routing.md`, `.ai/specialists/<id>/CONTEXT.md` | workflows |

@@ -10,6 +10,11 @@ Replaced installation-related set/sets/setting wording in seven city pages, shar
 
 Validation: all 66 local test steps passed; final terminology/SEO checks and separate 70-page build passed. PR293 merged as 2ec2978 after GitHub Build run 969 and Cloudflare Pages both succeeded. Independent preview 844187c1 and production deployment baef5206 were inspected in Chrome. Production Vancouver body/FAQ, estimate form choice and new-construction image descriptions use the revised wording; the new-construction siding link and requested removals remain live. Production PWA health passed. No physical-device testing was performed.
 
+## 2026-10-24 - Rough notes to draft quote lines (for the next agent)
+
+What to know: voice needs the `AI` binding in the Pages dashboard (already set for Ask photos); without it the Record button reports "Voice is not connected yet" and typing or the phone keyboard microphone still work. Drafting needs `GROQ_API_KEY` or `GEMINI_API_KEY` (already used by Copilot). Limits: clips 45 s / 1.5 MB, 90 clips an hour, 30 drafts per 15 minutes, notes 4,000 characters. Open: a real-phone test (iOS Safari recording, noise), whether Mark wants his per-opening prices filled in the price book so drafts start closer (only the slider has one), and counsel's view on Washington's all-party recording consent. Details: `.ai/workflows/quote-dictation/CONTEXT.md`.
+
+
 ## 2026-10-24 — Separate permit research from Analytics
 
 Supplier permit list and public Permit leads now live together at /internal/permits with a Permits navigation entry on desktop and in the phone More menu. Analytics no longer renders either list, includes the contact dialog, or requests either permit endpoint; requests-to-revenue, lead-source reporting and GA4 remain. The new page retains summary charts, explicit list loading, group filtering, spreadsheet download, builder connections and do-not-contact/call-log controls. Existing authenticated endpoints, D1 data and no-store boundaries are unchanged; no supplier data was loaded or copied into git. Expired permit fetches return to login with the Permits return path. Navigation and separation guards plus the relocated browser contact flow cover the move.
