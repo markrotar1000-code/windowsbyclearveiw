@@ -33,10 +33,21 @@ model: no customer record, no prices, no history.
 2. **Draft.** When Mark stops recording (default; a checkbox turns it off) or taps *Draft lines*, only the words added
    since the last draft are sent (`nextDraftText`), so room-by-room use never duplicates lines. Editing drafted words
    asks before replacing the earlier lines. `/internal/api/quote-notes` asks Groq (Gemini as fallback) for a JSON draft limited to the price-book ids.
-3. **Validate (deterministic).** `validateDraft` keeps only known opening/material/brand/method ids, whole quantities
-   1 to 99, at most 30 lines, a size only when every number in it appears in the notes (digits or spoken, "thirty six" counts), evidence phrases only when
+3. **Sizes (deterministic, `functions/_lib/dimensions.mjs`).** A size is read by code, never by the model: width by
+   height in inches, exact sixteenths, written back as `35 1/2 x 47 3/4` (slash fraction, never a dash or a decimal)
+   whether it was said ("thirty five and a half by forty seven and three quarters") or typed ("35-1/2 x 47-3/4",
+   "35.5 by 47.75"). The transcription endpoint rewrites sizes in the transcript, and the page lists every size in the
+   notes box (`Sizes heard`) the moment it appears so Mark can check it against the tape. A model-claimed size is kept
+   only if the same width and height appear in the notes; a size the model forgot is taken from its own evidence phrase
+   when that holds exactly one; a decimal that is not a multiple of 1/16 is rounded and flagged. Only 6 to 144 inches
+   count (a "2 by 4" is lumber). The size goes at the end of the quote line label, and the Build Plan prefills the
+   opening's dimensions from it but keeps "VERIFY at site". Speech recognition is not perfect and this does not claim it
+   is: the guarantees are that code (not a model) turns words into numbers, that nothing is kept that was not said, and
+   that every size is shown back in the standard form at three points (the clip, the notes box, the line).
+4. **Validate (deterministic).** `validateDraft` keeps only known opening/material/brand/method ids, whole quantities
+   1 to 99, at most 30 lines, a size only as described above, evidence phrases only when
    they appear in the notes, and customer facts only when the notes contain them. It carries no price field.
-4. **Place.** The page adds each line with the same price-book suggestion as *Add line* (`suggestedUnitPrice`);
+5. **Place.** The page adds each line with the same price-book suggestion as *Add line* (`suggestedUnitPrice`);
    anything the price book does not cover starts at $0, highlighted. Sizes and remarks go to the internal notes, not
    the printed line. Empty customer fields are filled; filled ones are not touched. *Undo draft* removes the lines.
 

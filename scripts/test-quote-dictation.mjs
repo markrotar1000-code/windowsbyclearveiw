@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 import * as notesApi from '../functions/internal/api/quote-notes.js';
 import * as dictationApi from '../functions/internal/api/quote-dictation.js';
-import { normalize, spokenNumbers, OPENING_IDS, MATERIAL_IDS, BRAND_IDS, METHODS, MAX_LINES, extractionPrompt, parseModelJson, validateDraft } from '../functions/internal/_lib/quote-notes.mjs';
+import { normalize, OPENING_IDS, MATERIAL_IDS, BRAND_IDS, METHODS, MAX_LINES, extractionPrompt, parseModelJson, validateDraft } from '../functions/internal/_lib/quote-notes.mjs';
 
 process.removeAllListeners('warning');
 const root = new URL('../', import.meta.url);
@@ -67,7 +67,7 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   const v = validateDraft(raw, NOTES);
   assert.equal(v.lines.length, 5, `kept lines: ${JSON.stringify(v.lines.map((l) => l.type + (l.openingId || l.label)))}`);
   assert.equal(v.dropped, 8);
-  assert.equal(v.lines[0].size, '36 by 48');
+  assert.equal(v.lines[0].size, '36 x 48', 'a size is always written back the standard way');
   assert.equal(v.lines[0].heard, 'two double-hungs, 36 by 48');
   assert.equal(v.lines[0].method, 'fin');
   assert.equal(v.lines[0].brandId, null);
@@ -93,17 +93,27 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
 }
 
 
-// 4b. Spoken numbers and loose punctuation still count as "said"; invented ones still do not.
+// 4b. Sizes: read by code from the notes, compared exactly, written back the standard way. Invented or mixed ones are removed.
 {
-  assert.deepEqual(spokenNumbers('thirty six by forty-eight, twelve, ninety'), ['36', '48', '12', '90']);
   assert.equal(normalize('Two double-hungs, 36 by 48.'), 'two double hungs 36 by 48');
-  const spoken = 'Dana here. Picture window thirty six by forty eight, one more in the den.';
-  const line = { type: 'window', openingId: 'picture', quantity: 1, room: 'Den', size: '36x48', heard: 'Picture window, thirty-six by forty-eight' };
-  const v = validateDraft({ customer: { name: 'Dana Whitfield' }, lines: [line, { ...line, size: '36x50' }] }, spoken);
-  assert.equal(v.lines[0].size, '36x48', 'a size said in words is kept');
-  assert.equal(v.lines[0].heard, 'Picture window, thirty-six by forty-eight', 'punctuation and hyphens do not break the evidence check');
-  assert.equal(v.lines[1].size, '', 'a size nobody said is still removed');
-  pass('spoken numbers and punctuation are matched; invented sizes are still removed');
+  const spoken = 'Dana here. Picture window thirty five and a half by forty seven and three quarters, one more in the den, 23 7/8 by 35 3/4.';
+  const line = { type: 'window', openingId: 'picture', quantity: 1, room: 'Den', size: '35-1/2 x 47-3/4', heard: 'Picture window thirty five and a half by forty seven and three quarters' };
+  const v = validateDraft({ customer: { name: 'Dana Whitfield' }, lines: [
+    line,
+    { ...line, size: '35 1/2 x 47 1/2' },                       // one number changed: not said
+    { ...line, size: '47 3/4 x 35 1/2' },                       // width and height swapped: not said
+    { ...line, size: '35 1/2 x 35 3/4' },                       // numbers borrowed from two different sizes
+    { ...line, size: '', heard: 'one more in the den, 23 7/8 by 35 3/4' }, // model forgot the size; the evidence phrase holds exactly one
+    { ...line, size: '', heard: 'Picture window' },             // nothing to take it from
+  ] }, spoken);
+  assert.equal(v.lines[0].size, '35 1/2 x 47 3/4', 'said in words, claimed with a dash, written with a slash');
+  assert.equal(v.lines[1].size, '', 'a size with one number changed is removed');
+  assert.equal(v.lines[2].size, '', 'width and height swapped is removed');
+  assert.equal(v.lines[3].size, '', 'numbers from two different sizes are not combined');
+  assert.equal(v.lines[4].size, '23 7/8 x 35 3/4', 'a size the model forgot is taken from its own evidence phrase');
+  assert.equal(v.lines[5].size, '');
+  assert.equal(v.lines[0].heard, 'Picture window thirty five and a half by forty seven and three quarters', 'punctuation and hyphens do not break the evidence check');
+  pass('sizes are matched exactly against the notes and always written width x height with a slash fraction');
 }
 
 // 5. quote-notes handler.

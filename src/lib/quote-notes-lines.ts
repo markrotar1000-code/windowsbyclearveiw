@@ -7,7 +7,7 @@
 // Mark said go to the internal notes (never printed on the contract).
 import { suggestedUnitPrice } from './quote-pricing.ts';
 
-export type DraftWindowLine = { type: 'window'; openingId: string; materialId: string | null; brandId: string | null; method: 'insert' | 'fin' | null; quantity: number; room: string; size: string; note: string; heard: string };
+export type DraftWindowLine = { type: 'window'; openingId: string; materialId: string | null; brandId: string | null; method: 'insert' | 'fin' | null; quantity: number; room: string; size: string; sizeRounded?: boolean; note: string; heard: string };
 export type DraftCustomLine = { type: 'custom'; label: string; quantity: number; room: string; size: string; note: string; heard: string };
 export type DraftLine = DraftWindowLine | DraftCustomLine;
 export type DraftCatalog = {
@@ -33,7 +33,9 @@ export function draftLineToItem(line: DraftLine, catalog: DraftCatalog, workType
   if (workType === 'siding') return { label: `${prefix}${opening.label}`, description: '', quantity: line.quantity, unitPrice: 0 };
   // Only say what was said: when the method was not stated, leave it out (the Build Plan then reads it as VERIFY).
   const unitPrice = suggestedUnitPrice({ opening, materialMultiplier: material?.multiplier, brand });
-  const parts = [opening.label, line.materialId ? material?.label : null, !opening.isDoor ? brand?.label : null, line.method].filter(Boolean);
+  // The size goes last, width x height in inches, fractions with a slash ("35 1/2 x 47 3/4"), exactly as the page
+  // and the server read it from the notes. It is Mark's own measurement, shown on the line so he sees it as he checks it.
+  const parts = [opening.label, line.materialId ? material?.label : null, !opening.isDoor ? brand?.label : null, line.method, line.size || null].filter(Boolean);
   return { label: `${prefix}${parts.join(' — ')}`, description: '', quantity: line.quantity, unitPrice };
 }
 
@@ -48,7 +50,7 @@ export function notesBlock(rawNotes: string, lines: DraftLine[], withHeader = tr
     .filter((l) => l.size || l.note)
     .map((l) => {
       const what = l.type === 'custom' ? l.label : l.openingId;
-      return `- ${[l.room, what].filter(Boolean).join(' ')} x${l.quantity}: ${[l.size ? `size heard ${l.size} (confirm at measure)` : '', l.note].filter(Boolean).join('; ')}`;
+      return `- ${[l.room, what].filter(Boolean).join(' ')} x${l.quantity}: ${[l.size ? `size heard ${l.size}${l.sizeRounded ? ' (rounded to the nearest 1/16, recheck)' : ''} (confirm at measure)` : '', l.note].filter(Boolean).join('; ')}`;
     });
   return [...(withHeader ? [NOTES_HEADER] : []), rawNotes.trim(), ...(detail.length ? ['Details heard:', ...detail] : [])].join('\n');
 }

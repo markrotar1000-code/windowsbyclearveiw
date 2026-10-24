@@ -44,6 +44,7 @@ const catalog = {
       <p class="est-hint">Talk through the house or type it: room, window type, how many, anything extra. Lines appear in the quote below and you change the prices any time.</p>
       <label class="visually-hidden" for="rough-notes">Rough notes</label>
       <textarea id="rough-notes" data-rough-notes rows="5" maxlength="4000" enterkeyhint="enter" placeholder="Kitchen, two double-hungs, fin. Living room slider, vinyl Cascade. Back bedroom picture window, some rot at the sill..."></textarea>
+      <p class="qb-sizes" data-sizes-heard hidden aria-live="polite"></p>
       <div class="qb-notes-actions">
         <button type="button" class="btn btn-primary qb-rec" data-rec-toggle aria-pressed="false"><span class="qb-rec-dot" aria-hidden="true"></span><span data-rec-label>Record</span></button>
         <button type="button" class="btn btn-ghost" data-draft-go>Draft lines</button>
@@ -193,6 +194,7 @@ const catalog = {
   import { formatCents } from '../../../lib/money';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
   import { suggestedUnitPrice } from '../../../lib/quote-pricing';
+  import { extractSizes, formatSize } from '../../../../functions/_lib/dimensions.mjs';
   import { NOTES_HEADER, draftLineToItem, mergeNotes, needsPrice, nextDraftText, notesBlock, type DraftCatalog, type DraftLine } from '../../../lib/quote-notes-lines';
 
   type CatalogOpening = { id: string; label: string; low: number; high: number; isDoor: boolean; quotePrice: number | null };
@@ -490,6 +492,7 @@ const catalog = {
     const retryClips = form.querySelector('[data-retry-clips]');
     const autoDraftBox = form.querySelector('[data-auto-draft]');
     const notesStatus = form.querySelector('[data-notes-status]');
+    const sizesHeard = form.querySelector('[data-sizes-heard]');
     if (roughNotes instanceof HTMLTextAreaElement && recToggle instanceof HTMLButtonElement && recLabel instanceof HTMLElement && draftGo instanceof HTMLButtonElement && draftUndo instanceof HTMLButtonElement && retryClips instanceof HTMLButtonElement && autoDraftBox instanceof HTMLInputElement && notesStatus instanceof HTMLElement) {
       const buzz = (ms: number) => { try { navigator.vibrate?.(ms); } catch { /* not every phone vibrates */ } };
       const say = (message: string, problem = false) => {
@@ -518,6 +521,23 @@ const catalog = {
       let failedClips: Blob[] = [];
 
       // Keep unsent notes across a reload (the lines themselves are rebuilt from them).
+      // Every size in the box, read by code in the standard form (width x height, inches, fractions with a slash), so
+      // Mark can check what was heard against the tape without waiting for a draft.
+      const showSizes = () => {
+        if (!(sizesHeard instanceof HTMLElement)) return;
+        const sizes = extractSizes(roughNotes.value);
+        sizesHeard.hidden = sizes.length === 0;
+        sizesHeard.replaceChildren();
+        if (sizes.length === 0) return;
+        sizesHeard.append(document.createTextNode('Sizes heard (width x height, inches): '));
+        sizes.forEach((size, index) => {
+          const chip = document.createElement('strong');
+          chip.textContent = `${formatSize(size)}${size.rounded ? ' (rounded to 1/16, check)' : ''}`;
+          sizesHeard.append(chip);
+          if (index < sizes.length - 1) sizesHeard.append(document.createTextNode('   '));
+        });
+      };
+      roughNotes.addEventListener('input', showSizes);
       const saveNotes = () => { if (editId) return; if (roughNotes.value.trim()) store.set(NOTES_KEY, JSON.stringify({ text: roughNotes.value, at: Date.now() })); else store.del(NOTES_KEY); };
       roughNotes.addEventListener('input', saveNotes);
       autoDraftBox.checked = store.get(AUTO_KEY) !== '0';
@@ -527,6 +547,7 @@ const catalog = {
           const saved = JSON.parse(store.get(NOTES_KEY) || 'null');
           if (saved && typeof saved.text === 'string' && saved.text.trim() && Date.now() - Number(saved.at) < 12 * 3600_000 && roughNotes.value.trim() === '') {
             roughNotes.value = saved.text.slice(0, 4000);
+            showSizes();
             say('Restored your unsent notes. Tap Draft lines to rebuild the quote lines.');
           }
         } catch { /* unreadable saved notes: start empty */ }
@@ -719,7 +740,11 @@ const catalog = {
             else {
               roughNotes.value = `${roughNotes.value.trimEnd()}${roughNotes.value.trim() ? '\n' : ''}${data.text}`.slice(0, 4000);
               saveNotes();
-              say(recording ? 'Recording...' : 'Added to the notes.');
+              showSizes();
+              // Read the sizes back right away, in the standard form, so a mishearing is caught while Mark is still at the window.
+              const sizes: string[] = Array.isArray(data.sizes) ? data.sizes : [];
+              const heardSizes = sizes.length ? ` Sizes heard (width x height): ${sizes.join('  |  ')}.${Number(data.roundedSizes) > 0 ? ' One was rounded to the nearest 1/16, so say it again if it is not right.' : ''}` : '';
+              say(`${recording ? 'Recording...' : 'Added to the notes.'}${heardSizes}`, Number(data.roundedSizes) > 0);
             }
             if (!recording && pendingClips === 0) {
               if (draftAfterStop && failedClips.length === 0) { draftAfterStop = false; await runDraft(true); }
@@ -1098,6 +1123,8 @@ const catalog = {
   .qb-mic { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-s); margin-top: var(--space-s); }
   .qb-mic label { flex: 1 1 14rem; }
   .qb-mic select { width: 100%; }
+  .qb-sizes { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); border: 1px solid var(--line-strong); font-variant-numeric: tabular-nums; }
+  .qb-sizes strong { white-space: nowrap; }
   .qb-auto { display: flex; align-items: center; gap: .5rem; margin-top: var(--space-s); }
   [data-rough-notes] { width: 100%; }
   .qb-note-status { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); background: var(--paper-raised); border: 1px solid var(--line-strong); }

@@ -1,3 +1,7 @@
+## 2026-10-24 - Standard size format and exact dimension capture
+
+`dimensions.mjs`, `size-input.ts`, transcription/validator/label/Build Plan integration, Measurements and Field mode size inputs with fraction buttons, `scripts/test-dimensions.mjs`, browser flows 12 and 13.
+
 ## 2026-10-24 - Build Plan: extras are not windows
 
 `isOpeningLine`/`splitQuoteLines` in `build-plan-rules.mjs`, used by `generatePlan` and `lintPlan`; extras listed in VERIFY; `scripts/test-plan-extras.mjs`.

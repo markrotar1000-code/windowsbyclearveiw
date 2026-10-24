@@ -32,6 +32,10 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
       <div><p class="kicker">Opening schedule</p><h2>Measurements</h2></div>
       <button class="btn btn-ghost" type="button" data-add>Add opening</button>
     </div>
+    <div class="frac-bar" data-frac-bar role="group" aria-label="Add a fraction to the size you are typing">
+      <span>Size in inches, like <strong>35 1/2</strong>. Tap to add a fraction:</span>
+      <button type="button" data-frac="1/8">1/8</button><button type="button" data-frac="1/4">1/4</button><button type="button" data-frac="3/8">3/8</button><button type="button" data-frac="1/2">1/2</button><button type="button" data-frac="5/8">5/8</button><button type="button" data-frac="3/4">3/4</button><button type="button" data-frac="7/8">7/8</button>
+    </div>
     <div class="table-wrap">
       <table class="measure-table">
         <thead>
@@ -71,6 +75,8 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
 </InternalLayout>
 
 <script>
+  import { bindFractionBar, readInches, showInches } from '../../../lib/size-input';
+
   type Opening = {
     room: string;
     type: string;
@@ -147,6 +153,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const fmt = (v: number) => v.toFixed(2).replace(/\.00$/, '');
 
+
     // A reading that is almost certainly a slip (a missing decimal point, inches typed as feet) is flagged, never changed:
     // the worksheet keeps exactly what was typed.
     const SIZE_MIN = 6;
@@ -156,7 +163,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
       const w = num(opening.width);
       const h = num(opening.height);
       const q = Math.floor(num(opening.quantity) || 1);
-      if ((w && (w < SIZE_MIN || w > SIZE_MAX)) || (h && (h < SIZE_MIN || h > SIZE_MAX))) return `Check the size: ${w ? `${fmt(w)} in` : '—'} wide by ${h ? `${fmt(h)} in` : '—'} high is unusual. Measure again.`;
+      if ((w && (w < SIZE_MIN || w > SIZE_MAX)) || (h && (h < SIZE_MIN || h > SIZE_MAX))) return `Check the size: ${w ? `${showInches(w)} in` : '—'} wide by ${h ? `${showInches(h)} in` : '—'} high is unusual. Measure again.`;
       if (q > QTY_MAX) return `Check the quantity: ${q} of one opening is unusual.`;
       return '';
     }
@@ -190,8 +197,8 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
           <td class="index-cell" data-label="Opening">${index + 1}</td>
           <td data-label="Room / location"><input type="text" value="${esc(opening.room)}" data-field="room" maxlength="100" placeholder="Living room" aria-label="Room or location"></td>
           <td data-label="Type"><select data-field="type" aria-label="Window type">${TYPES.map((type) => `<option value="${esc(type)}" ${type === opening.type ? 'selected' : ''}>${esc(type)}</option>`).join('')}</select></td>
-          <td data-label="Width (in)"><input type="number" min="0" step="0.125" inputmode="decimal" value="${opening.width === '' ? '' : esc(opening.width)}" data-field="width" aria-label="Width in inches"></td>
-          <td data-label="Height (in)"><input type="number" min="0" step="0.125" inputmode="decimal" value="${opening.height === '' ? '' : esc(opening.height)}" data-field="height" aria-label="Height in inches"></td>
+          <td data-label="Width (in)"><input type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="35 1/2" value="${esc(showInches(opening.width))}" data-field="width" data-size aria-label="Width in inches, like 35 1/2"></td>
+          <td data-label="Height (in)"><input type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="47 3/4" value="${esc(showInches(opening.height))}" data-field="height" data-size aria-label="Height in inches, like 47 3/4"></td>
           <td data-label="Quantity"><input class="qty-input" type="number" min="1" step="1" inputmode="numeric" value="${qty}" data-field="quantity" aria-label="Quantity"></td>
           <td class="area-cell" data-label="Area">${fmt(rowArea)} sq ft</td>
           <td data-label="Notes"><input type="text" value="${esc(opening.notes)}" data-field="notes" maxlength="300" placeholder="Trim / rot / glass" aria-label="Opening notes"></td>
@@ -204,7 +211,14 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
             if (key !== 'width' && key !== 'height' && key !== 'quantity') return;
             const input = field as HTMLInputElement;
             const value = input.value;
-            if (key === 'width' || key === 'height') opening[key] = value === '' ? '' : Math.max(0, num(value));
+            if (key === 'width' || key === 'height') {
+              // Typed text such as "35 1/2", "35-1/2" or "35.5". Text that is not a size yet (mid-typing) leaves the
+              // last good value in place and marks the field; it is never turned into a different number.
+              const parsed = value.trim() === '' ? null : readInches(value);
+              if (value.trim() === '') { opening[key] = ''; input.removeAttribute('aria-invalid'); }
+              else if (parsed !== null) { opening[key] = parsed; input.removeAttribute('aria-invalid'); }
+              // Not a size yet (for example "35 1/" while typing): keep the last good value, mark nothing until the field is left.
+            }
             else opening.quantity = Math.max(1, Math.floor(num(value) || 1));
             const rowArea = num(opening.width) && num(opening.height)
               ? (num(opening.width) * num(opening.height) / 144) * opening.quantity
@@ -226,11 +240,21 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
           field.addEventListener('change', () => {
             const key = (field as HTMLInputElement | HTMLSelectElement).dataset.field as keyof Opening;
             const value = (field as HTMLInputElement).value;
-            if (key === 'width' || key === 'height') opening[key] = value === '' ? '' : Math.max(0, num(value));
+            if (key === 'width' || key === 'height') {
+              const parsed = value.trim() === '' ? null : readInches(value);
+              if (value.trim() === '') opening[key] = '';
+              else if (parsed !== null) opening[key] = parsed;
+            }
             else if (key === 'quantity') opening.quantity = Math.max(1, Math.floor(num(value) || 1));
             else if (key === 'room' || key === 'type' || key === 'notes') opening[key] = value;
-            // Keep the row mounted when moving to the next field. Numeric totals update on input.
-            if (key === 'width' || key === 'height' || key === 'quantity') (field as HTMLInputElement).value = String(opening[key]);
+            // Keep the row mounted when moving to the next field. A size that read correctly is rewritten in the
+            // standard form ("35-1/2" becomes "35 1/2"); one that did not is left as typed, marked, and not saved over.
+            if (key === 'width' || key === 'height') {
+              const input = field as HTMLInputElement;
+              if (value.trim() === '' || readInches(value) !== null) { input.value = showInches(opening[key]); input.removeAttribute('aria-invalid'); input.removeAttribute('title'); }
+              else { input.setAttribute('aria-invalid', 'true'); input.title = 'Type inches like 35 1/2'; saveState.textContent = 'That size was not understood. Type inches like 35 1/2.'; return; }
+            }
+            if (key === 'quantity') (field as HTMLInputElement).value = String(opening[key]);
             save();
           });
         });
@@ -261,6 +285,8 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
         (inputs[inputs.length - 1] as HTMLInputElement | undefined)?.focus();
       }, 0);
     }
+
+    bindFractionBar(root, (message) => { saveState.textContent = message; });
 
     load();
     jobName.value = data.jobName;
@@ -348,6 +374,10 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   .summary-note strong { font-size:var(--step--1); line-height:1.35; }
   .panel-head { padding:var(--space-m); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:end; gap:var(--space-s); }
   .panel-head h2 { margin:.12rem 0 0; font-size:var(--step-1); }
+  .frac-bar { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; margin:0 0 .6rem; font-size:var(--step--1); color:var(--ink-soft); }
+  .frac-bar span { flex:1 1 100%; }
+  .frac-bar button { min-width:3.2rem; min-height:44px; border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--paper); color:var(--ink); font:inherit; font-variant-numeric:tabular-nums; cursor:pointer; }
+  .measure-table :global(input[aria-invalid='true']) { border-color:var(--danger, #9b2c2c); }
   .table-wrap { overflow-x:auto; }
   .measure-table { width:100%; border-collapse:collapse; min-width:980px; }
   .measure-table :global(th), .measure-table :global(td) { padding:.55rem; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
