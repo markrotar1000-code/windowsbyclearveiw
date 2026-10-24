@@ -50,6 +50,13 @@ const catalog = {
         <button type="button" class="btn btn-ghost" data-draft-undo hidden>Undo draft</button>
         <button type="button" class="btn btn-ghost" data-retry-clips hidden>Retry recording</button>
       </div>
+      <div class="qb-mic" data-mic-row hidden>
+        <label>Microphone
+          <select data-mic-select></select>
+        </label>
+        <button type="button" class="btn btn-ghost" data-mic-allow>Allow microphone</button>
+      </div>
+      <p class="qb-note-status qb-note-problem" data-mic-help role="status" hidden></p>
       <label class="choice qb-auto"><input type="checkbox" data-auto-draft checked /> Draft the lines when I stop recording</label>
       <p class="qb-note-status" data-notes-status role="status" aria-live="polite" hidden></p>
       <p class="est-hint" data-rec-hint>Record your own notes, one room at a time. Washington needs everyone's OK to record a conversation, so ask the customer first or keep their voice out of it. Audio is not saved, only the typed words. Keep the screen on while recording. No microphone? The keyboard microphone on your phone fills this box too.</p>
@@ -140,6 +147,8 @@ const catalog = {
         <tbody data-items-body></tbody>
       </table>
       <p class="est-empty" data-items-empty>Nothing added yet.</p>
+
+      <p class="qb-unpriced" data-unpriced role="status" hidden></p>
 
       <div class="qb-totals">
         <label class="qb-discount">
@@ -333,6 +342,12 @@ const catalog = {
         totalCells[index]?.closest('tr')?.classList.toggle('qb-row-unpriced', needsPrice(item));
       });
       const discount = Math.max(0, Math.min(subtotal, Math.round((Number(discountInput.value) || 0) * 100)));
+      const unpricedNote = form.querySelector('[data-unpriced]');
+      if (unpricedNote instanceof HTMLElement) {
+        const zero = items.filter(needsPrice).length;
+        unpricedNote.hidden = zero === 0;
+        unpricedNote.textContent = zero === 0 ? '' : `${zero} line${zero === 1 ? ' is' : 's are'} still at $0. Type a price on ${zero === 1 ? 'it' : 'each'} before this goes to the customer.`;
+      }
       subtotalOut.textContent = formatCents(subtotal);
       totalOut.textContent = formatCents(subtotal - discount);
       if (dockOut) dockOut.textContent = formatCents(subtotal - discount);
@@ -591,6 +606,91 @@ const catalog = {
         recToggle.hidden = true;
         autoDraftBox.closest('label')?.setAttribute('hidden', '');
       } else {
+        // ── Microphone: permission, choice of input, and what to do when the browser says no ─────────────
+        // A page cannot reopen a permission the browser has blocked, so the control does what it can: ask again
+        // (works while the browser is still asking), list and remember the inputs, react when one is plugged in or
+        // removed, and when the block is real, say exactly where to undo it on this phone and re-check on a tap.
+        const MIC_KEY = 'cv-quote-mic';
+        const micRow = form.querySelector('[data-mic-row]');
+        const micSelect = form.querySelector('[data-mic-select]');
+        const micAllow = form.querySelector('[data-mic-allow]');
+        const micHelp = form.querySelector('[data-mic-help]');
+        let permission: PermissionState | 'unknown' = 'unknown';
+        const micName = (error: unknown) => (error instanceof DOMException || error instanceof Error ? error.name : '');
+        const blockedSteps = () => {
+          const ua = navigator.userAgent;
+          if (/iPhone|iPad|iPod/.test(ua)) return 'On iPhone: tap the "aA" button in the address bar, choose Website Settings, set Microphone to Allow, then tap Check again.';
+          if (/Android/.test(ua)) return 'On Android: tap the lock icon next to the address, choose Permissions, set Microphone to Allow, then tap Check again.';
+          return 'Click the lock icon next to the address, set Microphone to Allow, then click Check again.';
+        };
+        const micProblem = (error: unknown) => {
+          const name = micName(error);
+          if (name === 'NotFoundError') return 'No microphone was found on this device. Type your notes, or plug one in.';
+          if (name === 'NotReadableError' || name === 'AbortError') return 'Another app is using the microphone. Close it, then tap Record again.';
+          if (name === 'NotAllowedError' || name === 'SecurityError') return 'The microphone is blocked for this site.';
+          return 'Could not start the microphone. Type your notes, or try again.';
+        };
+        const renderMic = () => {
+          if (!(micRow instanceof HTMLElement) || !(micSelect instanceof HTMLSelectElement) || !(micAllow instanceof HTMLButtonElement) || !(micHelp instanceof HTMLElement)) return;
+          const granted = permission === 'granted';
+          micRow.hidden = false;
+          micSelect.hidden = !granted || micSelect.options.length < 2;
+          micSelect.closest('label')?.toggleAttribute('hidden', micSelect.hidden);
+          micAllow.hidden = granted;
+          micAllow.textContent = permission === 'denied' ? 'Check again' : 'Allow microphone';
+          micHelp.hidden = permission !== 'denied';
+          micHelp.textContent = permission === 'denied' ? `The browser has blocked the microphone for this site, and a web page cannot undo that. ${blockedSteps()}` : '';
+        };
+        const refreshMics = async () => {
+          if (!(micSelect instanceof HTMLSelectElement)) return;
+          try {
+            const mics = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput' && d.deviceId);
+            const saved = store.get(MIC_KEY) || '';
+            micSelect.replaceChildren(new Option("Phone's default microphone", ''));
+            mics.forEach((d, i) => micSelect.append(new Option(d.label || `Microphone ${i + 1}`, d.deviceId)));
+            micSelect.value = mics.some((d) => d.deviceId === saved) ? saved : '';
+            if (saved && micSelect.value === '') store.del(MIC_KEY);
+          } catch { /* no device list: the default microphone still works */ }
+          renderMic();
+        };
+        const readPermission = async () => {
+          try {
+            const state = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+            permission = state.state;
+            state.onchange = () => { permission = state.state; void refreshMics(); };
+          } catch { /* this browser cannot say; the Allow button still works */ }
+          await refreshMics();
+        };
+        micSelect?.addEventListener('change', () => { if (micSelect instanceof HTMLSelectElement) { if (micSelect.value) store.set(MIC_KEY, micSelect.value); else store.del(MIC_KEY); } });
+        navigator.mediaDevices.addEventListener?.('devicechange', () => { void refreshMics(); });
+        micAllow?.addEventListener('click', async () => {
+          try {
+            const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
+            probe.getTracks().forEach((track) => track.stop());
+            permission = 'granted';
+            say('Microphone is on. Tap Record when you are ready.');
+          } catch (error) {
+            if (micName(error) === 'NotAllowedError' || micName(error) === 'SecurityError') permission = 'denied';
+            say(micProblem(error), true);
+          }
+          await readPermission();
+        });
+        // The chosen input if it is still there, otherwise the default one (an unplugged headset must not stop a recording).
+        const openMic = async () => {
+          const saved = store.get(MIC_KEY);
+          try {
+            return await navigator.mediaDevices.getUserMedia({ audio: saved ? { deviceId: { exact: saved } } : true });
+          } catch (error) {
+            if (saved && (micName(error) === 'OverconstrainedError' || micName(error) === 'NotFoundError')) {
+              store.del(MIC_KEY);
+              say('That microphone is not available, so I am using the default one.');
+              return navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+            throw error;
+          }
+        };
+        void readPermission();
+
         const CLIP_MS = 45_000;
         let stream: MediaStream | null = null;
         let recorder: MediaRecorder | null = null;
@@ -650,6 +750,7 @@ const catalog = {
           stream = null;
           void wakeLock?.release().catch(() => {});
           wakeLock = null;
+          if (micSelect instanceof HTMLSelectElement) micSelect.disabled = false;
           recToggle.classList.remove('qb-rec-live');
           recLabel.textContent = 'Record';
           recToggle.setAttribute('aria-pressed', 'false');
@@ -664,11 +765,16 @@ const catalog = {
             return;
           }
           try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          } catch {
-            say('The microphone is blocked. Allow it in the browser settings, or use the keyboard microphone.', true);
+            stream = await openMic();
+          } catch (error) {
+            if (micName(error) === 'NotAllowedError' || micName(error) === 'SecurityError') permission = 'denied';
+            say(`${micProblem(error)} You can also use the keyboard microphone on your phone.`, true);
+            await readPermission();
             return;
           }
+          permission = 'granted';
+          void refreshMics();
+          if (micSelect instanceof HTMLSelectElement) micSelect.disabled = true;
           recording = true;
           startedAt = Date.now();
           recToggle.classList.add('qb-rec-live');
@@ -910,6 +1016,10 @@ const catalog = {
         return;
       }
 
+      // A $0 line is easy to miss on a phone and would print as $0.00 on the contract: make Mark say it is on purpose.
+      const zeroLines = items.filter(needsPrice);
+      if (zeroLines.length > 0 && !window.confirm(`${zeroLines.length} line${zeroLines.length === 1 ? ' is' : 's are'} still $0:\n\n${zeroLines.slice(0, 5).map((item) => `• ${item.label}`).join('\n')}\n\nSave anyway? You can change prices on the next screen.`)) return;
+
       const data = new FormData(form);
       const discountReasonEl = form.querySelector('[data-discount-reason]');
       const payload = {
@@ -980,6 +1090,10 @@ const catalog = {
   :global(.qb-rec.qb-rec-live .qb-rec-dot) { opacity: 1; animation: qb-rec-pulse 1.2s ease-in-out infinite; }
   @keyframes qb-rec-pulse { 50% { transform: scale(1.35); opacity: .6; } }
   @media (prefers-reduced-motion: reduce) { :global(.qb-rec.qb-rec-live .qb-rec-dot) { animation: none; } }
+  .qb-unpriced { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); border: 1px solid var(--danger, #9b2c2c); }
+  .qb-mic { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-s); margin-top: var(--space-s); }
+  .qb-mic label { flex: 1 1 14rem; }
+  .qb-mic select { width: 100%; }
   .qb-auto { display: flex; align-items: center; gap: .5rem; margin-top: var(--space-s); }
   [data-rough-notes] { width: 100%; }
   .qb-note-status { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); background: var(--paper-raised); border: 1px solid var(--line-strong); }

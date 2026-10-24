@@ -261,6 +261,9 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   assert.match(page, /Washington needs everyone/);
   assert.match(page, /Check every price and quantity before you save/);
   assert.match(page, /qb-row-unpriced/);
+  assert.match(page, /still \$0:/, 'saving with a $0 line asks first');
+  assert.match(page, /data-unpriced/, 'the builder says how many lines are at $0');
+  assert.match(read('src/pages/internal/quotes/view.astro'), /data-price-zero/, 'the price panel flags $0 lines');
   assert.match(page, /nextDraftText/);
   assert.match(page, /chain = chain\.then/, 'clips are added in the order recorded');
   assert.match(page, /failedClips/, 'a failed clip is kept for Retry');
@@ -272,6 +275,23 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   assert.ok(!/requestSubmit|\/internal\/api\/quotes/.test(draftHandler), 'drafting never saves the quote');
   assert.ok(!read('functions/internal/api/quote-notes.js').includes('QUOTES_DB.prepare'), 'the notes endpoint writes nothing');
   pass('the page drafts into the editable table and never saves by itself');
+}
+
+// 9. The site's own headers must not block the microphone the page asks for.
+{
+  const headers = read('public/_headers').replace(/\r\n/g, '\n');
+  assert.match(headers, /^\/\*\n(?:  .+\n)*?  Permissions-Policy: [^\n]*microphone=\(\)/m, 'public pages keep the microphone off');
+  for (const rule of ['/internal', '/internal/*']) {
+    const block = headers.split(/\n(?=\/)/).find((b) => b.startsWith(`${rule}\n`));
+    assert.ok(block, `${rule} has its own header rule`);
+    assert.match(block, /^  ! Permissions-Policy$/m, `${rule} first removes the inherited policy`);
+    assert.match(block, /^  Permissions-Policy: [^\n]*microphone=\(self\)/m, `${rule} allows the microphone for this origin`);
+    assert.match(block, /camera=\(\)/, 'the camera stays off');
+  }
+  const page = read('src/pages/internal/quotes/new.astro');
+  assert.ok(!/Allow it in the browser settings/.test(page), 'no dead-end "go to browser settings" message');
+  assert.match(page, /data-mic-allow/); assert.match(page, /data-mic-select/); assert.match(page, /devicechange/);
+  pass('internal pages may use the microphone; public pages may not; the page has an Allow button and a microphone picker');
 }
 
 console.log('\nAll quote-dictation checks passed.');

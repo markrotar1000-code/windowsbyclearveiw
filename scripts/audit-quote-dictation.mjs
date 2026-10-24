@@ -20,7 +20,7 @@ const base = `http://localhost:${server.address().port}`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const ok = (m) => console.log(`PASS: ${m}`);
 
-async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = false, drafts = [] } = {}) {
+async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = false, drafts = [], init = null } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', (e) => errors.push(e.message));
@@ -30,6 +30,7 @@ async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = f
     navigator.mediaDevices.getUserMedia = async () => ({ getTracks: () => [{ stop() {} }] });
     window.MediaRecorder = class { static isTypeSupported() { return true; } constructor() { this.state = 'inactive'; this.mimeType = 'audio/webm'; } start() { this.state = 'recording'; } stop() { this.state = 'inactive'; this.ondataavailable?.({ data: new Blob([new Uint8Array(5000)], { type: 'audio/webm' }) }); window.__recorders += 1; this.onstop?.(); } };
   });
+  if (init) await page.addInitScript(init);
   await page.route('**/internal/api/quote-dictation', async (r) => {
     const n = calls.dictation++;
     if (failFirst && n === 0) return r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: "Couldn't hear that clip." }) });
@@ -146,6 +147,79 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   assert.equal((await rows(page)).length, 1, 'accepting replaces the earlier lines instead of duplicating them');
   assert.equal(calls.notes.at(-1), 'Kitchen three double-hungs.');
   await ctx.close(); ok('editing drafted words asks first; replace never duplicates');
+}
+
+// 8. A $0 line is flagged live, and saving with one asks first (declining sends nothing).
+{
+  const { ctx, page, calls } = await open({ drafts: [{ lines: [{ type: 'custom', label: 'Rot repair at sill', quantity: 1, room: 'Den', size: '', note: '', heard: '' }] }] });
+  let saves = 0; await page.route('**/internal/api/quotes', (r) => { saves += 1; r.fulfill({ status: 201, contentType: 'application/json', body: '{"id":"Q-1"}' }); });
+  await page.fill('[data-rough-notes]', 'Den rot repair at the sill.');
+  await page.click('[data-draft-go]');
+  await page.waitForFunction(() => document.querySelectorAll('.qb-items tbody tr').length === 1);
+  assert.match(await page.textContent('[data-unpriced]'), /1 line is still at \$0/);
+  await page.fill('[name=name]', 'Dana'); await page.fill('[name=phone]', '3605550142');
+  let asked = ''; page.once('dialog', (d) => { asked = d.message(); d.dismiss(); });
+  await page.click('[data-submit]');
+  await page.waitForTimeout(200);
+  assert.match(asked, /still \$0/); assert.equal(saves, 0, 'declining saves nothing');
+  await page.fill('.qb-items tbody tr .qb-cell-price input', '450');
+  assert.equal(await page.isHidden('[data-unpriced]'), true, 'the note clears once a price is typed');
+  await ctx.close(); ok('a $0 line is flagged and saving with one asks first');
+}
+
+// 9. Microphone blocked: the page says exactly where to undo it, never loops, and "Check again" recovers once fixed.
+{
+  const { ctx, page } = await open({ init: () => {
+    window.__mic = 'denied';
+    const perm = { state: 'denied', onchange: null };
+    navigator.permissions.query = async () => perm;
+    navigator.mediaDevices.getUserMedia = async () => {
+      if (window.__mic === 'denied') throw new DOMException('no', 'NotAllowedError');
+      perm.state = 'granted'; return { getTracks: () => [{ stop() {} }] };
+    };
+    navigator.mediaDevices.enumerateDevices = async () => (window.__mic === 'denied' ? [] : [{ kind: 'audioinput', deviceId: 'a', label: 'Phone mic' }, { kind: 'audioinput', deviceId: 'b', label: 'AirPods' }]);
+  } });
+  await page.waitForSelector('[data-mic-help]:not([hidden])');
+  assert.match(await page.textContent('[data-mic-help]'), /cannot undo that.*lock icon|cannot undo that.*aA/s);
+  assert.equal(await page.textContent('[data-mic-allow]'), 'Check again');
+  await page.click('[data-rec-toggle]');
+  assert.match(await page.textContent('[data-notes-status]'), /blocked for this site/);
+  assert.equal(await page.getAttribute('[data-rec-toggle]', 'aria-pressed'), 'false', 'a blocked microphone never leaves the button stuck on Stop');
+  await page.evaluate(() => { window.__mic = 'ok'; });
+  await page.click('[data-mic-allow]');
+  await page.waitForSelector('[data-mic-help][hidden]', { state: 'attached' });
+  assert.equal(await page.isHidden('[data-mic-allow]'), true, 'no Allow button once the microphone is on');
+  await ctx.close(); ok('blocked microphone: clear steps, Check again recovers, button never sticks');
+}
+
+// 10. Choosing a microphone: listed, remembered, and an unplugged one falls back to the default.
+{
+  const { ctx, page } = await open({ init: () => {
+    window.__gone = false; window.__used = [];
+    navigator.permissions.query = async () => ({ state: 'granted', onchange: null });
+    navigator.mediaDevices.enumerateDevices = async () => [{ kind: 'audioinput', deviceId: 'a', label: 'Phone mic' }, { kind: 'audioinput', deviceId: 'b', label: 'AirPods' }];
+    navigator.mediaDevices.getUserMedia = async (c) => {
+      const want = c.audio && c.audio.deviceId && c.audio.deviceId.exact; window.__used.push(want || 'default');
+      if (want === 'b' && window.__gone) throw new DOMException('gone', 'OverconstrainedError');
+      return { getTracks: () => [{ stop() {} }] };
+    };
+  } });
+  await page.waitForFunction(() => document.querySelector('[data-mic-select]').options.length === 3);
+  assert.equal(await page.isHidden('[data-mic-select]'), false);
+  await page.selectOption('[data-mic-select]', 'b');
+  await page.click('[data-rec-toggle]');
+  assert.equal(await page.isDisabled('[data-mic-select]'), true, 'the input cannot change mid-recording');
+  await page.click('[data-rec-toggle]');
+  assert.equal((await page.evaluate(() => window.__used)).at(-1), 'b', 'the chosen microphone is used');
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('[data-mic-select]').options.length === 3);
+  assert.equal(await page.inputValue('[data-mic-select]'), 'b', 'the choice is remembered');
+  await page.evaluate(() => { window.__gone = true; window.__used = []; });
+  await page.click('[data-rec-toggle]');
+  assert.deepEqual(await page.evaluate(() => window.__used), ['b', 'default'], 'an unplugged microphone falls back to the default');
+  assert.match(await page.textContent('[data-notes-status]'), /using the default one|Recording/);
+  await page.click('[data-rec-toggle]');
+  await ctx.close(); ok('microphone choice is listed, remembered, locked while recording, and falls back when unplugged');
 }
 
 await browser.close(); server.close();
