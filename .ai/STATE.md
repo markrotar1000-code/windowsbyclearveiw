@@ -1,3 +1,7 @@
+## 2026-10-24 — Simplify new-construction preparation copy
+
+Reworded the screenshot-highlighted preparation section: Before we install the windows; direct instructions to have wall panels/house wrap in place and keep openings clear; plan siding/stucco after installing and checking the windows. Replaces protective-wrap/exterior-finishes/scheduled/walkthrough phrasing without changing the existing work sequence. Only this section was reviewed; no other copy, metadata, FAQs or guide index changed.
+
 ## 2026-10-24 — Plain installation wording across the site
 
 Replaced installation-related set/sets/setting wording in seven city pages, shared photo captions and alt text, homepage and About/Process copy, the estimate form, two guide frontmatter fields (one FAQ answer and one image description), and the internal field installation instruction. Uses install/installation to match Keith’s direction; no new business facts. Kept unrelated uses such as thermostat settings, plan sets, cookies and code identifiers. The guide body/title/description chunks consumed by build-guides-index are unchanged, so no embedding rebuild is needed. Reviewed the public source inventory for this wording only; this is not a full copy review of every page.
