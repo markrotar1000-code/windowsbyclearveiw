@@ -166,7 +166,12 @@ pass('the snapshot loads idempotently and the endpoint reads it, fail-soft');
 
 // ---------- the page, the docs and the repo hygiene ----------
 {
-  const page = fs.readFileSync('src/pages/internal/analytics.astro', 'utf8');
+  const page = fs.readFileSync('src/pages/internal/permits.astro', 'utf8');
+  const analytics = fs.readFileSync('src/pages/internal/analytics.astro', 'utf8');
+  const layout = fs.readFileSync('src/layouts/InternalLayout.astro', 'utf8');
+  assert.ok(!/data-permit|data-supplier|api\/permit-leads|api\/supplier-permits/.test(analytics), 'Analytics contains neither permit UI nor permit requests');
+  assert.ok(/href: '\/internal\/permits', label: 'Permits'/.test(layout), 'Permits has its own navigation entry');
+  assert.ok(/const mobileMoreItems[^;]*'\/internal\/permits'/.test(layout), 'Permits is reachable in the phone More menu');
   const endpoint = fs.readFileSync('functions/internal/api/permit-leads.js', 'utf8');
   const readme = fs.readFileSync('internal/README.md', 'utf8');
   const middleware = fs.readFileSync('functions/internal/_middleware.js', 'utf8');

@@ -606,7 +606,7 @@ const askFresh = async (query = '', env = { QUOTES_DB: fresh }, method = 'GET') 
 // ---------- privacy: session gate, private output, git ----------
 {
   const redirects = [];
-  for (const path of ['/internal/api/supplier-permits', '/internal/api/supplier-permits?view=csv', '/internal/api/supplier-permits?view=list&group=remodel', '/internal/analytics']) {
+  for (const path of ['/internal/api/supplier-permits', '/internal/api/supplier-permits?view=csv', '/internal/api/supplier-permits?view=list&group=remodel', '/internal/permits']) {
     let reached = false;
     const response = await gate({ request: new Request(`https://example.test${path}`), env: { INTERNAL_SESSION_SECRET: 'test-secret' }, next: async () => { reached = true; return new Response('secret'); } });
     assert.equal(response.status, 302, `${path} without a session is sent to the login page`);
@@ -744,7 +744,7 @@ const askFresh = async (query = '', env = { QUOTES_DB: fresh }, method = 'GET') 
 
 // ---------- page, docs and wiring ----------
 {
-  const page = fs.readFileSync(`${root}src/pages/internal/analytics.astro`, 'utf8');
+  const page = fs.readFileSync(`${root}src/pages/internal/permits.astro`, 'utf8');
   const readme = fs.readFileSync(`${root}internal/README.md`, 'utf8');
   const pkg = JSON.parse(fs.readFileSync(`${root}package.json`, 'utf8'));
   const workflow = fs.readFileSync(`${root}.github/workflows/build.yml`, 'utf8');

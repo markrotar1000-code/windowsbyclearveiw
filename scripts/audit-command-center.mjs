@@ -343,24 +343,35 @@ for (const mode of (flowsOnly ? [] : ['500', 'no signal'])) {
     await page.close();
   }
   {
-    const page = await open('analytics-calls'); await page.goto(base + '/internal/analytics', { waitUntil: 'networkidle' }); await page.waitForTimeout(800);
+    const page = await open('permit-calls');
+    const permitRequests = [];
+    const trackPermits = (request) => { if (/\/internal\/api\/(supplier-permits|permit-leads)/.test(request.url())) permitRequests.push(request.url()); };
+    page.on('request', trackPermits);
+    await page.goto(base + '/internal/analytics', { waitUntil: 'networkidle' });
+    if (await page.locator('[data-supplier-load], [data-homeowners-load]').count()) flowProblems.push('analytics: permit controls still appear');
+    if (permitRequests.length) flowProblems.push('analytics: permit APIs still load');
+    page.off('request', trackPermits);
+    await page.locator('[data-mobile-more]').click();
+    await page.locator('#internal-more-menu a[href="/internal/permits"]').click();
+    await page.locator('h1', { hasText: 'Permits' }).waitFor();
+    await page.waitForTimeout(800);
     await page.click('[data-supplier-load]'); await page.locator('[data-supplier-rows] tr').first().waitFor();
-    if (!(await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count())) flowProblems.push('analytics: a licensed contractor phone is not a tel: link before it is blocked');
+    if (!(await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count())) flowProblems.push('permits: a licensed contractor phone is not a tel: link before it is blocked');
     const logButton = page.locator('[data-supplier-rows] .an-phone-btn', { hasText: 'Log call' }).nth(1);
     const box = await logButton.boundingBox();
-    if (!box || box.height < 44) flowProblems.push('analytics: the Log call button is under 44 px tall on a phone');
+    if (!box || box.height < 44) flowProblems.push('permits: the Log call button is under 44 px tall on a phone');
     await logButton.click(); await page.locator('[data-contact-dialog][open]').waitFor();
     await page.selectOption('[data-contact-outcome]', 'no_answer'); await page.click('[data-contact-save]'); await page.waitForTimeout(700);
-    if (!/Saved/.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('analytics: logging a call did not confirm');
+    if (!/Saved/.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('permits: logging a call did not confirm');
     await page.selectOption('[data-contact-outcome]', 'asked_not_to_call'); await page.click('[data-contact-save]'); await page.waitForTimeout(900);
-    if (!/do-not-contact/i.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('analytics: "asked not to be contacted" did not block the number');
-    if (await page.locator('[data-contact-form]').isVisible()) flowProblems.push('analytics: a blocked number can still be logged');
-    if ((await page.locator('[data-contact-history] li').count()) < 2) flowProblems.push('analytics: the call history is missing entries');
+    if (!/do-not-contact/i.test(await page.locator('[data-contact-state]').innerText())) flowProblems.push('permits: "asked not to be contacted" did not block the number');
+    if (await page.locator('[data-contact-form]').isVisible()) flowProblems.push('permits: a blocked number can still be logged');
+    if ((await page.locator('[data-contact-history] li').count()) < 2) flowProblems.push('permits: the call history is missing entries');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1);
-    if (overflow) flowProblems.push('analytics: the call dialog overflows the phone screen');
+    if (overflow) flowProblems.push('permits: the call dialog overflows the phone screen');
     await page.keyboard.press('Escape'); await page.waitForTimeout(300);
-    if ((await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count()) !== 0) flowProblems.push('analytics: a do-not-contact number is still a tel: link');
-    if (!(await page.locator('[data-supplier-rows] .an-dnc').count())) flowProblems.push('analytics: the list does not mark the do-not-contact number');
+    if ((await page.locator('[data-supplier-rows] a[href="tel:+13605550143"]').count()) !== 0) flowProblems.push('permits: a do-not-contact number is still a tel: link');
+    if (!(await page.locator('[data-supplier-rows] .an-dnc').count())) flowProblems.push('permits: the list does not mark the do-not-contact number');
     await page.close();
   }
   {

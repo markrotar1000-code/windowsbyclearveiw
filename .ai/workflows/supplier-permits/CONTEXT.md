@@ -1,8 +1,8 @@
 # Workflow: Supplier permit list
 
 Load Mark's supplier's weekly permit report (Construction Monitor) into the Command Center and join it to public
-county records, so Clearview can see which permits are new to its own lists. Lives in Command Center > Analytics >
-"Supplier permit list" (`/internal/analytics`, endpoint `/internal/api/supplier-permits`).
+county records, so Clearview can see which permits are new to its own lists. Lives in Command Center > Permits >
+"Supplier permit list" (`/internal/permits`, endpoint `/internal/api/supplier-permits`).
 
 ## Load / exclude
 
@@ -46,18 +46,18 @@ chat, in an issue or in a screenshot that shows names or phone numbers.
    scratch config in `internal/README.md` → "Which database". It is a merge keyed by permit number: a permit seen
    again is refreshed (first_seen kept), new permits are added, permits absent from a later report stay, nothing is
    deleted, and an older file never overwrites newer rows.
-4. Open Analytics, check the section, the list and the spreadsheet download.
+4. Open Permits, check the section, the list and the spreadsheet download.
 5. Group rules, columns and table shape change in exactly one file, `functions/internal/_lib/supplier-permits.mjs`,
    so loader, endpoint, page and tests cannot disagree. Change it there, then `npm run test:supplier-permits`.
 
 ## Output
 
-Rows in D1 (`supplier_permits`, `supplier_import_meta`), the Analytics section, and a spreadsheet
+Rows in D1 (`supplier_permits`, `supplier_import_meta`), the Permits page, and a spreadsheet
 (`/internal/api/supplier-permits?view=csv[&group=…]`). Money is integer cents. The summary view carries counts and
 builder business names only; the list and the spreadsheet carry owner names, mailing addresses and phones and are
 separate requests behind the session gate, `private, no-store`, never cached by the service worker.
 
-Do-not-contact list and call log: Mark's own records in D1 (`supplier_contact_blocks`, `supplier_contact_log`), written from the Analytics page through
+Do-not-contact list and call log: Mark's own records in D1 (`supplier_contact_blocks`, `supplier_contact_log`), written from the Permits page through
 `POST /internal/api/supplier-permits` and kept outside `SUPPLIER_DDL`, so a weekly load can never overwrite them. Keyed by the 10-digit number; a listed number is never
 linked, takes no new log entries and is flagged in the spreadsheet. Lifting needs a written reason and stays in the log.
 
