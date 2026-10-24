@@ -48,6 +48,8 @@ export type FrameName = keyof typeof FRAMES;
  * costs a few kB; a smaller one shows as a soft photo).
  */
 export const SLOT_SIZES = {
+  /** Public two-photo row: full width on phones, then two equal columns in the 1240 px wrap. */
+  twoAcross: '(max-width: 560px) 100vw, (max-width: 900px) 46vw, 600px',
   /** Home work grid, gallery "large" and "square" groups: 2 columns on a phone, 3 on a desktop. */
   threeAcross: '(max-width: 560px) 45vw, (max-width: 900px) 46vw, 450px',
   /** Gallery "dense" groups: 2 columns on a phone, 4 on a desktop. */

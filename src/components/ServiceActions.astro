@@ -1,0 +1,20 @@
+---
+import { site, telHref } from '../data/site';
+interface Props { estimateHref?: string; extraHref?: string; extraLabel?: string; }
+const { estimateHref = '/estimate', extraHref, extraLabel } = Astro.props;
+---
+<div class="service-actions">
+  <a class="btn btn-light" href={estimateHref}>Request an estimate</a>
+  <a class="btn btn-ghost btn-on-dark" href={telHref()}>Call {site.phoneDisplay}</a>
+  {extraHref && extraLabel && <a class="service-action-link" href={extraHref}>{extraLabel} <span aria-hidden="true">→</span></a>}
+</div>
+<style>
+  .service-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); margin-top: var(--space-m); }
+  .service-action-link { color: var(--on-dark); font-size: var(--step--1); text-underline-offset: .25em; padding: .65rem .25rem; }
+  @media (max-width: 540px) {
+    .service-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2xs); }
+    .service-actions .btn { padding: .75rem .5rem; font-size: var(--step--1); text-align: center; }
+    .service-action-link { grid-column: 1 / -1; justify-self: start; padding-bottom: 0; }
+  }
+  @media (max-width: 360px) { .service-actions { grid-template-columns: minmax(0, 1fr); } }
+</style>

@@ -3,6 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { getImage } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import '../styles/global.css';
+import '../styles/marketing.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import MobileCtaBar from '../components/MobileCtaBar.astro';
@@ -279,7 +280,7 @@ const breadcrumbSchema =
       <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
     )}
   </head>
-  <body>
+  <body class="marketing-site">
     <!-- No noscript marketing iframe: prerendered HTML is shared by production
          and preview hosts, where a runtime hostname check cannot run without JS. -->
     <a class="skip-link" href="#main">Skip to content</a>

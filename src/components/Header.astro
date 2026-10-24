@@ -52,12 +52,12 @@ const links = [
           <span class="visually-hidden">Find {site.shortName} on Nextdoor</span>
         </a>
       )}
-      <a class="btn btn-light header-cta" href={telHref()}>
+      <a class="btn btn-ghost btn-on-dark header-cta" href={telHref()}>
         <span class="header-cta-full" aria-hidden="true">{site.phoneDisplay}</span>
         <span class="header-cta-short" aria-hidden="true">Call</span>
         <span class="visually-hidden">Call {site.phoneDisplay}</span>
       </a>
-      <a class="btn btn-primary header-estimate" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>Get an estimate</a>
+      <a class="btn btn-light header-estimate" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>Get an estimate</a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
         <span data-nav-toggle-label>Menu</span>
       </button>
@@ -285,8 +285,8 @@ const links = [
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.75rem;
+    height: 2.75rem;
     flex: none;
     border-radius: 50%;
     transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
@@ -315,7 +315,7 @@ const links = [
     .header-social-extra { display: flex; }
   }
 
-  .header-social-icon { width: 1.4rem; height: 1.4rem; }
+  .header-social :global(.header-social-icon) { width: 1.25rem; height: 1.25rem; }
   .header-cta-short { display: none; }
   .header-cta { font-variant-numeric: tabular-nums; }
   .header-cta-full { white-space: nowrap; }
@@ -405,6 +405,15 @@ const links = [
     .header-cta-short { display: inline; }
   }
 
+  @media (min-width: 701px) and (max-width: 1400px) {
+    .header-estimate { display: inline-flex; }
+  }
+  @container header-row (max-width: 42rem) {
+    .header-social, .header-estimate { display: none; }
+  }
+  @media (max-width: 700px) {
+    .header-social { display: none; }
+  }
   @media (max-width: 640px) {
     .header-cta { display: none; }
   }

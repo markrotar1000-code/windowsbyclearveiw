@@ -1,3 +1,7 @@
+## 2026-10-24 — Marketing visual refresh
+
+Public-only marketing stylesheet tightens section/CTA spacing, scales headings for phones, gives four service heroes a shared directional photo overlay and consistent estimate/call actions with original project-specific links retained. Header social SVG sizing is corrected across Astro component boundaries, social links are quieter and hidden on phones, and an estimate button is visible on menu-based desktop layouts with a large-text container fallback. Existing bottom phone actions remain. Home service cards and guide cards have consistent spacing; review/credential treatments are quieter. Existing replacement/siding/new-construction project sections move earlier; new construction shows its photos in a full-width row instead of a tall column beside short text. Public typography/header/grid changes do not apply to the internal layout. No new photos, facts, tracking or external dependencies; all service attribution parameters and builder handoff links remain. Validation and hosted/live verification in progress.
+
 ## 2026-10-24 — Simplify new-construction preparation copy
 
 Reworded the screenshot-highlighted preparation section: Before we install the windows; direct instructions to have wall panels/house wrap in place and keep openings clear; plan siding/stucco after installing and checking the windows. Replaces protective-wrap/exterior-finishes/scheduled/walkthrough phrasing without changing the existing work sequence. Only this section was reviewed; no other copy, metadata, FAQs or guide index changed.
