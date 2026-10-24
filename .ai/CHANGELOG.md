@@ -1,3 +1,7 @@
+## 2026-10-24 - Build Plan: extras are not windows
+
+`isOpeningLine`/`splitQuoteLines` in `build-plan-rules.mjs`, used by `generatePlan` and `lintPlan`; extras listed in VERIFY; `scripts/test-plan-extras.mjs`.
+
 ## 2026-10-24 - Rough notes: bug-hunt fixes
 
 Empty-clip stop sequence, no stored notes while editing, flow 11 in `scripts/audit-quote-dictation.mjs`.
