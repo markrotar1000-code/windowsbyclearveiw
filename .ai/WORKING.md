@@ -1,8 +1,6 @@
-## 2026-10-24 — New-construction section copy
+## 2026-10-24 — New-construction plain-language rewrite
 
-Reviewed the installation-sequence heading and introductory paragraph only against public-copy-positioning.md. Heading is now From plans to install. Subtext uses plans, window sizes/styles, written estimate, manufacturer expected delivery time and building schedule. Other new-construction copy, metadata, FAQs and structured data were not reviewed or changed in this pass. No new business facts or timing promises introduced.
-
-# Clearview ICM — Working Context
+Reviewed all copy owned by /new-construction against public-copy-positioning.md: hero (including the existing siding service and /siding link), introduction, estimate instructions, preparation notes, job steps, site checklist, photo-section headings, page-specific captions and contact prompts. Retained From plans to install. Removed the three highlighted checklist lines and the entire Clearview / Builder scope block. Replaced trade shorthand with plain descriptions, replaced the generic framing tolerance with manufacturer-specific requirements, and synchronized the HowTo steps with the visible list. Service/schema descriptions and the meta description now follow the revised wording. Existing business details, photos, shared gallery captions, CTA destinations and builder form prefill remain. No new figures, business claims or promised installation/delivery dates. Other public pages and guides were not reviewed; no guide index rebuild needed.
 
 ## 2026-10-22 - Audit repair scope
 

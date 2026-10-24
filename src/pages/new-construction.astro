@@ -22,32 +22,43 @@ const heroBg = await getHeroBg(heroPhoto.image);
 // things. See process.astro for the homeowner-side equivalent.
 const sequence = [
   {
-    name: 'Plans and schedule',
-    text: 'Send plans or the opening schedule. We verify sizes, styles, and count before pricing.',
+    name: 'Review the plans',
+    text: 'Send your plans or window list. We check the number of windows, their sizes, and the styles you want.',
   },
   {
-    name: 'Quote and lead time',
-    text: 'Receive one written project price and the manufacturer lead time.',
+    name: 'Write the estimate',
+    text: 'We give you a written price and the manufacturer’s expected delivery time before ordering.',
   },
   {
-    name: 'Framing check',
-    text: 'We confirm rough openings match the approved schedule before set day.',
+    name: 'Check the openings',
+    text: 'We check the framed spaces for the windows against the manufacturer’s requirements before installation.',
   },
   {
-    name: 'Window set',
-    text: 'We install after sheathing and WRB, ahead of siding or stucco.',
+    name: 'Install the windows',
+    text: 'We install after the outside wall panels and protective wrap are in place, before the siding or stucco goes on.',
   },
   {
-    name: 'Walk-through',
-    text: 'We review the openings with your superintendent or PM and release the elevation to the next trade.',
+    name: 'Walk through the work',
+    text: 'We check the installed windows with you or your builder before the next work begins.',
   },
 ];
+
+// Page-specific captions keep the shared gallery wording unchanged.
+const captions: Record<string, string> = {
+  'new-build-sheathed-garage': 'Windows on a two-story house before siding',
+  'new-build-tan-corner': 'Black-framed windows on a new house',
+  'new-build-gable-windows-roofline': 'Triangular windows below the roof',
+  'new-build-gable-windows-grid-picture-window': 'Triangular windows above a large window with grids',
+  'new-build-gable-windows-over-trimmed-grid': 'Windows above the new siding',
+  'new-build-flashing-tape-grid-window-ladder': 'Protective tape around the windows',
+  'new-build-gable-windows-flashing-ladder': 'Windows and wall wrap before siding',
+};
 
 const rowSchema = {
   '@context': 'https://schema.org',
   '@type': 'HowTo',
-  name: 'How Clearview Windows sets windows on a new-construction build',
-  description: 'Builder window installation sequence: schedule review, framing check, installation, and walk-through.',
+  name: 'How Clearview installs windows on a new home',
+  description: 'From reviewing the plans to checking the finished window installation.',
   step: sequence.map((step) => ({
     '@type': 'HowToStep',
     name: step.name,
@@ -65,7 +76,7 @@ const serviceSchema = {
   serviceType: 'New construction window installation',
   name: 'New construction window installation',
   description:
-    'Nailing-fin window setting for new Clark County builds, flashed to the rough opening and coordinated with the GC schedule.',
+    'Window installation for new homes in Clark County, planned with your builder.',
   provider: { '@id': `${site.url}/#business` },
   areaServed: site.nearby.map((place) => ({
     '@type': 'City',
@@ -76,36 +87,19 @@ const serviceSchema = {
 
 const schema = { '@context': 'https://schema.org', '@graph': [serviceSchema, rowSchema] };
 
-const scopeSplit = {
-  clearview: [
-    'Verify openings against the schedule before ordering',
-    'Order units and track manufacturer lead times',
-    'Set, shim, and flash the windows',
-    'Integrate flashing with the weather-resistive barrier',
-    'Walk the openings with your superintendent or PM',
-  ],
-  builder: [
-    'Frame to the approved rough-opening sizes',
-    'Complete sheathing and WRB before installation',
-    'Provide safe, clear access to each opening',
-    'Notify us of schedule or sequence changes',
-    'Schedule siding, stucco, or EIFS after the walk-through',
-  ],
-};
-
 // mailHref() falls back to /estimate when site.email is unset — appending a
 // mailto-style query string to that would silently get ignored by
 // EstimateForm, dropping the builder role prefill along with it. Route the
 // no-email case through ?role=builder instead so the fallback still lands
 // where it's supposed to.
 const projectInquiryMailto = site.email
-  ? mailHref() + `?subject=${encodeURIComponent('New construction project — plans/schedule attached')}` +
-    `&body=${encodeURIComponent('Project address or subdivision:\nBuilder / GC company:\nApproximate opening count:\nTarget set date:\n\n(Attach the plan set or window schedule if you have one.)')}`
+  ? mailHref() + `?subject=${encodeURIComponent('New construction window estimate')}` +
+    `&body=${encodeURIComponent('Project address:\nBuilder or company name:\nNumber of windows:\nPlanned installation date:\n\n(Attach your plans or window list if you have one.)')}`
   : '/estimate?role=builder';
 ---
 <BaseLayout
   title="New construction windows for builders"
-  description="New-construction window installation for Clark County builders. Send plans or a window schedule for project pricing and lead time."
+  description="Window installation for new homes in Clark County. Send your plans or window list for a written estimate and help planning the installation."
   path="/new-construction"
   crumbs={[{ name: 'New construction', href: '/new-construction' }]}
   ogImageSrc={ogPhoto.image}
@@ -114,27 +108,27 @@ const projectInquiryMailto = site.email
 >
   <section class="page-hero page-hero-photo" style={`background-image: linear-gradient(180deg, color-mix(in srgb, var(--black) 58%, transparent), color-mix(in srgb, var(--black) 88%, transparent)), url(${heroBg.src})`}>
     <div class="wrap">
-      <p class="kicker">For builders and GCs</p>
-      <h1>New-construction window installs for builders and GCs.</h1>
+      <p class="kicker">For new homes</p>
+      <h1>Window installation for new homes.</h1>
       <p class="lede">
-        Nailing-fin windows, installed to your schedule.
+        We install windows and siding for new homes. Send us your plans or window list. We check what you need, give you a written estimate, and plan the installation with your builder.
       </p>
       <div class="hero-actions">
-        <a class="btn btn-light" href={projectInquiryMailto}>Send plans or schedule</a>
+        <a class="btn btn-light" href={projectInquiryMailto}>Send your plans</a>
         <a class="btn btn-ghost btn-on-dark" href={telHref()}>Call {site.phoneDisplay}</a>
       </div>
       <p class="hero-note">
-        Existing-home work? <a href="/replacement">Window replacement</a>. Patio doors?{' '}
+        We also offer <a href="/siding">siding installation</a>. Replacing windows in an existing home? <a href="/replacement">Window replacement</a>. Patio doors?{' '}
         <a href="/sliding-glass-doors">Sliding glass doors</a>.
       </p>
     </div>
-    <p class="hero-photo-credit">Clearview job photo — new build with windows set</p>
+    <p class="hero-photo-credit">Clearview job photo — windows on a new house</p>
   </section>
 
   <section class="section">
     <div class="wrap split" data-reveal>
       <article>
-        <p class="rule-label">Installation sequence</p>
+        <p class="rule-label">Planning your installation</p>
         <h2>From plans to install.</h2>
         <p>
           We review your plans and check the window sizes and styles. You get a written estimate and the manufacturer's expected delivery time. We then arrange installation around your building schedule.
@@ -155,16 +149,16 @@ const projectInquiryMailto = site.email
   <section class="section section-sunk" id="schedule">
     <div class="wrap split" data-reveal>
       <article>
-        <p class="rule-label">For project pricing</p>
-        <h2>Send plans or a window schedule.</h2>
-        <p>We price the full scope and flag missing or conflicting specs before ordering.</p>
+        <p class="rule-label">Getting an estimate</p>
+        <h2>Send us your plans or window list.</h2>
+        <p>Include the details below. If something is missing or does not agree with the plans, we check it with you before ordering.</p>
       </article>
       <article>
-        <p class="rule-label">Include</p>
+        <p class="rule-label">What to send</p>
         <ul class="plain-list">
-          <li>Opening count, sizes, and styles</li>
-          <li>Brand, finish, and required glass or code specs</li>
-          <li>Target set date and site contact</li>
+          <li>Number of windows, their sizes, and how each one opens</li>
+          <li>Preferred brand, frame color, and any glass requirements</li>
+          <li>Project address, contact person, and planned installation date</li>
         </ul>
         <p class="fine-print">
           <a href="/window-features">Window and glass options</a>
@@ -175,19 +169,19 @@ const projectInquiryMailto = site.email
 
   <section class="section">
     <div class="wrap" data-reveal>
-      <p class="rule-label">Opening requirements</p>
-      <h2>Prep and flashing.</h2>
+      <p class="rule-label">Before installation</p>
+      <h2>Getting the walls ready.</h2>
       <div class="ro-notes">
         <article>
-          <h3>Rough opening</h3>
+          <h3>Window openings</h3>
           <p>
-            Follow the unit spec. Frame within 1/4&Prime; of square, corner to corner.
+            The framed spaces for the windows need to meet the manufacturer’s size and installation requirements.
           </p>
         </article>
         <article>
-          <h3>Weather barrier</h3>
+          <h3>Outside walls</h3>
           <p>
-            Sheathing and properly lapped WRB must be complete before installation. No bare, unwrapped openings.
+            The outside wall panels and protective wrap need to be in place before we install the windows.
           </p>
         </article>
       </div>
@@ -196,8 +190,8 @@ const projectInquiryMailto = site.email
 
   <section class="section section-sunk">
     <div class="wrap" data-reveal>
-      <p class="rule-label">Project sequence</p>
-      <h2>From schedule to handoff.</h2>
+      <p class="rule-label">The steps</p>
+      <h2>How the job works.</h2>
       <ol class="steps">
         {sequence.map((step) => (
           <li><strong>{step.name}.</strong> {step.text}</li>
@@ -208,39 +202,12 @@ const projectInquiryMailto = site.email
 
   <section class="section">
     <div class="wrap" data-reveal>
-      <p class="rule-label">Before set day</p>
-      <h2>Site ready. Schedule confirmed.</h2>
+      <p class="rule-label">Getting the site ready</p>
+      <h2>What needs to be ready.</h2>
       <ul class="plain-list">
-        <li>Rough openings match the approved schedule</li>
-        <li>Sheathing and WRB are complete; access is clear</li>
-        <li>Superintendent or PM is available for schedule changes</li>
-        <li>Siding, stucco, or EIFS follows our walk-through</li>
-        <li>Openings and flashing are dry on install day</li>
+        <li>Outside wall panels and protective wrap are in place, with clear access to the windows.</li>
+        <li>Exterior finishes, such as siding or stucco, are scheduled after the window installation and walkthrough.</li>
       </ul>
-    </div>
-  </section>
-
-  <section class="section section-sunk">
-    <div class="wrap" data-reveal>
-      <p class="rule-label">Scope</p>
-      <h2>Clearview / Builder</h2>
-      <div class="scope-split">
-        <article class="scope-card">
-          <h3>Clearview</h3>
-          <ul class="plain-list">
-            {scopeSplit.clearview.map((item) => <li>{item}</li>)}
-          </ul>
-        </article>
-        <article class="scope-card">
-          <h3>Builder / GC</h3>
-          <ul class="plain-list">
-            {scopeSplit.builder.map((item) => <li>{item}</li>)}
-          </ul>
-        </article>
-      </div>
-      <p class="fine-print">
-        We price schedule changes and out-of-scope work before proceeding.
-      </p>
     </div>
   </section>
 
@@ -248,18 +215,18 @@ const projectInquiryMailto = site.email
     <div class="wrap newbuild-band" data-reveal>
       <div>
         <p class="rule-label">Completed work</p>
-        <h2>Installed and ready for the next trade.</h2>
+        <h2>Windows on new homes.</h2>
         <p class="lede">
-          See a recent new-construction installation.
+          Photos from our new-construction jobs.
         </p>
-        <p class="section-link"><a href="/gallery">More of the work</a></p>
+        <p class="section-link"><a href="/gallery">See more project photos</a></p>
       </div>
       <div class="work-grid work-grid-newbuild">
         {newBuildWork.map((photo) => (
           <WorkCard
             image={photo.image}
             alt={photo.alt}
-            caption={photo.caption}
+            caption={captions[photo.id] ?? photo.caption}
             kind={workKindLabel(photo.kind)}
             sizes={SLOT_SIZES.fullThenBeside}
             frame={newBuildFrame}
@@ -271,14 +238,14 @@ const projectInquiryMailto = site.email
 
   <section class="section section-sunk">
     <div class="wrap" data-reveal>
-      <p class="rule-label">Flashing on a recent job</p>
-      <h2>Windows set and taped before siding.</h2>
+      <p class="rule-label">Window details</p>
+      <h2>Windows before the siding goes on.</h2>
       <div class="work-grid work-grid-gable">
         {newBuildGableWork.map((photo) => (
           <WorkCard
             image={photo.image}
             alt={photo.alt}
-            caption={photo.caption}
+            caption={captions[photo.id] ?? photo.caption}
             sizes={SLOT_SIZES.threeAcross}
             frame={gableFrame}
           />
@@ -289,27 +256,27 @@ const projectInquiryMailto = site.email
 
   <section class="section" id="project-inquiry">
     <div class="wrap is-narrow" data-reveal>
-        <p class="rule-label">Request pricing</p>
-        <h2>Send plans or request an estimate.</h2>
+        <p class="rule-label">Get in touch</p>
+        <h2>Ask for an estimate.</h2>
       <ol class="steps">
         <li>
-          <strong>Email plans or schedule.</strong> Marked-up elevations welcome.{' '}
+          <strong>Email your plans.</strong> Send your plans or window list to{' '}
           <a href={projectInquiryMailto}>{site.email}</a>.
         </li>
         <li>
-          <strong>Use the form.</strong> Choose "Builder or GC" and add the city, opening count, and target date.{' '}
-          <a href="/estimate?role=builder">Request pricing</a>.
+          <strong>Use the estimate form.</strong> Choose "Builder or GC" and tell us where the project is and what you need.{' '}
+          <a href="/estimate?role=builder">Request an estimate</a>.
         </li>
       </ol>
       <p class="fine-print">
-        Written price and lead time before ordering.
+        Get the price in writing before you order.
       </p>
     </div>
   </section>
 
   <CtaBar
-    heading="Price your next window package."
-    body="Send the plans or schedule for project pricing and lead time."
+    heading="Planning a new build?"
+    body="Send your plans or window list, or call us to talk through the project."
     showToolLink={false}
   />
 </BaseLayout>
@@ -361,7 +328,7 @@ const projectInquiryMailto = site.email
     color: var(--accent-bright);
   }
 
-  /* Two short notes — framing tolerance and wall sequence — read better as a pair of cards than as more paragraph text. */
+  /* Keep the two preparation notes readable at desktop and phone sizes. */
   .ro-notes {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -387,35 +354,6 @@ const projectInquiryMailto = site.email
     font-size: var(--step--1);
   }
 
-  /* Same two-card device as window-features.astro's material/brand compare,
-     reused for a scope split rather than a binary choice. */
-  .scope-split {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-m);
-    margin: var(--space-l) 0 var(--space-m);
-  }
-
-  .scope-card {
-    padding: var(--space-m);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    background: var(--paper-raised);
-  }
-
-  .scope-card h3 {
-    margin: 0 0 var(--space-2xs);
-    font-size: var(--step-1);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-label);
-    color: var(--accent-ink);
-  }
-
-  .scope-card .plain-list li {
-    font-size: var(--step--1);
-    color: var(--ink-soft);
-  }
-
   /* A single tall framing shot needs a partner, not a full-width grid row of
      its own — stretched across the page it read as a missing image. */
   .newbuild-band {
@@ -431,8 +369,7 @@ const projectInquiryMailto = site.email
       gap: var(--space-l);
     }
 
-    .ro-notes,
-    .scope-split {
+    .ro-notes {
       grid-template-columns: minmax(0, 1fr);
     }
   }
