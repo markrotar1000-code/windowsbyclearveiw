@@ -1,3 +1,15 @@
+## 2026-10-24 — Simplify new-construction preparation copy
+
+Reworded the screenshot-highlighted preparation section: Before we install the windows; direct instructions to have wall panels/house wrap in place and keep openings clear; plan siding/stucco after installing and checking the windows. Replaces protective-wrap/exterior-finishes/scheduled/walkthrough phrasing without changing the existing work sequence. Only this section was reviewed; no other copy, metadata, FAQs or guide index changed.
+
+Validation: all 66 local test steps and separate 70-page build passed. PR294 merged as 295f02c after GitHub Build run 972 and Cloudflare Pages passed. Hosted preview 400d8193 and production fd819bcf were inspected in Chrome; the revised heading and both lines are live. Evidence: task outputs/new-con-preparation-live-2026-10-24.png.
+
+## 2026-10-24 — Plain installation wording across the site
+
+Replaced installation-related set/sets/setting wording in seven city pages, shared photo captions and alt text, homepage and About/Process copy, the estimate form, two guide frontmatter fields (one FAQ answer and one image description), and the internal field installation instruction. Uses install/installation to match Keith’s direction; no new business facts. Kept unrelated uses such as thermostat settings, plan sets, cookies and code identifiers. The guide body/title/description chunks consumed by build-guides-index are unchanged, so no embedding rebuild is needed. Reviewed the public source inventory for this wording only; this is not a full copy review of every page.
+
+Validation: all 66 local test steps passed; final terminology/SEO checks and separate 70-page build passed. PR293 merged as 2ec2978 after GitHub Build run 969 and Cloudflare Pages both succeeded. Independent preview 844187c1 and production deployment baef5206 were inspected in Chrome. Production Vancouver body/FAQ, estimate form choice and new-construction image descriptions use the revised wording; the new-construction siding link and requested removals remain live. Production PWA health passed. No physical-device testing was performed.
+
 ## 2026-10-24 - Rough notes: native-feel pass
 
 Incremental drafting (`nextDraftText`), draft-on-stop, live recording state, ordered clips, Retry for failed clips, locked-screen save, 12-hour notes restore, spoken-number sizes in the validator, `scripts/audit-quote-dictation.mjs`. Draft limit 60 per 15 minutes.
@@ -6,13 +18,14 @@ Incremental drafting (`nextDraftText`), draft-on-stop, live recording state, ord
 
 Added voice and typed rough notes on the new-quote page. Files: `functions/internal/api/quote-dictation.js`, `functions/internal/api/quote-notes.js`, `functions/internal/_lib/quote-notes.mjs`, `src/lib/quote-notes-lines.ts`, `src/pages/internal/quotes/new.astro`, `scripts/test-quote-dictation.mjs`, `.ai/workflows/quote-dictation/`. Prices are never the AI's. See STATE.md for the decision record.
 
+
 ## 2026-10-24 — Separate permit research from Analytics
 
 Supplier permit list and public Permit leads now live together at /internal/permits with a Permits navigation entry on desktop and in the phone More menu. Analytics no longer renders either list, includes the contact dialog, or requests either permit endpoint; requests-to-revenue, lead-source reporting and GA4 remain. The new page retains summary charts, explicit list loading, group filtering, spreadsheet download, builder connections and do-not-contact/call-log controls. Existing authenticated endpoints, D1 data and no-store boundaries are unchanged; no supplier data was loaded or copied into git. Expired permit fetches return to login with the Permits return path. Navigation and separation guards plus the relocated browser contact flow cover the move.
 
 Rewrote the full new-construction page in plain language under the owner’s expanded request: hero explicitly includes siding with a /siding link, From plans to install retained, estimate instructions, preparation notes, job steps, site checklist, photo headings/captions and contact prompts simplified. Removed the three highlighted checklist lines and the full Clearview / Builder scope block, its data and unused styles. HowTo steps mirror the visible list; schema/meta descriptions use the revised language. Business details, photos, shared gallery captions, link destinations and builder form prefill remain. No new figures or timing promises.
 
-Validation: all 66 test:all steps passed; terminology and SEO checks passed after the copy edit. Separate build, browser and hosted release checks pending.
+Validation: all 66 test:all steps and separate 70-page build passed. Targeted reports browser audit passed 40 scenarios with zero problems (not the full Command Center audit). PR291 and PR292 merged; PR292 production deployment 520a6b53 serves the full rewrite, siding link and requested removals. Signed-in production Analytics made no permit requests; Permits navigation and sections were verified. Desktop and emulated phone checks passed; physical-device testing was not performed.
 
 ## 2026-10-23 - Live GA4 automatic scroll context repair
 

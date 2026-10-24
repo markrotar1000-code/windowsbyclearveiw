@@ -12,7 +12,7 @@ faq:
     answer: No — the same measure, written estimate, and installation standard apply anywhere in Clark County. Unincorporated just means no city government of its own, not different work.
   - question: Does a rural lot actually need different flashing than an in-town house?
     answer: The flashing detail is the same either way; what changes is how much a mistake in it costs you. A rural lot with nothing to break the wind takes wind-driven rain harder than a tucked-in city street, so a slightly-off lapped seam shows up sooner.
-  - question: Do you set nailing-fin windows on new Brush Prairie builds?
+  - question: Do you install nailing-fin windows on new Brush Prairie builds?
     answer: Yes — off 117th, 182nd, and out toward Hockinson are common jobs. See new construction for what we need from the builder before we schedule.
 ---
 
@@ -32,6 +32,6 @@ Brush Prairie is unincorporated, so Clark County's rule applies: a roofing, sidi
 
 ## What we do here
 
-Window installation here starts with measuring each opening. We put the right approach in the written estimate, set the window level, and seal it for weather that comes in sideways. New construction is common out here too. For framing off 117th, 182nd, or toward Hockinson, we set windows on a scheduled date so your siding crew is not waiting on us.
+Window installation here starts with measuring each opening. We put the right approach in the written estimate, install the window level, and seal it for weather that comes in sideways. New construction is common out here too. For framing off 117th, 182nd, or toward Hockinson, we install windows on a scheduled date so your siding crew is not waiting on us.
 
 Nearby: [Battle Ground](/areas/battle-ground), [Vancouver](/areas/vancouver), and [Camas](/areas/camas).
