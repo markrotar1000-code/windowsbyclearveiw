@@ -20,12 +20,16 @@ model: no customer record, no prices, no history.
 ## Process
 
 1. **Record (optional).** Push-to-talk in the browser; each clip is sent on its own to `/internal/api/quote-dictation`
-   (Workers AI Whisper through the `AI` binding). The transcript is appended to the notes box for Mark to correct.
+   (Workers AI Whisper through the `AI` binding). Clips are added to the notes box strictly in the order recorded; a
+   failed clip is kept for *Retry recording*; locking the screen ends the recording and still sends what was captured.
+   Unsent notes are kept on the device for 12 hours and forgotten when the quote is saved.
    Audio is never stored or logged. Washington needs every party's consent to record a conversation, so the page
    tells Mark to dictate his own notes or get the customer's OK first.
-2. **Draft.** `/internal/api/quote-notes` asks Groq (Gemini as fallback) for a JSON draft limited to the price-book ids.
+2. **Draft.** When Mark stops recording (default; a checkbox turns it off) or taps *Draft lines*, only the words added
+   since the last draft are sent (`nextDraftText`), so room-by-room use never duplicates lines. Editing drafted words
+   asks before replacing the earlier lines. `/internal/api/quote-notes` asks Groq (Gemini as fallback) for a JSON draft limited to the price-book ids.
 3. **Validate (deterministic).** `validateDraft` keeps only known opening/material/brand/method ids, whole quantities
-   1 to 99, at most 30 lines, a size only when every number in it appears in the notes, evidence phrases only when
+   1 to 99, at most 30 lines, a size only when every number in it appears in the notes (digits or spoken, "thirty six" counts), evidence phrases only when
    they appear in the notes, and customer facts only when the notes contain them. It carries no price field.
 4. **Place.** The page adds each line with the same price-book suggestion as *Add line* (`suggestedUnitPrice`);
    anything the price book does not cover starts at $0, highlighted. Sizes and remarks go to the internal notes, not
@@ -45,5 +49,6 @@ Never: price a line, invent a size or count, save a quote, or contact the custom
 
 Done when `npm run test:quote-dictation` passes (validator, both handlers with stubbed providers, id parity with
 `src/data/pricing.ts`, line mapping, page wiring). Budgets: 1 transcription per clip; 1 Groq call plus at most 1 Gemini
-call per draft; 1,400 output tokens; 15 s per call; 90 clips per hour and 30 drafts per 15 minutes per visitor.
+call per draft; 1,400 output tokens; 15 s per call; 90 clips per hour and 60 drafts per 15 minutes per visitor.
+Browser behavior (recorder, ordering, retry, restore, locked screen) is checked by `node scripts/audit-quote-dictation.mjs` (needs Playwright and a build; not in CI).
 Unverified until a phone is used: iOS Safari recording format with Whisper, background noise accuracy.

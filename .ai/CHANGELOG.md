@@ -1,3 +1,7 @@
+## 2026-10-24 - Rough notes: native-feel pass
+
+Incremental drafting (`nextDraftText`), draft-on-stop, live recording state, ordered clips, Retry for failed clips, locked-screen save, 12-hour notes restore, spoken-number sizes in the validator, `scripts/audit-quote-dictation.mjs`. Draft limit 60 per 15 minutes.
+
 ## 2026-10-24 - Rough notes to draft quote lines
 
 Added voice and typed rough notes on the new-quote page. Files: `functions/internal/api/quote-dictation.js`, `functions/internal/api/quote-notes.js`, `functions/internal/_lib/quote-notes.mjs`, `src/lib/quote-notes-lines.ts`, `src/pages/internal/quotes/new.astro`, `scripts/test-quote-dictation.mjs`, `.ai/workflows/quote-dictation/`. Prices are never the AI's. See STATE.md for the decision record.

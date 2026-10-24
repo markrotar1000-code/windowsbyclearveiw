@@ -51,6 +51,26 @@ function numbersIn(text) {
   return String(text).match(/\d+(?:\.\d+)?/g) || [];
 }
 
+// Lower case, punctuation and spacing flattened: "Two double-hungs, 36 by 48." matches "two double hungs 36 by 48".
+export const normalize = (text) => String(text ?? '').toLowerCase().replace(/[^a-z0-9.]+/g, ' ').replace(/\.(?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
+
+const ONES = { zero: 0, oh: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19 };
+const TENS = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
+
+/** Numbers spoken as words ("thirty six", "forty-eight", "twelve"), as digit strings, so a size Mark said aloud still counts as said. */
+export function spokenNumbers(text) {
+  const words = normalize(text).split(' ');
+  const found = [];
+  for (let i = 0; i < words.length; i += 1) {
+    const w = words[i];
+    if (w in TENS) {
+      const next = words[i + 1];
+      if (next in ONES && ONES[next] >= 1 && ONES[next] <= 9) { found.push(String(TENS[w] + ONES[next])); i += 1; } else found.push(String(TENS[w]));
+    } else if (w in ONES) found.push(String(ONES[w]));
+  }
+  return found;
+}
+
 /**
  * Validates model output against the notes. Returns { lines, customer, dropped } and never throws.
  * `dropped` counts lines that could not be validated, so the page can say "N lines skipped, check your notes".
@@ -59,18 +79,18 @@ export function validateDraft(raw, notes) {
   const out = { lines: [], customer: {}, dropped: 0 };
   if (!raw || typeof raw !== 'object') return out;
   const text = String(notes ?? '');
-  const lower = text.toLowerCase();
-  const digitsInNotes = new Set(numbersIn(text));
+  const flat = normalize(text);
+  const digitsInNotes = new Set([...numbersIn(text), ...spokenNumbers(text)]);
 
   const c = raw.customer && typeof raw.customer === 'object' ? raw.customer : {};
   const phoneDigits = clean(c.phone, 40).replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
   // A phone number or name only counts if the notes contain it (no guessing at a customer).
   if (phoneDigits.length === 10 && text.replace(/\D/g, '').includes(phoneDigits)) out.customer.phone = phoneDigits;
   const name = clean(c.name, 200);
-  if (name && lower.includes(name.toLowerCase().split(' ')[0])) out.customer.name = name;
+  if (name && flat.split(' ').includes(normalize(name).split(' ')[0])) out.customer.name = name;
   for (const key of ['address', 'city']) {
     const v = clean(c[key], key === 'city' ? 120 : 300);
-    if (v && lower.includes(v.toLowerCase().split(' ')[0])) out.customer[key] = v;
+    if (v && flat.includes(normalize(v).split(' ')[0])) out.customer[key] = v;
   }
 
   const rawLines = Array.isArray(raw.lines) ? raw.lines : [];
@@ -83,7 +103,8 @@ export function validateDraft(raw, notes) {
     const note = clean(item.note, 200);
     // Evidence: keep the phrase only if it really is in the notes.
     const heardRaw = clean(item.heard, 160);
-    const heard = heardRaw && lower.includes(heardRaw.toLowerCase()) ? heardRaw : '';
+    const heardFlat = normalize(heardRaw);
+    const heard = heardFlat && flat.includes(heardFlat) ? heardRaw : '';
     // A size is a measurement: keep it only when every number in it appears in the notes as typed digits.
     let size = clean(item.size, 40);
     if (size && !(/^\d{1,3}(?:\.\d+)?\s*(?:x|×|by)\s*\d{1,3}(?:\.\d+)?$/i.test(size) && numbersIn(size).every((n) => digitsInNotes.has(n)))) size = '';

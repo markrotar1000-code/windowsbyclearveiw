@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 import * as notesApi from '../functions/internal/api/quote-notes.js';
 import * as dictationApi from '../functions/internal/api/quote-dictation.js';
-import { OPENING_IDS, MATERIAL_IDS, BRAND_IDS, METHODS, MAX_LINES, extractionPrompt, parseModelJson, validateDraft } from '../functions/internal/_lib/quote-notes.mjs';
+import { normalize, spokenNumbers, OPENING_IDS, MATERIAL_IDS, BRAND_IDS, METHODS, MAX_LINES, extractionPrompt, parseModelJson, validateDraft } from '../functions/internal/_lib/quote-notes.mjs';
 
 process.removeAllListeners('warning');
 const root = new URL('../', import.meta.url);
@@ -92,6 +92,20 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   pass('validateDraft drops invented sizes, ids, quantities, evidence and customer facts, and never carries a price');
 }
 
+
+// 4b. Spoken numbers and loose punctuation still count as "said"; invented ones still do not.
+{
+  assert.deepEqual(spokenNumbers('thirty six by forty-eight, twelve, ninety'), ['36', '48', '12', '90']);
+  assert.equal(normalize('Two double-hungs, 36 by 48.'), 'two double hungs 36 by 48');
+  const spoken = 'Dana here. Picture window thirty six by forty eight, one more in the den.';
+  const line = { type: 'window', openingId: 'picture', quantity: 1, room: 'Den', size: '36x48', heard: 'Picture window, thirty-six by forty-eight' };
+  const v = validateDraft({ customer: { name: 'Dana Whitfield' }, lines: [line, { ...line, size: '36x50' }] }, spoken);
+  assert.equal(v.lines[0].size, '36x48', 'a size said in words is kept');
+  assert.equal(v.lines[0].heard, 'Picture window, thirty-six by forty-eight', 'punctuation and hyphens do not break the evidence check');
+  assert.equal(v.lines[1].size, '', 'a size nobody said is still removed');
+  pass('spoken numbers and punctuation are matched; invented sizes are still removed');
+}
+
 // 5. quote-notes handler.
 {
   const realFetch = globalThis.fetch;
@@ -144,8 +158,8 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
 
     const limitedEnv = env();
     let last;
-    for (let i = 0; i < 31; i += 1) last = await notesApi.onRequestPost(postJson('/internal/api/quote-notes', { notes: NOTES }, limitedEnv));
-    assert.equal(last.status, 429, '31st request in 15 minutes is refused');
+    for (let i = 0; i < 61; i += 1) last = await notesApi.onRequestPost(postJson('/internal/api/quote-notes', { notes: NOTES }, limitedEnv));
+    assert.equal(last.status, 429, '61st request in 15 minutes is refused');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -225,6 +239,19 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   pass('draft lines use price-book prices and stay clean on the contract');
 }
 
+
+// 7b. Room-by-room drafting never duplicates lines.
+{
+  assert.deepEqual(lib.nextDraftText('Kitchen two double-hungs.', ''), { text: 'Kitchen two double-hungs.', replaceAll: false });
+  assert.deepEqual(lib.nextDraftText('Kitchen two double-hungs.\nDen picture window.', 'Kitchen two double-hungs.'), { text: 'Den picture window.', replaceAll: false }, 'only the new words are drafted');
+  assert.deepEqual(lib.nextDraftText('Kitchen two double-hungs.', 'Kitchen two double-hungs.'), { text: '', replaceAll: false }, 'nothing new, nothing sent');
+  assert.deepEqual(lib.nextDraftText('Kitchen three double-hungs.', 'Kitchen two double-hungs.'), { text: 'Kitchen three double-hungs.', replaceAll: true }, 'editing drafted words asks to redraft');
+  const first = lib.notesBlock('Kitchen two double-hungs.', []);
+  const second = lib.notesBlock('Den picture window.', [], false);
+  assert.ok(first.startsWith(lib.NOTES_HEADER) && !second.includes(lib.NOTES_HEADER), 'the notes header is written once');
+  pass('drafting sends only new words, and asks before replacing edited ones');
+}
+
 // 8. The page is wired to the endpoints and keeps the human gates.
 {
   const page = read('src/pages/internal/quotes/new.astro');
@@ -234,7 +261,14 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   assert.match(page, /Washington needs everyone/);
   assert.match(page, /Check every price and quantity before you save/);
   assert.match(page, /qb-row-unpriced/);
-  const draftHandler = page.slice(page.indexOf('data-draft-go]'), page.indexOf("const customLabel"));
+  assert.match(page, /nextDraftText/);
+  assert.match(page, /chain = chain\.then/, 'clips are added in the order recorded');
+  assert.match(page, /failedClips/, 'a failed clip is kept for Retry');
+  assert.match(page, /cv-quote-rough-notes/);
+  assert.match(page, /store\.del\(NOTES_KEY\);\s*window\.location\.href/, 'saved notes are forgotten once the quote is saved');
+  assert.match(page, /visibilitychange/, 'a locked screen sends what was recorded');
+  assert.match(page, /prefers-reduced-motion/);
+  const draftHandler = page.slice(page.indexOf('async function runDraft'), page.indexOf("const customLabel"));
   assert.ok(!/requestSubmit|\/internal\/api\/quotes/.test(draftHandler), 'drafting never saves the quote');
   assert.ok(!read('functions/internal/api/quote-notes.js').includes('QUOTES_DB.prepare'), 'the notes endpoint writes nothing');
   pass('the page drafts into the editable table and never saves by itself');

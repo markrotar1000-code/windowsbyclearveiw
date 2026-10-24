@@ -40,15 +40,30 @@ export function draftLineToItem(line: DraftLine, catalog: DraftCatalog, workType
 /** True when the line still needs Mark to type a price. */
 export const needsPrice = (item: Pick<DraftItem, 'unitPrice'>) => !(item.unitPrice > 0);
 
+export const NOTES_HEADER = 'Walk-through notes (rough, from voice/typing):';
+
 /** The internal-notes block for a draft: what Mark said, plus any size or remark the lines carry. */
-export function notesBlock(rawNotes: string, lines: DraftLine[]): string {
+export function notesBlock(rawNotes: string, lines: DraftLine[], withHeader = true): string {
   const detail = lines
     .filter((l) => l.size || l.note)
     .map((l) => {
       const what = l.type === 'custom' ? l.label : l.openingId;
       return `- ${[l.room, what].filter(Boolean).join(' ')} x${l.quantity}: ${[l.size ? `size heard ${l.size} (confirm at measure)` : '', l.note].filter(Boolean).join('; ')}`;
     });
-  return ['Walk-through notes (rough, from voice/typing):', rawNotes.trim(), ...(detail.length ? ['Details heard:', ...detail] : [])].join('\n');
+  return [...(withHeader ? [NOTES_HEADER] : []), rawNotes.trim(), ...(detail.length ? ['Details heard:', ...detail] : [])].join('\n');
+}
+
+/**
+ * What to send for drafting. Mark records room by room, so only the words added since the last draft go to the
+ * model and earlier lines are never duplicated. If he edited text that was already drafted, the whole box is sent
+ * and the page replaces the earlier draft (after asking).
+ */
+export function nextDraftText(value: string, consumed: string): { text: string; replaceAll: boolean } {
+  const now = value.trim();
+  const before = consumed.trim();
+  if (!before) return { text: now, replaceAll: false };
+  if (now.startsWith(before)) return { text: now.slice(before.length).trim(), replaceAll: false };
+  return { text: now, replaceAll: true };
 }
 
 /** Appends a block to the existing notes without repeating it, and never past the notes limit. */

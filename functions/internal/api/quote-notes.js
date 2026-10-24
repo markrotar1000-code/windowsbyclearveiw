@@ -4,8 +4,8 @@ import { MAX_NOTES_CHARS, extractionPrompt, parseModelJson, validateDraft } from
 
 // Rough notes -> draft quote lines (Command Center > New quote > Rough notes). Read-only: it saves nothing.
 // Budgets (AI Operating Contract section 6): notes <= 4,000 chars; one Groq call, one Gemini fallback;
-// 1,400 output tokens; 15 s per call; 30 requests per visitor per 15 minutes.
-export const NOTES_RATE_LIMIT = { bucket: 'internal-quote-notes', limit: 30, windowSeconds: 900 };
+// 1,400 output tokens; 15 s per call; 60 requests per visitor per 15 minutes.
+export const NOTES_RATE_LIMIT = { bucket: 'internal-quote-notes', limit: 60, windowSeconds: 900 };
 const MAX_BODY_BYTES = 24 * 1024;
 const MAX_OUTPUT_TOKENS = 1400;
 const TIMEOUT_MS = 15000;
