@@ -6,7 +6,7 @@
 
 ## Process
 
-Create a stable opening ID/number for every quoted opening. Record product/type, quantity, dimensions, existing condition, installation method, flashing/water-management considerations, and notes. Keep unknowns explicit.
+Create a stable opening ID/number for every quoted window or door. A quote line that clearly names an extra (rot repair, trim, haul-away, permit, paint) and no window or door word is not an opening (`isOpeningLine` in `functions/_lib/build-plan-rules.mjs`, `test:plan-extras`); it is listed in VERIFY instead so it is confirmed on site. Doubtful lines stay openings. Record product/type, quantity, dimensions, existing condition, installation method, flashing/water-management considerations, and notes. Keep unknowns explicit.
 
 ## Outputs
 

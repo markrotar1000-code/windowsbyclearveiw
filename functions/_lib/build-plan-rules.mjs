@@ -52,6 +52,15 @@ export function materialPlan({projectType='unknown',openings=[]}={}) {
   return MATERIAL_RULES.filter(r=>{if(r.trigger==='always')return true;if(r.trigger==='replacement')return replacement;if(r.trigger==='window-or-door')return openings.length>0;if(r.trigger==='opening-and-installation-path')return openings.length>0;if(r.trigger==='perimeter-sealing')return openings.length>0;if(r.trigger==='perimeter-gap')return openings.length>0;if(r.trigger==='new-construction-or-exposed-opening')return projectType==='new-construction';if(r.trigger==='finish-scope')return true;return false;});
 }
 function normalize(s){return String(s||'').toLowerCase();}
+// Which quote lines are window or door openings. A Build Plan makes one opening per unit quoted, and Field mode and
+// closeout then ask for evidence on every opening, so a line like "Rot repair at sill" must not become a window.
+// Deliberately one-sided: a line is left out only when it clearly names an extra AND says nothing about a window or
+// door. Anything doubtful stays an opening (a missed opening is worse than a spare one), and the lines left out are
+// listed in the plan's VERIFY section so nothing disappears silently.
+const OPENING_WORDS = /\b(windows?|sliders?|sliding|double[- ]?hung|single[- ]?hung|hung|picture|fixed|casements?|awnings?|bay|bow|doors?|french|patio|glass|units?|openings?|egress|transoms?)\b/i;
+const EXTRA_WORDS = /\b(trim|mou?lding|casing|rot|rotted|repairs?|haul(ing)?|disposal|dump|permits?|siding|paint(ing)?|caulk(ing)?|stucco|drywall|framing|labor|delivery|fees?|allowance|clean[- ]?up|demo(lition)?|mobili[sz]ation|travel|deposit)\b/i;
+export function isOpeningLine(label){const text=String(label||'');return OPENING_WORDS.test(text)||!EXTRA_WORDS.test(text);}
+export function splitQuoteLines(items=[]){const openings=[],extras=[];for(const item of items)(isOpeningLine(item?.label)?openings:extras).push(item);return{openings,extras};}
 export function lintPlan(plan,items=[]) {
   const warnings=[],blockers=[],openings=Array.isArray(plan?.openings)?plan.openings:[],buy=Array.isArray(plan?.buy)?plan.buy:[],verify=Array.isArray(plan?.verify)?plan.verify:[],install=Array.isArray(plan?.install)?plan.install:[],buyText=normalize(buy.join(' ')),verifyText=normalize(verify.join(' ')),installText=normalize(install.join(' '));
   if(!openings.length&&items.length)blockers.push('No opening schedule exists for a quote that contains line items.');
@@ -64,7 +73,7 @@ export function lintPlan(plan,items=[]) {
   if(!/flash|sill|water/.test(verifyText+installText))blockers.push('The plan does not contain an explicit water-management verification step.');
   if(!/weep|drain/.test(verifyText+installText))warnings.push('Confirm that designed drainage/weep paths remain clear after installation.');
   if(!/operation|operate|lock|latch/.test(installText+normalize((plan?.qc||[]).join(' '))))warnings.push('Final operation/lock/latch verification is missing.');
-  if(items.length&&openings.length){const quotedQty=items.reduce((n,i)=>n+Math.min(50,Math.max(1,Number(i.quantity)||1)),0);if(quotedQty!==openings.length)warnings.push(`Quote quantity (${quotedQty}) and opening schedule (${openings.length}) do not match; reconcile before ordering.`);}
+  const quotedItems=splitQuoteLines(items).openings;if(quotedItems.length&&openings.length){const quotedQty=quotedItems.reduce((n,i)=>n+Math.min(50,Math.max(1,Number(i.quantity)||1)),0);if(quotedQty!==openings.length)warnings.push(`Quote quantity (${quotedQty}) and opening schedule (${openings.length}) do not match; reconcile before ordering.`);}
   return{blockers,warnings,knowledgeVersion:BUILD_PLAN_KNOWLEDGE_VERSION};
 }
 // A price is not a build fact: Mark can change what a line costs at any time before the quote is signed

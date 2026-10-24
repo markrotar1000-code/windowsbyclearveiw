@@ -518,7 +518,7 @@ const catalog = {
       let failedClips: Blob[] = [];
 
       // Keep unsent notes across a reload (the lines themselves are rebuilt from them).
-      const saveNotes = () => { if (roughNotes.value.trim()) store.set(NOTES_KEY, JSON.stringify({ text: roughNotes.value, at: Date.now() })); else store.del(NOTES_KEY); };
+      const saveNotes = () => { if (editId) return; if (roughNotes.value.trim()) store.set(NOTES_KEY, JSON.stringify({ text: roughNotes.value, at: Date.now() })); else store.del(NOTES_KEY); };
       roughNotes.addEventListener('input', saveNotes);
       autoDraftBox.checked = store.get(AUTO_KEY) !== '0';
       autoDraftBox.addEventListener('change', () => store.set(AUTO_KEY, autoDraftBox.checked ? '1' : '0'));
@@ -704,14 +704,18 @@ const catalog = {
 
         // Clips are transcribed in parallel but added to the notes strictly in the order they were recorded.
         const sendClip = (blob: Blob) => {
-          if (blob.size < 2000) return;
+          // A clip with almost no audio (stopped at once, or the microphone gave nothing) is not sent, but it still
+          // finishes the stop sequence below, so the screen never stays on "Writing out what you said...".
+          const silent = blob.size < 2000;
           pendingClips += 1;
-          const result = askJson('/internal/api/quote-dictation', { method: 'POST', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob }).then((data) => ({ data, error: null as Error | null }), (error) => ({ data: null, error: error instanceof Error ? error : new Error('Could not write out that clip.') }));
+          const result = silent
+            ? Promise.resolve({ data: { empty: true, text: '' }, error: null as Error | null })
+            : askJson('/internal/api/quote-dictation', { method: 'POST', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob }).then((data) => ({ data, error: null as Error | null }), (error) => ({ data: null, error: error instanceof Error ? error : new Error('Could not write out that clip.') }));
           chain = chain.then(async () => {
             const { data, error } = await result;
             pendingClips -= 1;
             if (error || !data) { failedClips.push(blob); showRetry(); say(`${error?.message || 'Could not write out that clip.'} The recording is kept: tap Retry, or type it.`, true); }
-            else if (data.empty || !data.text) say('That clip had no words I could hear. Try again closer to the phone.', true);
+            else if (data.empty || !data.text) { draftAfterStop = false; say('I did not hear any words. Hold the phone closer and try again.', true); }
             else {
               roughNotes.value = `${roughNotes.value.trimEnd()}${roughNotes.value.trim() ? '\n' : ''}${data.text}`.slice(0, 4000);
               saveNotes();

@@ -269,6 +269,8 @@ const postJson = (url, body, env, headers = {}) => ctx(url, { method: 'POST', he
   assert.match(page, /failedClips/, 'a failed clip is kept for Retry');
   assert.match(page, /cv-quote-rough-notes/);
   assert.match(page, /store\.del\(NOTES_KEY\);\s*window\.location\.href/, 'saved notes are forgotten once the quote is saved');
+  assert.match(page, /const saveNotes = \(\) => \{ if \(editId\) return;/, 'editing a saved quote never stores notes for the next new quote');
+  assert.match(page, /const silent = blob\.size < 2000;/, 'an empty clip still finishes the stop sequence');
   assert.match(page, /visibilitychange/, 'a locked screen sends what was recorded');
   assert.match(page, /prefers-reduced-motion/);
   const draftHandler = page.slice(page.indexOf('async function runDraft'), page.indexOf("const customLabel"));
