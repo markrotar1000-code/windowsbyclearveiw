@@ -2,6 +2,8 @@
 
 Changed the first site-preparation checklist line on /new-construction to exactly: Have the sheathing and house wrap installed. The second line and other sections remain unchanged. No metadata, FAQ, guide index or business-fact changes.
 
+Validation: all 68 local test steps and separate 70-page build passed. Production deployment 61d84e83 (1ea864d) verified in Chrome with the exact line. Screenshot: task outputs/sheathing-wording-live-2026-10-24.png.
+
 ## 2026-10-24 - Microphone permission (for the next agent)
 
 If a phone still says the microphone is blocked after this deploys: (1) `curl -I https://windowsbyclearview.com/internal/login` must show `Permissions-Policy: ... microphone=(self)` (and only one such header); if it shows `microphone=()` the `_headers` rule did not take effect and the policy needs setting in `functions/internal/_middleware.js` instead. (2) If the header is right, the browser block is the user's own earlier "Block"; the page shows the steps to undo it. Installed-app (home screen) mode on iPhone keeps its own permission under Settings.
