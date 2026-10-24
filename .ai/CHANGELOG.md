@@ -1,3 +1,7 @@
+## 2026-10-24 — Owner-requested sheathing wording
+
+Changed the first site-preparation checklist line on /new-construction to exactly: Have the sheathing and house wrap installed. The second line and other sections remain unchanged. No metadata, FAQ, guide index or business-fact changes.
+
 ## 2026-10-24 - Build Plan: extras are not windows
 
 `isOpeningLine`/`splitQuoteLines` in `build-plan-rules.mjs`, used by `generatePlan` and `lintPlan`; extras listed in VERIFY; `scripts/test-plan-extras.mjs`.

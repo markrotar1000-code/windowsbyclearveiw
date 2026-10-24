@@ -1,3 +1,7 @@
+## 2026-10-24 — Owner-requested sheathing wording
+
+Changed the first site-preparation checklist line on /new-construction to exactly: Have the sheathing and house wrap installed. The second line and other sections remain unchanged. No metadata, FAQ, guide index or business-fact changes.
+
 ## 2026-10-24 - Build Plan: extras are not windows
 
 Found while tracing voice-drafted lines downstream: every quote line became one Build Plan opening per unit, so a "Rot repair at sill" or "Trim" line became a phantom window in Field mode and closeout (which cannot finalize until every opening is complete). Now a line is left out of the openings only when it clearly names an extra (trim, rot, repair, haul-away, permit, paint, siding, labor...) and no window or door word; anything doubtful stays an opening. Excluded lines are listed in the plan's VERIFY section with their quantity, the source snapshot still covers every line (stale detection unchanged), and the quote-quantity warning counts openings only. Knowledge version not bumped; existing saved plans are untouched until regenerated. `test:plan-extras` (CI). **VERIFY with Mark:** the word list (`EXTRA_WORDS`) matches how he words extras; a line he writes as only "Bathroom 24x36" stays an opening by design.
