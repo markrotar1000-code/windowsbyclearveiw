@@ -87,7 +87,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.4.0",
+    "astro": "^7.4.1",
     "three": "^0.186.1"
   },
   "devDependencies": {
