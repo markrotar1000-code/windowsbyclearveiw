@@ -41,7 +41,7 @@ body.marketing-site .video-hero { min-height: 0; }
 body.marketing-site .video-wash { background: linear-gradient(90deg, rgb(11 12 14 / .87), rgb(11 12 14 / .76) 48%, rgb(11 12 14 / .18)); }
 body.marketing-site .video-copy h1 { font-size: clamp(2.3rem, 1.8rem + 2.7vw, 4rem); max-width: 19ch; }
 body.marketing-site .hero-credentials { display: flex; flex-wrap: wrap; gap: var(--space-2xs); align-items: center; }
-body.marketing-site .insurance-tag.is-on-dark, body.marketing-site .bond-tag.is-on-dark { background: rgb(11 12 14 / .7); border-color: var(--dark-line-strong); color: var(--on-dark-soft); }
+body.marketing-site .credential-tag.is-on-dark { background: rgb(11 12 14 / .7); border-color: var(--dark-line-strong); color: var(--on-dark-soft); }
 @media (min-width: 901px) {
   body.marketing-site .guide-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 0; }
   body.marketing-site .guide-row { grid-template-columns: minmax(0, 1fr) auto; padding: var(--space-m); border: 1px solid var(--line); background: var(--paper-raised); align-items: start; }
