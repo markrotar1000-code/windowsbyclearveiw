@@ -1,3 +1,7 @@
+## 2026-10-24 - Rough notes to draft quote lines
+
+Added voice and typed rough notes on the new-quote page. Files: `functions/internal/api/quote-dictation.js`, `functions/internal/api/quote-notes.js`, `functions/internal/_lib/quote-notes.mjs`, `src/lib/quote-notes-lines.ts`, `src/pages/internal/quotes/new.astro`, `scripts/test-quote-dictation.mjs`, `.ai/workflows/quote-dictation/`. Prices are never the AI's. See STATE.md for the decision record.
+
 ## 2026-10-24 — Separate permit research from Analytics
 
 Supplier permit list and public Permit leads now live together at /internal/permits with a Permits navigation entry on desktop and in the phone More menu. Analytics no longer renders either list, includes the contact dialog, or requests either permit endpoint; requests-to-revenue, lead-source reporting and GA4 remain. The new page retains summary charts, explicit list loading, group filtering, spreadsheet download, builder connections and do-not-contact/call-log controls. Existing authenticated endpoints, D1 data and no-store boundaries are unchanged; no supplier data was loaded or copied into git. Expired permit fetches return to login with the Permits return path. Navigation and separation guards plus the relocated browser contact flow cover the move.

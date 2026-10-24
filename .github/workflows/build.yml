@@ -33,6 +33,7 @@ jobs:
       - run: npm run test:siding-work
       - run: npm run test:recent-fixes
       - run: npm run test:public-terminology
+      - run: npm run test:quote-dictation
       - run: npm run test:copilot
       - run: npm run test:copilot-snapshot
       - run: npm run test:ai-surfaces
