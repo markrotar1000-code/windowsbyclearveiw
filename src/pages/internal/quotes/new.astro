@@ -39,6 +39,22 @@ const catalog = {
       <p class="est-hint" data-work-type-hint>Window quotes go through the Build Plan before they can be signed. A siding quote is approved by its signature. The type is locked once the quote is saved.</p>
     </fieldset>
 
+    <fieldset class="qb-block" data-notes-panel>
+      <legend>Rough notes</legend>
+      <p class="est-hint">Talk through the house or type it: room, window type, how many, anything extra. Lines appear in the quote below and you change the prices any time.</p>
+      <label class="visually-hidden" for="rough-notes">Rough notes</label>
+      <textarea id="rough-notes" data-rough-notes rows="5" maxlength="4000" enterkeyhint="enter" placeholder="Kitchen, two double-hungs, fin. Living room slider, vinyl Cascade. Back bedroom picture window, some rot at the sill..."></textarea>
+      <div class="qb-notes-actions">
+        <button type="button" class="btn btn-primary qb-rec" data-rec-toggle aria-pressed="false"><span class="qb-rec-dot" aria-hidden="true"></span><span data-rec-label>Record</span></button>
+        <button type="button" class="btn btn-ghost" data-draft-go>Draft lines</button>
+        <button type="button" class="btn btn-ghost" data-draft-undo hidden>Undo draft</button>
+        <button type="button" class="btn btn-ghost" data-retry-clips hidden>Retry recording</button>
+      </div>
+      <label class="choice qb-auto"><input type="checkbox" data-auto-draft checked /> Draft the lines when I stop recording</label>
+      <p class="qb-note-status" data-notes-status role="status" aria-live="polite" hidden></p>
+      <p class="est-hint" data-rec-hint>Record your own notes, one room at a time. Washington needs everyone's OK to record a conversation, so ask the customer first or keep their voice out of it. Audio is not saved, only the typed words. Keep the screen on while recording. No microphone? The keyboard microphone on your phone fills this box too.</p>
+    </fieldset>
+
     <fieldset class="qb-block">
       <legend>Customer</legend>
       <div class="qb-grid-2">
@@ -168,6 +184,7 @@ const catalog = {
   import { formatCents } from '../../../lib/money';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
   import { suggestedUnitPrice } from '../../../lib/quote-pricing';
+  import { NOTES_HEADER, draftLineToItem, mergeNotes, needsPrice, nextDraftText, notesBlock, type DraftCatalog, type DraftLine } from '../../../lib/quote-notes-lines';
 
   type CatalogOpening = { id: string; label: string; low: number; high: number; isDoor: boolean; quotePrice: number | null };
   type CatalogMaterial = { id: string; label: string; multiplier: number };
@@ -180,6 +197,15 @@ const catalog = {
   };
   type WorkType = 'windows' | 'siding';
   type LineItem = { label: string; description: string; quantity: number; unitPrice: number };
+
+  // Unsent rough notes survive a reload or a phone lock for 12 hours, on this device only.
+  const NOTES_KEY = 'cv-quote-rough-notes';
+  const AUTO_KEY = 'cv-quote-auto-draft';
+  const store = {
+    get(key: string) { try { return localStorage.getItem(key); } catch { return null; } },
+    set(key: string, value: string) { try { localStorage.setItem(key, value); } catch { /* private window: notes just do not persist */ } },
+    del(key: string) { try { localStorage.removeItem(key); } catch { /* nothing to remove */ } },
+  };
 
   function initQuoteBuilder() {
     const form = document.getElementById('quote-form');
@@ -304,6 +330,7 @@ const catalog = {
         const cents = lineCents(item);
         subtotal += cents;
         if (totalCells[index]) totalCells[index].textContent = formatCents(cents);
+        totalCells[index]?.closest('tr')?.classList.toggle('qb-row-unpriced', needsPrice(item));
       });
       const discount = Math.max(0, Math.min(subtotal, Math.round((Number(discountInput.value) || 0) * 100)));
       subtotalOut.textContent = formatCents(subtotal);
@@ -433,6 +460,231 @@ const catalog = {
       items.push({ label: labelParts.join(' — '), description: '', quantity: qty, unitPrice });
       render();
     });
+
+
+    // ── Rough notes: Mark's spoken or typed walk-through -> draft lines ─────────────────────────────────
+    // Voice is optional. Clips are short (45 s) and sent on their own, so a dropped signal loses seconds, not the
+    // house; a failed clip is kept for Retry. The words land in the box in the order they were spoken. Drafting
+    // sends only the words added since the last draft, so room-by-room use never duplicates lines. The draft only
+    // adds editable lines (price-book prices, or $0 for anything else), and nothing is saved until Mark saves.
+    const roughNotes = form.querySelector('[data-rough-notes]');
+    const recToggle = form.querySelector('[data-rec-toggle]');
+    const recLabel = form.querySelector('[data-rec-label]');
+    const draftGo = form.querySelector('[data-draft-go]');
+    const draftUndo = form.querySelector('[data-draft-undo]');
+    const retryClips = form.querySelector('[data-retry-clips]');
+    const autoDraftBox = form.querySelector('[data-auto-draft]');
+    const notesStatus = form.querySelector('[data-notes-status]');
+    if (roughNotes instanceof HTMLTextAreaElement && recToggle instanceof HTMLButtonElement && recLabel instanceof HTMLElement && draftGo instanceof HTMLButtonElement && draftUndo instanceof HTMLButtonElement && retryClips instanceof HTMLButtonElement && autoDraftBox instanceof HTMLInputElement && notesStatus instanceof HTMLElement) {
+      const buzz = (ms: number) => { try { navigator.vibrate?.(ms); } catch { /* not every phone vibrates */ } };
+      const say = (message: string, problem = false) => {
+        notesStatus.hidden = message === '';
+        notesStatus.textContent = message;
+        notesStatus.classList.toggle('qb-note-problem', problem);
+      };
+      const askJson = async (url: string, init: RequestInit) => {
+        const response = await fetch(url, { credentials: 'same-origin', ...init });
+        // An expired sign-in redirects to the login page, which is HTML, not JSON.
+        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again; your notes are still here.');
+        const data = await response.json();
+        if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : 'That did not work. Your notes are still here.');
+        return data;
+      };
+
+      let consumed = '';                 // the part of the notes already drafted
+      let previousConsumed = '';         // restored by Undo
+      let lastBatch: LineItem[] = [];    // lines from the last draft (Undo)
+      let allDrafted: LineItem[] = [];   // every drafted line still on the quote (replace-all)
+      let drafting = false;
+      let draftAgain = false;
+      let pendingClips = 0;
+      let draftAfterStop = false;
+      let chain: Promise<void> = Promise.resolve();
+      let failedClips: Blob[] = [];
+
+      // Keep unsent notes across a reload (the lines themselves are rebuilt from them).
+      const saveNotes = () => { if (roughNotes.value.trim()) store.set(NOTES_KEY, JSON.stringify({ text: roughNotes.value, at: Date.now() })); else store.del(NOTES_KEY); };
+      roughNotes.addEventListener('input', saveNotes);
+      autoDraftBox.checked = store.get(AUTO_KEY) !== '0';
+      autoDraftBox.addEventListener('change', () => store.set(AUTO_KEY, autoDraftBox.checked ? '1' : '0'));
+      if (!editId) {
+        try {
+          const saved = JSON.parse(store.get(NOTES_KEY) || 'null');
+          if (saved && typeof saved.text === 'string' && saved.text.trim() && Date.now() - Number(saved.at) < 12 * 3600_000 && roughNotes.value.trim() === '') {
+            roughNotes.value = saved.text.slice(0, 4000);
+            say('Restored your unsent notes. Tap Draft lines to rebuild the quote lines.');
+          }
+        } catch { /* unreadable saved notes: start empty */ }
+      }
+
+      const setBusy = () => { draftGo.disabled = drafting; };
+      const showRetry = () => {
+        retryClips.hidden = failedClips.length === 0;
+        retryClips.textContent = failedClips.length > 1 ? `Retry ${failedClips.length} recordings` : 'Retry recording';
+      };
+
+      async function runDraft(auto: boolean) {
+        if (drafting) { draftAgain = true; return; }
+        const { text, replaceAll } = nextDraftText(roughNotes.value, consumed);
+        if (!text) { say(auto ? '' : roughNotes.value.trim() ? 'Nothing new to draft since the last time. Add more notes first.' : 'Type or record some notes first.', !auto); if (!auto && !roughNotes.value.trim()) roughNotes.focus(); return; }
+        if (pendingClips > 0) { say('Still writing out the last recording. Try again in a moment.', true); return; }
+        if (replaceAll && allDrafted.length > 0 && !window.confirm('You changed notes that were already drafted. Redraft everything and replace the lines drafted before? (Prices you typed on those lines will be lost.)')) return;
+        const wholeBox = roughNotes.value.trim();
+        drafting = true; setBusy();
+        say('Drafting lines...');
+        try {
+          const data = await askJson('/internal/api/quote-notes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ notes: text }) });
+          const lines: DraftLine[] = Array.isArray(data.lines) ? data.lines : [];
+          if (replaceAll) { for (const old of allDrafted) { const at = items.indexOf(old); if (at >= 0) items.splice(at, 1); } allDrafted = []; }
+          const added: LineItem[] = [];
+          for (const line of lines) {
+            const item = draftLineToItem(line, catalog as DraftCatalog, workType);
+            if (item) { items.push(item); added.push(item); }
+          }
+          lastBatch = added;
+          allDrafted = allDrafted.concat(added);
+          previousConsumed = replaceAll ? '' : consumed;
+          consumed = wholeBox;
+          const c = data.customer && typeof data.customer === 'object' ? data.customer : {};
+          for (const [field, value] of [['name', c.name], ['phone', c.phone], ['address', c.address], ['city', c.city]] as const) {
+            const el = form.elements.namedItem(field);
+            if (typeof value === 'string' && value && el instanceof HTMLInputElement && el.value.trim() === '') el.value = value;
+          }
+          const notesField = form.elements.namedItem('notes');
+          if (notesField instanceof HTMLTextAreaElement) {
+            let existing = notesField.value;
+            if (replaceAll && existing.includes(NOTES_HEADER)) existing = existing.slice(0, existing.indexOf(NOTES_HEADER)).trimEnd();
+            notesField.value = mergeNotes(existing, notesBlock(text, lines, !existing.includes(NOTES_HEADER)));
+          }
+          render();
+          draftUndo.hidden = added.length === 0;
+          const unpriced = added.filter(needsPrice).length;
+          const skipped = Number(data.dropped) || 0;
+          say(added.length === 0
+            ? 'No quotable lines found in those notes. They were kept in the quote notes; add lines by hand.'
+            : `Added ${added.length} line${added.length === 1 ? '' : 's'}.${unpriced ? ` ${unpriced} still need${unpriced === 1 ? 's' : ''} a price (shown at $0).` : ''} Check every price and quantity before you save.${skipped ? ` ${skipped} part${skipped === 1 ? '' : 's'} of the notes could not be matched; check them.` : ''}`, added.length === 0 || skipped > 0);
+          buzz(added.length ? 30 : 0);
+        } catch (error) {
+          say(error instanceof Error ? error.message : 'Could not draft lines. Your notes are still here.', true);
+        } finally {
+          drafting = false; setBusy();
+          if (draftAgain) { draftAgain = false; void runDraft(true); }
+        }
+      }
+      draftGo.addEventListener('click', () => { void runDraft(false); });
+      draftUndo.addEventListener('click', () => {
+        for (const item of lastBatch) {
+          const at = items.indexOf(item);
+          if (at >= 0) items.splice(at, 1);
+        }
+        allDrafted = allDrafted.filter((item) => !lastBatch.includes(item));
+        lastBatch = [];
+        consumed = previousConsumed;
+        draftUndo.hidden = true;
+        render();
+        say('Draft removed. Tap Draft lines to try again; your notes are still in the box.');
+      });
+
+      // Recording. Hidden where the browser has no recorder; the keyboard microphone still works there.
+      const canRecord = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+      if (!canRecord) {
+        recToggle.hidden = true;
+        autoDraftBox.closest('label')?.setAttribute('hidden', '');
+      } else {
+        const CLIP_MS = 45_000;
+        let stream: MediaStream | null = null;
+        let recorder: MediaRecorder | null = null;
+        let cutTimer: number | undefined;
+        let tick: number | undefined;
+        let startedAt = 0;
+        let recording = false;
+        let wakeLock: WakeLockSentinel | null = null;
+        const pickType = () => ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'].find((t) => MediaRecorder.isTypeSupported(t)) || '';
+        const clock = () => { const n = Math.floor((Date.now() - startedAt) / 1000); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
+
+        // Clips are transcribed in parallel but added to the notes strictly in the order they were recorded.
+        const sendClip = (blob: Blob) => {
+          if (blob.size < 2000) return;
+          pendingClips += 1;
+          const result = askJson('/internal/api/quote-dictation', { method: 'POST', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob }).then((data) => ({ data, error: null as Error | null }), (error) => ({ data: null, error: error instanceof Error ? error : new Error('Could not write out that clip.') }));
+          chain = chain.then(async () => {
+            const { data, error } = await result;
+            pendingClips -= 1;
+            if (error || !data) { failedClips.push(blob); showRetry(); say(`${error?.message || 'Could not write out that clip.'} The recording is kept: tap Retry, or type it.`, true); }
+            else if (data.empty || !data.text) say('That clip had no words I could hear. Try again closer to the phone.', true);
+            else {
+              roughNotes.value = `${roughNotes.value.trimEnd()}${roughNotes.value.trim() ? '\n' : ''}${data.text}`.slice(0, 4000);
+              saveNotes();
+              say(recording ? 'Recording...' : 'Added to the notes.');
+            }
+            if (!recording && pendingClips === 0) {
+              if (draftAfterStop && failedClips.length === 0) { draftAfterStop = false; await runDraft(true); }
+              else if (failedClips.length === 0) say(notesStatus.classList.contains('qb-note-problem') ? notesStatus.textContent || '' : 'Added to the notes. Tap Draft lines when you are ready.');
+            }
+          });
+        };
+        retryClips.addEventListener('click', () => {
+          const again = failedClips; failedClips = []; showRetry();
+          if (again.length) say('Writing out what you said...');
+          again.forEach(sendClip);
+        });
+
+        const startSegment = () => {
+          if (!stream || !recording) return;
+          const mime = pickType();
+          const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+          const parts: Blob[] = [];
+          rec.ondataavailable = (event) => { if (event.data.size) parts.push(event.data); };
+          rec.onstop = () => { sendClip(new Blob(parts, { type: rec.mimeType || mime || 'audio/webm' })); };
+          rec.start();
+          recorder = rec;
+          cutTimer = window.setTimeout(() => { if (recording) { rec.stop(); startSegment(); } }, CLIP_MS);
+        };
+
+        const stopRecording = () => {
+          recording = false;
+          window.clearTimeout(cutTimer);
+          window.clearInterval(tick);
+          if (recorder && recorder.state !== 'inactive') recorder.stop();
+          stream?.getTracks().forEach((track) => track.stop());
+          stream = null;
+          void wakeLock?.release().catch(() => {});
+          wakeLock = null;
+          recToggle.classList.remove('qb-rec-live');
+          recLabel.textContent = 'Record';
+          recToggle.setAttribute('aria-pressed', 'false');
+        };
+
+        recToggle.addEventListener('click', async () => {
+          if (recording) {
+            draftAfterStop = autoDraftBox.checked;
+            stopRecording();
+            buzz(20);
+            say('Writing out what you said...');
+            return;
+          }
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch {
+            say('The microphone is blocked. Allow it in the browser settings, or use the keyboard microphone.', true);
+            return;
+          }
+          recording = true;
+          startedAt = Date.now();
+          recToggle.classList.add('qb-rec-live');
+          recToggle.setAttribute('aria-pressed', 'true');
+          recLabel.textContent = `Stop  ${clock()}`;
+          tick = window.setInterval(() => { recLabel.textContent = `Stop  ${clock()}`; }, 500);
+          buzz(20);
+          say('Recording. Keep the screen on and tap Stop when you finish the room.');
+          try { wakeLock = (await navigator.wakeLock?.request('screen')) ?? null; } catch { /* the screen may sleep; the hint says to keep it on */ }
+          startSegment();
+        });
+        // Leaving the page or locking the phone ends the recording: send what was captured instead of losing it.
+        window.addEventListener('pagehide', () => { if (recording) stopRecording(); });
+        document.addEventListener('visibilitychange', () => { if (document.hidden && recording) { draftAfterStop = false; stopRecording(); say('Recording stopped because the screen turned off. What you said so far is being written out; tap Record to continue.', true); } });
+      }
+    }
 
     const customLabel = form.querySelector('[data-custom-label]');
     const customQty = form.querySelector('[data-custom-qty]');
@@ -701,6 +953,7 @@ const catalog = {
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || 'Could not save the quote.');
         const id = editId || result.id;
+        store.del(NOTES_KEY);
         window.location.href = `/internal/quotes/view?id=${encodeURIComponent(id)}`;
       } catch (error) {
         status.hidden = false;
@@ -718,6 +971,20 @@ const catalog = {
 </script>
 
 <style>
+
+  .qb-notes-actions { display: flex; flex-wrap: wrap; gap: var(--space-s); margin-top: var(--space-s); }
+  .qb-notes-actions .btn { white-space: normal; overflow-wrap: normal; }
+  .qb-notes-actions .qb-rec { display: inline-flex; align-items: center; gap: .5rem; }
+  .qb-rec-dot { width: .7rem; height: .7rem; border-radius: 50%; background: currentColor; opacity: .55; }
+  :global(.qb-rec.qb-rec-live) { background: var(--danger, #9b2c2c); border-color: var(--danger, #9b2c2c); color: #fff; }
+  :global(.qb-rec.qb-rec-live .qb-rec-dot) { opacity: 1; animation: qb-rec-pulse 1.2s ease-in-out infinite; }
+  @keyframes qb-rec-pulse { 50% { transform: scale(1.35); opacity: .6; } }
+  @media (prefers-reduced-motion: reduce) { :global(.qb-rec.qb-rec-live .qb-rec-dot) { animation: none; } }
+  .qb-auto { display: flex; align-items: center; gap: .5rem; margin-top: var(--space-s); }
+  [data-rough-notes] { width: 100%; }
+  .qb-note-status { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); background: var(--paper-raised); border: 1px solid var(--line-strong); }
+  .qb-note-status.qb-note-problem { border-color: var(--danger, #9b2c2c); }
+  :global(.qb-items tr.qb-row-unpriced .qb-cell-price input) { border-color: var(--danger, #9b2c2c); background: color-mix(in srgb, var(--danger, #9b2c2c) 8%, transparent); }
   #quote-form {
     display: grid;
     gap: var(--space-l);

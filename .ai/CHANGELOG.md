@@ -14,6 +14,15 @@ Replaced installation-related set/sets/setting wording in seven city pages, shar
 
 Validation: all 66 local test steps passed; final terminology/SEO checks and separate 70-page build passed. PR293 merged as 2ec2978 after GitHub Build run 969 and Cloudflare Pages both succeeded. Independent preview 844187c1 and production deployment baef5206 were inspected in Chrome. Production Vancouver body/FAQ, estimate form choice and new-construction image descriptions use the revised wording; the new-construction siding link and requested removals remain live. Production PWA health passed. No physical-device testing was performed.
 
+## 2026-10-24 - Rough notes: native-feel pass
+
+Incremental drafting (`nextDraftText`), draft-on-stop, live recording state, ordered clips, Retry for failed clips, locked-screen save, 12-hour notes restore, spoken-number sizes in the validator, `scripts/audit-quote-dictation.mjs`. Draft limit 60 per 15 minutes.
+
+## 2026-10-24 - Rough notes to draft quote lines
+
+Added voice and typed rough notes on the new-quote page. Files: `functions/internal/api/quote-dictation.js`, `functions/internal/api/quote-notes.js`, `functions/internal/_lib/quote-notes.mjs`, `src/lib/quote-notes-lines.ts`, `src/pages/internal/quotes/new.astro`, `scripts/test-quote-dictation.mjs`, `.ai/workflows/quote-dictation/`. Prices are never the AI's. See STATE.md for the decision record.
+
+
 ## 2026-10-24 — Separate permit research from Analytics
 
 Supplier permit list and public Permit leads now live together at /internal/permits with a Permits navigation entry on desktop and in the phone More menu. Analytics no longer renders either list, includes the contact dialog, or requests either permit endpoint; requests-to-revenue, lead-source reporting and GA4 remain. The new page retains summary charts, explicit list loading, group filtering, spreadsheet download, builder connections and do-not-contact/call-log controls. Existing authenticated endpoints, D1 data and no-store boundaries are unchanged; no supplier data was loaded or copied into git. Expired permit fetches return to login with the Permits return path. Navigation and separation guards plus the relocated browser contact flow cover the move.
