@@ -1,3 +1,7 @@
+## 2026-10-24 - Rough notes: bug-hunt fixes
+
+Empty-clip stop sequence, no stored notes while editing, flow 11 in `scripts/audit-quote-dictation.mjs`.
+
 ## 2026-10-24 - Rough notes: microphone control and Permissions-Policy fix
 
 `public/_headers` internal rule; Allow button, picker, error handling in `new.astro`; flows 9 and 10 in `scripts/audit-quote-dictation.mjs`.

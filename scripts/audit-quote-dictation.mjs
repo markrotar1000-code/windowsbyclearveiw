@@ -222,5 +222,17 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await ctx.close(); ok('microphone choice is listed, remembered, locked while recording, and falls back when unplugged');
 }
 
+// 11. Stopping at once (no audio) ends cleanly: no stuck "Writing out" message, no draft, nothing sent.
+{
+  const { ctx, page, calls } = await open({ init: () => {
+    window.MediaRecorder = class { static isTypeSupported() { return true; } constructor() { this.state = 'inactive'; this.mimeType = 'audio/webm'; } start() { this.state = 'recording'; } stop() { this.state = 'inactive'; this.ondataavailable?.({ data: new Blob([new Uint8Array(100)], { type: 'audio/webm' }) }); this.onstop?.(); } };
+  } });
+  await page.click('[data-rec-toggle]'); await page.click('[data-rec-toggle]');
+  await page.waitForFunction(() => /did not hear any words/.test(document.querySelector('[data-notes-status]').textContent));
+  assert.equal(calls.dictation, 0, 'an empty clip is not uploaded');
+  assert.equal(calls.notes.length, 0, 'nothing is drafted from silence');
+  await ctx.close(); ok('a clip with no audio ends cleanly');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');
