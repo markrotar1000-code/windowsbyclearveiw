@@ -12,7 +12,7 @@ faq:
     answer: No — the same measure and written estimate process, handled the same way. Short drive north, not a special trip.
   - question: What's the most common window problem in La Center?
     answer: Old sliders and fogged insulated units — the same failure points as the rest of Clark County, since it's the same rain and the same heating season.
-  - question: Do you set windows on new construction here too?
+  - question: Do you install windows on new construction here too?
     answer: Yes, once the openings are ready. See new construction for the sequence we follow.
 ---
 
@@ -32,6 +32,6 @@ La Center lists window replacement among the projects that need a building permi
 
 ## What we do here
 
-We measure, order, and handle the window installation from Vancouver. The approach depends on what each opening needs, and we put it in the written estimate. New construction? We set windows once the openings are ready; see [new construction](/new-construction) for what we ask a builder to have ready first.
+We measure, order, and handle the window installation from Vancouver. The approach depends on what each opening needs, and we put it in the written estimate. New construction? We install windows once the openings are ready; see [new construction](/new-construction) for what we ask a builder to have ready first.
 
 Nearby: [Ridgefield](/areas/ridgefield) and [Vancouver](/areas/vancouver).

@@ -10,8 +10,8 @@ faq:
     answer: It changes how much the flashing detail matters, not the product. Wind-driven rain along SR-14 finds a weak seal or a poorly lapped flashing faster than a sheltered lot would. We flash every opening the same careful way regardless, but it shows its worth here sooner.
   - question: Is the older riverside core different from the newer east-hill builds?
     answer: Yes — older sash near the river sticks and loses heat through the glass itself; newer construction up the hill above town is mostly a simpler job when it needs anything at all.
-  - question: Do you set windows in new Washougal construction?
-    answer: Yes, nailing-fin units set to schedule. See new construction for what we need from the builder before we book a date.
+  - question: Do you install windows in new Washougal construction?
+    answer: Yes, windows installed on an agreed date. See new construction for what we need from the builder before we book a date.
 ---
 
 Washougal gets Columbia River Gorge weather along SR-14: wind and a long wet season that finds a weak spot in a wall faster than a sheltered lot would. The town has an older riverside core, with newer growth spreading east and up the hill.

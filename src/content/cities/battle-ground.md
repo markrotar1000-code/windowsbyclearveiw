@@ -12,7 +12,7 @@ faq:
     answer: Mostly newer. Most of what we see is suburban construction from the last few decades, not an old town core — so the windows are failing on seals and hardware, not the frame.
   - question: Do you cover Yacolt and the rest of north county too?
     answer: Yes, quoted the same way — the same written estimate and installation standard, with the drive factored in.
-  - question: Can you set windows on a new Battle Ground build?
+  - question: Can you install windows on a new Battle Ground build?
     answer: Yes. See new construction for the opening schedule and rough-opening details we work from.
 ---
 

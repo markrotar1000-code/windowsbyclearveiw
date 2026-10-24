@@ -9,9 +9,9 @@ faq:
   - question: Do I need a permit to replace windows in Ridgefield?
     answer: The City of Ridgefield's home-improvement page lists window and door replacement of the same size as work that does not need a permit. A different size does. Either way, the new window still has to meet the Washington energy code (U-factor 0.30 or lower). Rules change, so confirm with the city for your address.
   - question: Is Ridgefield mostly new construction now?
-    answer: A lot of it is — Ridgefield's one of the fastest-growing cities in the state. But there's still a small historic downtown with older housing mixed in, so we see replacement work in older houses and new-construction window sets in the same week.
+    answer: A lot of it is — Ridgefield's one of the fastest-growing cities in the state. But there's still a small historic downtown with older housing mixed in, so we see replacement work in older houses and new-construction window installations in the same week.
   - question: What should a Ridgefield builder have ready before calling?
-    answer: The plan set or window schedule and a target set date. See new construction for the full list and what we check before ordering.
+    answer: The plan set or window schedule and a target installation date. See new construction for the full list and what we check before ordering.
   - question: Do you do anything differently for houses near the wildlife refuge?
     answer: No — same measure, same flashing standard, same written estimate. Proximity to the refuge doesn't change the window, just the view out of it.
 ---
@@ -32,6 +32,6 @@ Ridgefield lists same-size window and door replacement as work that does not nee
 
 ## What we do here
 
-We do both kinds of window installation: replacement in existing walls, and windows set while the house is still in wrap. Homeowner? We walk the openings with you. Builder? Bring the plan set and the window schedule, and see [new construction](/new-construction) for exactly what we check against it before ordering.
+We do both kinds of window installation: replacement in existing walls, and windows installed while the house is still in wrap. Homeowner? We walk the openings with you. Builder? Bring the plan set and the window schedule, and see [new construction](/new-construction) for exactly what we check against it before ordering.
 
 Nearby: [La Center](/areas/la-center), [Woodland](/areas/woodland), and [Vancouver](/areas/vancouver).

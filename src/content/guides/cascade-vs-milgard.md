@@ -21,7 +21,7 @@ faq:
   - question: Can I mix brands on one house?
     answer: It happens less often than mixing different amounts of work across a house, but yes — a homeowner upgrading a few street-facing openings to Milgard while the rest of the house takes Cascade is a normal way to control budget.
   - question: Does the brand change how the window is installed?
-    answer: No. The flashing and sealing standard stays the same either way. The brand changes what's in the opening, not how we set it.
+    answer: No. The flashing and sealing standard stays the same either way. The brand changes what's in the opening, not how we install it.
 ---
 
 Short answer: Cascade and Milgard are both legitimate Pacific Northwest window manufacturers, and Clearview installs both. Cascade is the standard window on most jobs — solid, vinyl, built in Washington. Milgard is the step up: more product lines, more glass and hardware options, a higher price per opening for the same install labor. Neither is the better brand. They are two price-and-feature points. The right pick depends on the opening and the budget, not brand loyalty.
