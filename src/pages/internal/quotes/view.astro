@@ -37,6 +37,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   <section class="qv-prices no-print" data-price-panel hidden aria-label="Change a price">
     <h2>Prices</h2>
     <p class="qv-prices-hint">Change any line's price here until the quote is signed. The contract below updates when you save.</p>
+    <p class="qv-prices-zero" data-price-zero role="status" hidden></p>
     <div class="qv-price-rows" data-price-rows></div>
     <p class="qv-prices-status" data-price-status role="status" hidden></p>
     <button class="btn btn-primary" type="button" data-price-save>Save prices</button>
@@ -360,7 +361,14 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       const refresh = () => {
         inputs.forEach((input, index) => {
           totals[index].textContent = money(items[index].quantity * cents(input));
+          input.closest('.qv-price-row')?.classList.toggle('qv-price-row-zero', cents(input) === 0);
         });
+        const zeroNote = document.querySelector('[data-price-zero]');
+        if (zeroNote instanceof HTMLElement) {
+          const zero = inputs.filter((input) => cents(input) === 0).length;
+          zeroNote.hidden = zero === 0;
+          zeroNote.textContent = zero === 0 ? '' : `${zero} line${zero === 1 ? ' is' : 's are'} still at $0 and will print as $0.00. Type a price before you send this.`;
+        }
       };
       items.forEach((item, index) => {
         const row = document.createElement('div');
@@ -974,6 +982,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     font-size: var(--step-1);
   }
 
+  .qv-prices-zero { margin: 0 0 var(--space-s); padding: .5rem .7rem; border-radius: var(--radius-md); border: 1px solid var(--danger, #9b2c2c); }
+  :global(.qv-price-row.qv-price-row-zero input) { border-color: var(--danger, #9b2c2c); }
   .qv-prices-hint {
     margin: 0;
     color: var(--ink-soft);

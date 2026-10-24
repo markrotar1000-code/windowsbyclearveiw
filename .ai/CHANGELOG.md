@@ -1,3 +1,11 @@
+## 2026-10-24 - Rough notes: microphone control and Permissions-Policy fix
+
+`public/_headers` internal rule; Allow button, picker, error handling in `new.astro`; flows 9 and 10 in `scripts/audit-quote-dictation.mjs`.
+
+## 2026-10-24 - Quote builder: $0 line warning
+
+Live $0-line count and highlight in `new.astro` and the `view.astro` Prices panel; confirm on save when any line is $0.
+
 ## 2026-10-24 — Marketing visual refresh
 
 Public-only marketing stylesheet tightens section/CTA spacing, scales headings for phones, gives four service heroes a shared directional photo overlay and consistent estimate/call actions with original project-specific links retained. Header social SVG sizing is corrected across Astro component boundaries, social links are quieter and hidden on phones, and an estimate button is visible on menu-based desktop layouts with a large-text container fallback. Existing bottom phone actions remain. Home service cards and guide cards have consistent spacing; review/credential treatments are quieter. Existing replacement/siding/new-construction project sections move earlier; new construction shows its photos in a full-width row instead of a tall column beside short text. Public typography/header/grid changes do not apply to the internal layout. No new photos, facts, tracking or external dependencies; all service attribution parameters and builder handoff links remain. Validation: all 67 local test steps passed against current main; separate 70-page build and final layout guards passed. Chrome checks passed 32 responsive page scenarios, eight at 200% text, and three wide-desktop header sizes. Builder estimate handoff and menu/Escape behavior were verified without submitting a lead. PR296 and PR297 merged; production b6a598eb/dc6f5c6 verified the full-width photo row and guide cards. Final credential selector adjustment 97b5d8f passed layout/build checks and production de28b583 now shows consistent credential colors. Live phone checks at 390px show no overflow; all temporary emulation/text overrides were cleared. PWA health passed. No physical-device, full manual accessibility or new field-CWV measurement was performed. Evidence: task outputs/marketing-visual-refresh-2026-10-24.md and live screenshots.

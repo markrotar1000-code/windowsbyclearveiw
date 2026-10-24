@@ -23,7 +23,12 @@ model: no customer record, no prices, no history.
    (Workers AI Whisper through the `AI` binding). Clips are added to the notes box strictly in the order recorded; a
    failed clip is kept for *Retry recording*; locking the screen ends the recording and still sends what was captured.
    Unsent notes are kept on the device for 12 hours and forgotten when the quote is saved.
-   Audio is never stored or logged. Washington needs every party's consent to record a conversation, so the page
+   Audio is never stored or logged. The microphone control lives in the Rough notes block: an **Allow microphone**
+   button (asks again while the browser is still asking), a picker for the input (remembered on the device, locked
+   while recording, falls back to the default if it is unplugged, refreshed on `devicechange`), and, when the browser
+   has really blocked it, device-specific steps with **Check again**. A page cannot reopen a blocked permission; that
+   is a browser rule. `public/_headers` serves `Permissions-Policy: microphone=(self)` on `/internal*` only (public
+   pages keep `microphone=()`); the site-wide policy had been blocking it for everyone. Washington needs every party's consent to record a conversation, so the page
    tells Mark to dictate his own notes or get the customer's OK first.
 2. **Draft.** When Mark stops recording (default; a checkbox turns it off) or taps *Draft lines*, only the words added
    since the last draft are sent (`nextDraftText`), so room-by-room use never duplicates lines. Editing drafted words
