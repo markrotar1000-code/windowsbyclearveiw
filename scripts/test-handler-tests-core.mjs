@@ -145,7 +145,8 @@ const env = { INTERNAL_PASSWORD: 'fixture-password', INTERNAL_SESSION_SECRET: 'f
   for (const body of [{}, { action: 'void' }, { action: 'paid' }, 'not json', '[]']) {
     const res = await post('INV-20260101-AAAA', body);
     assert.equal(res.status, 400, `rejected: ${JSON.stringify(body)}`);
-    assert.equal(res.body.error, 'Unsupported invoice action.');
+    // A body that is not JSON is refused by the shared request guard before the action is read.
+    assert.equal(res.body.error, body === 'not json' ? 'Invalid JSON.' : 'Unsupported invoice action.');
   }
   assert.deepEqual((await get('INV-20260101-AAAA')).body.invoice, before, 'rejected payloads leave the invoice untouched');
 
