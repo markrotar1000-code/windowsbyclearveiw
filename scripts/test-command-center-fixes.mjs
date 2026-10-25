@@ -403,10 +403,13 @@ console.log('command center fixes: ok');
     pending: null, jobs: [], activeFilter: 'ready', workType: '', page: 1, totalPages: 1, total: 0,
     prev: { disabled: true }, next: { disabled: true }, filters: [],
     count: output, updated: { textContent: '' }, pageLabel: { textContent: '' },
-    list: { innerHTML: '', querySelector: () => null }, render: () => {},
+    list: { innerHTML: '', querySelector: () => null, append: () => {} }, render: () => {},
     label: value => value, esc: value => String(value),
     fetch: (url, options) => new Promise(resolve => requests.push({ url, options, resolve })),
+    loadFailedNode: () => ({}), loadFailureMessage: () => '',
   });
+  // The page loads through the shared fetchJson; here it is the same call over the stubbed fetch.
+  context.fetchJson = async (url, options) => { const response = await context.fetch(url, options); const data = await response.json(); if (!response.ok) throw new Error(data.error); return data; };
   runInContext(stripTypeScriptTypes(handler), context);
   const oldRequest = context.loadJobs();
   context.activeFilter = 'completed';
@@ -500,6 +503,7 @@ console.log('command center fixes: ok');
     urls.push(url);const page=new URL(url,ORIGIN).searchParams.get('page');
     return new Response(JSON.stringify({quotes:page==='1'?[{id:'Q-first',customer_name:'First',total_cents:10000}]:[{id:'Q-last',customer_name:'Last',total_cents:20000}],totalPages:2}));
   }});
+  context.fetchJson=async(url,options)=>{const response=await context.fetch(url,options);return response.json();};
   runInContext(stripTypeScriptTypes(handler),context);await context.loadQuotes();
   assert.equal(urls.length,2);assert.ok(urls.every(url=>url.includes('status=finalized')));
   assert.match(select.innerHTML,/Q-first/);assert.match(select.innerHTML,/Q-last/);
@@ -511,7 +515,7 @@ console.log('command center fixes: ok');
   const source=read('src/pages/internal/schedule.astro');
   const start=source.indexOf('    async function load()');
   const handler=source.slice(start,source.indexOf("    document.querySelector('[data-prev]')",start));
-  class Element {hidden=false;innerHTML='';textContent='';}
+  class Element {hidden=false;innerHTML='';textContent='';shown=[];append(node){this.shown.push(node);}}
   class Button extends Element {disabled=false;}
   const refresh=new Button(),empty=new Element(),grid=new Element(),status=new Element(),urls=[];
   let renders=0;
@@ -519,16 +523,18 @@ console.log('command center fixes: ok');
     HTMLElement:Element,HTMLButtonElement:Button,AbortController,URLSearchParams,Error,
     grid,empty,status,range:new Element(),pending:null,jobs:[],anchor:new Date('2026-10-03T12:00:00Z'),scheduleWeek,
     dayKey:d=>d.toISOString().slice(0,10),label:d=>d.toISOString().slice(0,10),render:()=>{renders++;},
+    loadFailedNode:message=>({message}),loadFailureMessage:error=>error.message,
     document:{querySelector:()=>refresh},fetch:async url=>{
       urls.push(url);const page=new URL(url,ORIGIN).searchParams.get('page');
       return new Response(JSON.stringify({jobs:[{id:page==='1'?'J-first':'J-last'}],totalPages:2}));
     },
   });
+  context.fetchJson=async(url,options)=>{const response=await context.fetch(url,options);const data=await response.json();if(!response.ok)throw new Error(data.error);return data;};
   runInContext(stripTypeScriptTypes(handler),context);await context.load();
   assert.equal(urls.length,2);assert.ok(urls.every(url=>url.includes('from=2026-09-28')&&url.includes('to=2026-10-05')));
   assert.equal(context.jobs.length,2);assert.equal(renders,1);assert.equal(refresh.disabled,false);
   context.fetch=async()=>new Response(JSON.stringify({error:'Your session ended.'}),{status:401});
   await context.load();
-  assert.equal(status.textContent,'Your session ended.');assert.equal(empty.hidden,true);assert.equal(grid.innerHTML,'');assert.equal(renders,1);assert.equal(refresh.disabled,false);
+  assert.equal(grid.shown.at(-1).message,'Your session ended.');assert.equal(empty.hidden,true);assert.equal(grid.innerHTML,'');assert.equal(renders,1);assert.equal(refresh.disabled,false);
   pass('schedule loads every weekly result page; failed loads show an error rather than a false empty week');
 }
