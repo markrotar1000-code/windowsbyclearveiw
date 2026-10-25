@@ -17,7 +17,7 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
   </div>
 
   <p data-loading>Loading…</p>
-  <p class="ld-error" data-error hidden role="alert"></p>
+  <div class="ld-error" data-error hidden></div>
   <p data-empty hidden>No estimate requests yet.</p>
 
   <div class="ld-type-filter" data-type-filter-wrap hidden><WorkTypeFilter /></div>
@@ -37,6 +37,8 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
 <script>
   import { bindWorkTypeFilter, workTypeBadge } from '../../lib/work-type';
   import { smsUrl } from '../../lib/contact-links';
+  import { fetchJson, esc } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
   function initLeads() {
     const list = document.querySelector('[data-list]');
     if (!(list instanceof HTMLElement) || list.dataset.bound === 'true') return;
@@ -50,12 +52,6 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     const searchInput = document.querySelector('[data-search]');
     const clearSearch = document.querySelector('[data-clear-search]');
     const results = document.querySelector('[data-results]');
-
-    function escapeHtml(s: string) {
-      const div = document.createElement('div');
-      div.textContent = s ?? '';
-      return div.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
 
     function telHref(phone: string) {
       const digits = String(phone || '').replace(/\D/g, '');
@@ -74,14 +70,14 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     function arrivalLine(lead: any) {
       if (lead.first_utm_source) {
         const medium = lead.first_utm_medium ? `/${lead.first_utm_medium}` : '';
-        return `Arrived via ${escapeHtml(lead.first_utm_source)}${escapeHtml(medium)}${lead.landing_path ? ` &rarr; ${escapeHtml(lead.landing_path)}` : ''}`;
+        return `Arrived via ${esc(lead.first_utm_source)}${esc(medium)}${lead.landing_path ? ` &rarr; ${esc(lead.landing_path)}` : ''}`;
       }
       if (lead.first_referrer) {
         let host = lead.first_referrer;
         try { host = new URL(lead.first_referrer).hostname; } catch {}
-        return `Arrived from ${escapeHtml(host)}${lead.landing_path ? ` &rarr; ${escapeHtml(lead.landing_path)}` : ''}`;
+        return `Arrived from ${esc(host)}${lead.landing_path ? ` &rarr; ${esc(lead.landing_path)}` : ''}`;
       }
-      return lead.landing_path ? `Arrived directly at ${escapeHtml(lead.landing_path)}` : 'Arrival unknown';
+      return lead.landing_path ? `Arrived directly at ${esc(lead.landing_path)}` : 'Arrival unknown';
     }
 
     function renderJourney(lead: any) {
@@ -89,7 +85,7 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
       try { visits = JSON.parse(lead.page_views_json || '[]'); } catch { visits = []; }
       if (!visits.length) return '<p class="ld-no-journey">No page-view history for this visit.</p>';
       const items = visits
-        .map((v: any) => `<li><span class="ld-journey-title">${escapeHtml(v.title || v.path || 'Untitled page')}</span><span class="ld-journey-path">${escapeHtml(v.path || '')}</span></li>`)
+        .map((v: any) => `<li><span class="ld-journey-title">${esc(v.title || v.path || 'Untitled page')}</span><span class="ld-journey-path">${esc(v.path || '')}</span></li>`)
         .join('');
       return `<ol class="ld-journey">${items}</ol>`;
     }
@@ -97,20 +93,19 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     function renderNotes(notes) {
       if (!notes) return '';
       const text = String(notes);
-      if (text.length <= 240) return `<p class="ld-notes">${escapeHtml(text)}</p>`;
+      if (text.length <= 240) return `<p class="ld-notes">${esc(text)}</p>`;
       return `<details class="ld-request">
-        <summary><span class="ld-request-preview">${escapeHtml(text.slice(0, 180))}…</span><span class="ld-request-more">Read full request</span><span class="ld-request-less">Close full request</span></summary>
-        <p class="ld-notes">${escapeHtml(text)}</p>
+        <summary><span class="ld-request-preview">${esc(text.slice(0, 180))}…</span><span class="ld-request-more">Read full request</span><span class="ld-request-less">Close full request</span></summary>
+        <p class="ld-notes">${esc(text)}</p>
       </details>`;
     }
 
     async function load() {
       try {
-        const response = await fetch('/internal/api/leads');
-        if (!response.ok) throw new Error();
-        const { leads } = await response.json();
+        const { leads } = await fetchJson('/internal/api/leads');
 
         if (loading instanceof HTMLElement) loading.hidden = true;
+        if (errorEl instanceof HTMLElement) errorEl.hidden = true;
         if (!leads.length) {
           if (emptyEl instanceof HTMLElement) emptyEl.hidden = false;
           return;
@@ -138,12 +133,12 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
             card.innerHTML = `
               <div class="ld-card-top">
                 <div>
-                  <h2>${escapeHtml(lead.name)} ${workTypeBadge(kind)}</h2>
+                  <h2>${esc(lead.name)} ${workTypeBadge(kind)}</h2>
                   <p class="ld-meta">
-                    ${phoneHref ? `<a href="${phoneHref}">${escapeHtml(lead.phone)}</a>` : escapeHtml(lead.phone || '')}
-                    ${lead.email ? ` &middot; <a href="mailto:${escapeHtml(lead.email)}">${escapeHtml(lead.email)}</a>` : ''}
-                    ${lead.city ? ` &middot; ${escapeHtml(lead.city)}` : ''}
-                    ${lead.role ? ` &middot; ${escapeHtml(lead.role)}` : ''}
+                    ${phoneHref ? `<a href="${phoneHref}">${esc(lead.phone)}</a>` : esc(lead.phone || '')}
+                    ${lead.email ? ` &middot; <a href="mailto:${esc(lead.email)}">${esc(lead.email)}</a>` : ''}
+                    ${lead.city ? ` &middot; ${esc(lead.city)}` : ''}
+                    ${lead.role ? ` &middot; ${esc(lead.role)}` : ''}
                   </p>
                 </div>
                 <time class="ld-when">${formatWhen(lead.created_at)}</time>
@@ -156,10 +151,10 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
                 <a class="ld-action" href="/internal/follow-up?leadId=${leadId}">Add follow-up</a>
                 ${phoneHref ? `<a class="ld-action" href="${phoneHref}">Call</a>` : ''}
                 ${smsUrl(lead.phone) ? `<a class="ld-action" href="${smsUrl(lead.phone)}">Text</a>` : ''}
-                ${lead.email ? `<a class="ld-action" href="mailto:${escapeHtml(lead.email)}">Email</a>` : ''}
+                ${lead.email ? `<a class="ld-action" href="mailto:${esc(lead.email)}">Email</a>` : ''}
               </div>
               ${renderNotes(lead.notes)}
-              ${lead.intent ? `<p class="ld-meta"><strong>Website engagement: ${Number(lead.intent.score)}/100</strong> &middot; ${Number(lead.intent.sessions)} browser visit(s)<br>${lead.intent.signals.map(escapeHtml).join(" &middot; ")}<br><small>Browser-reported activity before this request; a prioritization aid, not a buying prediction.</small></p>` : ""}
+              ${lead.intent ? `<p class="ld-meta"><strong>Website engagement: ${Number(lead.intent.score)}/100</strong> &middot; ${Number(lead.intent.sessions)} browser visit(s)<br>${lead.intent.signals.map(esc).join(" &middot; ")}<br><small>Browser-reported activity before this request; a prioritization aid, not a buying prediction.</small></p>` : ""}
               <details class="ld-journey-wrap">
                 <summary>${lead.visit_count || 0} page${lead.visit_count === 1 ? '' : 's'} viewed this visit &middot; ${arrivalLine(lead)}</summary>
                 ${renderJourney(lead)}
@@ -169,11 +164,11 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
           }
         }
         applyFilter();
-      } catch {
+      } catch (error) {
         if (loading instanceof HTMLElement) loading.hidden = true;
         if (errorEl instanceof HTMLElement) {
           errorEl.hidden = false;
-          errorEl.textContent = 'Could not load leads.';
+          errorEl.replaceChildren(loadFailedNode(loadFailureMessage(error), load));
         }
       }
     }

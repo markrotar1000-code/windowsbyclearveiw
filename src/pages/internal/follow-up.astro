@@ -41,6 +41,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
 <script>
   import { smsUrl } from '../../lib/contact-links';
+  import { fetchJson, esc } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
   type Task={id:number;title:string;lead_id:number|null;quote_id?:string|null;lead_name?:string|null;lead_phone?:string|null;lead_email?:string|null;lead_city?:string|null;due_at:string|null;status:string;notes:string|null;created_at:string};
   function initFollowUp(){
     const list=document.querySelector('[data-list]'); if(!(list instanceof HTMLElement)||list.dataset.bound==='true')return;list.dataset.bound='true';
@@ -50,8 +52,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     const linkedLeadId=new URLSearchParams(location.search).get('leadId');
     const leadIdInput=form instanceof HTMLFormElement?form.elements.namedItem('leadId'):null;
     const linkedLead=document.querySelector('[data-linked-lead]');
-    if(linkedLeadId&&/^\d+$/.test(linkedLeadId)&&leadIdInput instanceof HTMLInputElement&&addCard instanceof HTMLElement){leadIdInput.value=linkedLeadId;addCard.hidden=false;if(linkedLead instanceof HTMLElement){linkedLead.hidden=false;linkedLead.textContent='Linking this follow-up to the selected inquiry…';}fetch('/internal/api/leads',{headers:{'cache-control':'no-cache'}}).then(r=>r.ok?r.json():Promise.reject()).then(d=>{const lead=(d.leads||[]).find((item:any)=>String(item.id)===linkedLeadId);if(linkedLead instanceof HTMLElement)linkedLead.textContent=lead?`For ${lead.name}${lead.city?` · ${lead.city}`:''}`:'Linked to selected inquiry';}).catch(()=>{if(linkedLead instanceof HTMLElement)linkedLead.textContent='Linked to selected inquiry';});}
-    const esc=(v:unknown)=>{const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;')};
+    if(linkedLeadId&&/^\d+$/.test(linkedLeadId)&&leadIdInput instanceof HTMLInputElement&&addCard instanceof HTMLElement){leadIdInput.value=linkedLeadId;addCard.hidden=false;if(linkedLead instanceof HTMLElement){linkedLead.hidden=false;linkedLead.textContent='Linking this follow-up to the selected inquiry…';}fetchJson('/internal/api/leads',{headers:{'cache-control':'no-cache'}}).then(d=>{const lead=(d.leads||[]).find((item:any)=>String(item.id)===linkedLeadId);if(linkedLead instanceof HTMLElement)linkedLead.textContent=lead?`For ${lead.name}${lead.city?` · ${lead.city}`:''}`:'Linked to selected inquiry';}).catch(()=>{if(linkedLead instanceof HTMLElement)linkedLead.textContent='Linked to selected inquiry';});}
     const dateLabel=(value:string|null)=>{if(!value)return 'No due date';const d=new Date(value);return Number.isNaN(d.getTime())?value:d.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});};
     const isOverdue=(t:Task)=>!!t.due_at&&new Date(t.due_at).getTime()<Date.now()&&t.status==='open';
     const isToday=(t:Task)=>{if(!t.due_at||t.status!=='open')return false;const key=(d:Date)=>d.toLocaleDateString('en-US',{timeZone:'America/Los_Angeles'});return key(new Date(t.due_at))===key(new Date());};
@@ -69,14 +70,13 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       if(prev instanceof HTMLButtonElement)prev.disabled=true;if(next instanceof HTMLButtonElement)next.disabled=true;
       if(updated)updated.textContent='Loading follow-ups…';
       try{
-        const r=await fetch(`/internal/api/tasks?status=open&page=${page}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});
-        const d=await r.json();if(!r.ok)throw new Error(d.error||'Could not load follow-ups.');if(pending!==request)return;
+        const d=await fetchJson(`/internal/api/tasks?status=open&page=${page}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});if(pending!==request)return;
         tasks=Array.isArray(d.tasks)?d.tasks:[];page=d.page||page;totalPages=Math.max(1,d.totalPages||0);total=d.total||0;summary=d.summary||{open:0,today:0,overdue:0};
         if(page>totalPages){page=totalPages;return load();}
         render();const label=document.querySelector('[data-page-label]');if(label)label.textContent=`Page ${page} of ${totalPages} · ${total} open tasks`;
         if(prev instanceof HTMLButtonElement)prev.disabled=page<=1;if(next instanceof HTMLButtonElement)next.disabled=page>=totalPages;
         if(updated)updated.textContent=`Updated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
-      }catch(error){if(pending!==request||request.signal.aborted)return;list.innerHTML=`<div class="empty"><strong>Could not load follow-ups.</strong><span>${esc(error instanceof Error?error.message:'Try again.')}</span><button class="btn btn-ghost" type="button" data-retry>Try again</button></div>`;list.querySelector('[data-retry]')?.addEventListener('click',load);if(updated)updated.textContent='Refresh failed';}
+      }catch(error){if(pending!==request||request.signal.aborted)return;list.replaceChildren(loadFailedNode(loadFailureMessage(error),load));if(updated)updated.textContent='Refresh failed';}
     }
     document.querySelector('[data-add-open]')?.addEventListener('click',()=>{if(feedback instanceof HTMLElement)feedback.hidden=true;if(addCard instanceof HTMLElement){addCard.hidden=false;addCard.scrollIntoView({block:'start'});form?.querySelector<HTMLInputElement>('input[name=title]')?.focus({preventScroll:true});}});
     document.querySelector('[data-cancel]')?.addEventListener('click',()=>{if(addCard instanceof HTMLElement)addCard.hidden=true;});

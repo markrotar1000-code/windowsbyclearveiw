@@ -10,6 +10,9 @@
 </section>
 
 <script>
+  import { fetchJson } from '../../lib/internal-fetch';
+  import { formatCents } from '../../lib/money';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
   function initFind() {
     const input = document.querySelector('[data-find-input]');
     const status = document.querySelector('[data-find-status]');
@@ -17,7 +20,6 @@
     if (!(input instanceof HTMLInputElement) || !(status instanceof HTMLElement) || !(results instanceof HTMLElement) || input.dataset.bound === 'true') return;
     input.dataset.bound = 'true';
 
-    const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     const day = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
     const el = (tag: string, className = '', text = '') => { const n = document.createElement(tag); if (className) n.className = className; if (text) n.textContent = text; return n; };
 
@@ -45,7 +47,7 @@
 
     function render(data: { query: string; leads: Lead[]; quotes: Quote[]; jobs: Job[] }) {
       const leads = group('Leads', data.leads.map((l) => row(`/internal/leads?q=${encodeURIComponent((l.phone.replace(/\D/g, '') || l.name).slice(0, 60))}`, l.name, [l.city, l.phone, day(l.createdAt)].filter(Boolean).join(' · '))));
-      const quotes = group('Quotes', data.quotes.map((q) => row(`/internal/quotes/view?id=${encodeURIComponent(q.id)}`, q.name, [q.id, q.status, q.workType === 'siding' ? 'siding' : '', typeof q.totalCents === 'number' ? money.format(q.totalCents / 100) : ''].filter(Boolean).join(' · '))));
+      const quotes = group('Quotes', data.quotes.map((q) => row(`/internal/quotes/view?id=${encodeURIComponent(q.id)}`, q.name, [q.id, q.status, q.workType === 'siding' ? 'siding' : '', typeof q.totalCents === 'number' ? formatCents(q.totalCents) : ''].filter(Boolean).join(' · '))));
       const jobs = group('Jobs', data.jobs.map((j) => row(`/internal/jobs/view?id=${encodeURIComponent(j.id)}`, j.name, [j.status, j.scheduledDate ? `on ${day(j.scheduledDate)}` : '', j.city].filter(Boolean).join(' · '))));
       const groups = [leads, quotes, jobs].filter((g): g is HTMLElement => Boolean(g));
       results.replaceChildren(...groups);
@@ -59,19 +61,18 @@
       const text = input.value.replace(/\s+/g, ' ').trim();
       controller?.abort();
       if (text.length < 2) { results.replaceChildren(); status.textContent = ''; return; }
-      controller = new AbortController();
+      const request = new AbortController();
+      controller = request;
       status.textContent = 'Searching…';
       try {
-        const response = await fetch(`/internal/api/search?q=${encodeURIComponent(text)}`, { headers: { accept: 'application/json' }, signal: controller.signal });
-        if (response.redirected || response.status === 401) { location.href = '/internal/login?next=' + encodeURIComponent(location.pathname); return; }
-        if (!response.ok) throw new Error('bad status');
-        const data = await response.json();
-        if (data.status === 'unavailable') throw new Error('unavailable');
+        const data = await fetchJson(`/internal/api/search?q=${encodeURIComponent(text)}`, { headers: { accept: 'application/json' }, signal: request.signal });
+        if (request.signal.aborted) return;
+        if (data.status === 'unavailable') throw new Error('Search is unavailable right now. Try again in a moment.');
         render(data);
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return;
-        results.replaceChildren();
-        status.textContent = 'Could not search. Check your signal and try again.';
+        if (request.signal.aborted) return;
+        status.textContent = '';
+        results.replaceChildren(loadFailedNode(loadFailureMessage(error), () => { void search(); }));
       }
     }
 
