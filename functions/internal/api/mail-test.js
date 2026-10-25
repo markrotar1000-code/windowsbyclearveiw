@@ -1,4 +1,5 @@
 import { json } from '../_lib/quotes.mjs';
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
 const DEFAULT_FROM = 'Clearview Windows <estimates@windowsbyclearveiw.com>';
 const DEFAULT_TO = 'owner@windowsbyclearveiw.com';
@@ -22,8 +23,14 @@ function redactEmail(value) {
   return `${raw.slice(0, 1)}***${raw.slice(at)}`;
 }
 
+// The test send takes no body. It still sends email, so an origin check applies and any body larger than a few KB is refused.
+const MAX_BODY_BYTES = 8 * 1024;
+
 export async function onRequestPost(context) {
   const { env } = context;
+  const guard = await guardWrite(context, { json: false });
+  if (!guard.ok) return guard.response;
+  if (Number(context.request.headers.get('content-length') || 0) > MAX_BODY_BYTES) return json({ error: 'That request is too large.' }, 413);
   const key = env?.RESEND_API_KEY;
   if (!key) return json({ error: 'RESEND_API_KEY is not configured in this environment.' }, 503);
 
@@ -112,4 +119,10 @@ export async function onRequestGet(context) {
       region: domain.region || null,
     })) : [],
   });
+}
+
+// Dispatches by method and answers anything else with a JSON 405.
+export async function onRequest(context) {
+  const handler = ({ GET: onRequestGet, POST: onRequestPost })[context.request.method];
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST']);
 }
