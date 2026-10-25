@@ -51,6 +51,7 @@ const catalog = {
         <button type="button" class="btn btn-ghost" data-draft-go>Draft lines</button>
         <button type="button" class="btn btn-ghost" data-draft-undo hidden>Undo draft</button>
         <button type="button" class="btn btn-ghost" data-retry-clips hidden>Retry recording</button>
+        <button type="button" class="btn btn-ghost" data-discard-clips hidden>Delete saved recordings</button>
       </div>
       <div class="qb-mic" data-mic-row hidden>
         <label>Microphone
@@ -59,9 +60,23 @@ const catalog = {
         <button type="button" class="btn btn-ghost" data-mic-allow>Allow microphone</button>
       </div>
       <p class="qb-note-status qb-note-problem" data-mic-help role="status" hidden></p>
+      <div class="qb-level" data-level hidden aria-hidden="true"><span data-level-bar></span></div>
+      <label class="choice qb-auto" data-speak-row hidden><input type="checkbox" data-speak-sizes /> Read the sizes back to me out loud (after I stop recording)</label>
       <label class="choice qb-auto"><input type="checkbox" data-auto-draft checked /> Draft the lines when I stop recording</label>
       <p class="qb-note-status" data-notes-status role="status" aria-live="polite" hidden></p>
-      <p class="est-hint" data-rec-hint>Record your own notes, one room at a time. Washington needs everyone's OK to record a conversation, so ask the customer first or keep their voice out of it. Audio is not saved, only the typed words. Keep the screen on while recording. No microphone? The keyboard microphone on your phone fills this box too.</p>
+      <p class="est-hint" data-rec-hint>Record your own notes, one room at a time. Washington needs everyone's OK to record a conversation, so ask the customer first or keep their voice out of it. Audio is never kept on our servers. If a recording cannot be sent (no signal), it waits on this phone until it can, then it is deleted. Keep the screen on while recording. No microphone? The keyboard microphone on your phone fills this box too.</p>
+    </fieldset>
+
+    <fieldset class="qb-block" data-measure-panel hidden>
+      <legend>From Measurements</legend>
+      <p class="est-hint" data-measure-summary></p>
+      <ul class="qb-measure-list" data-measure-list></ul>
+      <p class="qb-note-status qb-note-problem" data-measure-checks hidden></p>
+      <div class="qb-notes-actions">
+        <button type="button" class="btn btn-primary" data-measure-add>Add these to the quote</button>
+        <button type="button" class="btn btn-ghost" data-measure-undo hidden>Undo</button>
+      </div>
+      <p class="qb-note-status" data-measure-status role="status" hidden></p>
     </fieldset>
 
     <fieldset class="qb-block">
@@ -198,7 +213,10 @@ const catalog = {
   import { bindSupplierList } from '../../../scripts/supplier-list';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
   import { suggestedUnitPrice } from '../../../lib/quote-pricing';
-  import { extractSizes, formatSize } from '../../../../functions/_lib/dimensions.mjs';
+  import { extractSizes, formatSize, spokenSize } from '../../../../functions/_lib/dimensions.mjs';
+  import { createSilenceWatch, meterFill, rmsOfBytes } from '../../../lib/audio-level';
+  import { deleteClip, discardAllClips, saveClip, waitingClips } from '../../../lib/clip-store';
+  import { MEASUREMENT_KEY, MEASUREMENT_NOTES_HEADER, measurementNotes, readWorksheet, worksheetToLines } from '../../../lib/measurement-lines';
   import { NOTES_HEADER, draftLineToItem, mergeNotes, needsPrice, nextDraftText, notesBlock, type DraftCatalog, type DraftLine } from '../../../lib/quote-notes-lines';
 
   type CatalogOpening = { id: string; label: string; low: number; high: number; isDoor: boolean; quotePrice: number | null };
@@ -500,21 +518,29 @@ const catalog = {
     const draftUndo = form.querySelector('[data-draft-undo]');
     const retryClips = form.querySelector('[data-retry-clips]');
     const autoDraftBox = form.querySelector('[data-auto-draft]');
+    const discardClips = form.querySelector('[data-discard-clips]');
+    const levelEl = form.querySelector('[data-level]');
+    const levelBar = form.querySelector('[data-level-bar]');
+    const speakRow = form.querySelector('[data-speak-row]');
+    const speakBox = form.querySelector('[data-speak-sizes]');
     const notesStatus = form.querySelector('[data-notes-status]');
     const sizesHeard = form.querySelector('[data-sizes-heard]');
-    if (roughNotes instanceof HTMLTextAreaElement && recToggle instanceof HTMLButtonElement && recLabel instanceof HTMLElement && draftGo instanceof HTMLButtonElement && draftUndo instanceof HTMLButtonElement && retryClips instanceof HTMLButtonElement && autoDraftBox instanceof HTMLInputElement && notesStatus instanceof HTMLElement) {
+    if (roughNotes instanceof HTMLTextAreaElement && recToggle instanceof HTMLButtonElement && recLabel instanceof HTMLElement && draftGo instanceof HTMLButtonElement && draftUndo instanceof HTMLButtonElement && retryClips instanceof HTMLButtonElement && autoDraftBox instanceof HTMLInputElement && discardClips instanceof HTMLButtonElement && speakRow instanceof HTMLElement && speakBox instanceof HTMLInputElement && notesStatus instanceof HTMLElement) {
       const buzz = (ms: number) => { try { navigator.vibrate?.(ms); } catch { /* not every phone vibrates */ } };
       const say = (message: string, problem = false) => {
         notesStatus.hidden = message === '';
         notesStatus.textContent = message;
         notesStatus.classList.toggle('qb-note-problem', problem);
       };
+      // Errors say whether trying again can help: no signal, a busy server and an expired sign-in can; a clip that is too long cannot.
+      class AskError extends Error { retryable: boolean; constructor(message: string, retryable: boolean) { super(message); this.retryable = retryable; } }
       const askJson = async (url: string, init: RequestInit) => {
-        const response = await fetch(url, { credentials: 'same-origin', ...init });
+        let response: Response;
+        try { response = await fetch(url, { credentials: 'same-origin', ...init }); } catch { throw new AskError('No signal right now.', true); }
         // An expired sign-in redirects to the login page, which is HTML, not JSON.
-        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again; your notes are still here.');
+        if (!(response.headers.get('content-type') || '').includes('json')) throw new AskError('Your sign-in expired. Sign in again; your notes are still here.', true);
         const data = await response.json();
-        if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : 'That did not work. Your notes are still here.');
+        if (!response.ok) throw new AskError(typeof data?.error === 'string' ? data.error : 'That did not work. Your notes are still here.', response.status >= 500 || response.status === 429 || response.status === 401);
         return data;
       };
 
@@ -527,7 +553,7 @@ const catalog = {
       let pendingClips = 0;
       let draftAfterStop = false;
       let chain: Promise<void> = Promise.resolve();
-      let failedClips: Blob[] = [];
+      let failedClips: { blob: Blob; id: number | null }[] = [];
 
       // Keep unsent notes across a reload (the lines themselves are rebuilt from them).
       // Every size in the box, read by code in the standard form (width x height, inches, fractions with a slash), so
@@ -551,6 +577,11 @@ const catalog = {
       roughNotes.addEventListener('input', saveNotes);
       autoDraftBox.checked = store.get(AUTO_KEY) !== '0';
       autoDraftBox.addEventListener('change', () => store.set(AUTO_KEY, autoDraftBox.checked ? '1' : '0'));
+      if ('speechSynthesis' in window) {
+        speakRow.hidden = false;
+        speakBox.checked = store.get('cv-quote-speak') === '1';
+        speakBox.addEventListener('change', () => store.set('cv-quote-speak', speakBox.checked ? '1' : '0'));
+      }
       if (!editId) {
         try {
           const saved = JSON.parse(store.get(NOTES_KEY) || 'null');
@@ -565,6 +596,7 @@ const catalog = {
       const setBusy = () => { draftGo.disabled = drafting; };
       const showRetry = () => {
         retryClips.hidden = failedClips.length === 0;
+        discardClips.hidden = failedClips.length === 0;
         retryClips.textContent = failedClips.length > 1 ? `Retry ${failedClips.length} recordings` : 'Retry recording';
       };
 
@@ -733,18 +765,50 @@ const catalog = {
         const clock = () => { const n = Math.floor((Date.now() - startedAt) / 1000); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
 
         // Clips are transcribed in parallel but added to the notes strictly in the order they were recorded.
-        const sendClip = (blob: Blob) => {
+        const speakSizes = (sizes: string[]) => {
+          if (!speakBox.checked || recording || !('speechSynthesis' in window)) return;
+          const phrases = sizes.map((size) => extractSizes(size)[0]).filter(Boolean).map((size) => spokenSize(size));
+          if (!phrases.length) return;
+          try {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(phrases.join('. Then '));
+            utterance.rate = 0.95; utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+          } catch { /* no voice on this phone: the sizes are still on screen */ }
+        };
+
+        // Clips are transcribed in parallel but added to the notes strictly in the order they were recorded. A clip is
+        // saved on this phone before it is sent and deleted once it is written out, so a dropped signal, a reload or a
+        // locked phone cannot lose what Mark said at a window.
+        const sendClip = (blob: Blob, existingId: number | null = null) => {
           // A clip with almost no audio (stopped at once, or the microphone gave nothing) is not sent, but it still
           // finishes the stop sequence below, so the screen never stays on "Writing out what you said...".
           const silent = blob.size < 2000;
           pendingClips += 1;
-          const result = silent
-            ? Promise.resolve({ data: { empty: true, text: '' }, error: null as Error | null })
-            : askJson('/internal/api/quote-dictation', { method: 'POST', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob }).then((data) => ({ data, error: null as Error | null }), (error) => ({ data: null, error: error instanceof Error ? error : new Error('Could not write out that clip.') }));
+          const stored: Promise<number | null> = silent ? Promise.resolve(null) : existingId !== null ? Promise.resolve(existingId) : saveClip(blob);
+          const failed = (error: unknown) => ({ data: null, error: error instanceof Error ? error : new AskError('Could not write out that clip.', true) });
+          const result: Promise<{ data: any; error: Error | null }> = silent
+            ? Promise.resolve({ data: { empty: true, text: '' }, error: null })
+            : navigator.onLine === false
+              ? Promise.resolve(failed(new AskError('No signal right now.', true)))
+              : askJson('/internal/api/quote-dictation', { method: 'POST', headers: { 'content-type': blob.type || 'audio/webm' }, body: blob }).then((data) => ({ data, error: null as Error | null }), failed);
           chain = chain.then(async () => {
             const { data, error } = await result;
+            const id = await stored;
             pendingClips -= 1;
-            if (error || !data) { failedClips.push(blob); showRetry(); say(`${error?.message || 'Could not write out that clip.'} The recording is kept: tap Retry, or type it.`, true); }
+            const bad = Boolean(error) || !data;
+            if (!bad && id !== null) void deleteClip(id);
+            if (bad) {
+              if ((error as AskError | null)?.retryable === false) {
+                // Sending it again cannot help (for example it was too long): do not keep it.
+                if (id !== null) void deleteClip(id);
+                say(`${error?.message || 'That recording could not be used.'} Record that part again, or type it.`, true);
+              } else {
+                failedClips.push({ blob, id });
+                showRetry();
+                say(`${error?.message || 'Could not write out that clip.'} Your recording is kept on this phone and will send when you are back online. You can also tap Retry, or type it.`, true);
+              }
+            }
             else if (data.empty || !data.text) { draftAfterStop = false; say('I did not hear any words. Hold the phone closer and try again.', true); }
             else {
               roughNotes.value = `${roughNotes.value.trimEnd()}${roughNotes.value.trim() ? '\n' : ''}${data.text}`.slice(0, 4000);
@@ -754,6 +818,7 @@ const catalog = {
               const sizes: string[] = Array.isArray(data.sizes) ? data.sizes : [];
               const heardSizes = sizes.length ? ` Sizes heard (width x height): ${sizes.join('  |  ')}.${Number(data.roundedSizes) > 0 ? ' One was rounded to the nearest 1/16, so say it again if it is not right.' : ''}` : '';
               say(`${recording ? 'Recording...' : 'Added to the notes.'}${heardSizes}`, Number(data.roundedSizes) > 0);
+              speakSizes(sizes);
             }
             if (!recording && pendingClips === 0) {
               if (draftAfterStop && failedClips.length === 0) { draftAfterStop = false; await runDraft(true); }
@@ -761,11 +826,64 @@ const catalog = {
             }
           });
         };
-        retryClips.addEventListener('click', () => {
+        const retryAll = () => {
+          if (!failedClips.length) return;
           const again = failedClips; failedClips = []; showRetry();
-          if (again.length) say('Writing out what you said...');
-          again.forEach(sendClip);
+          say('Writing out what you said...');
+          again.forEach(({ blob, id }) => sendClip(blob, id));
+        };
+        retryClips.addEventListener('click', retryAll);
+        // Signal is back (out of the basement): send what was waiting, unless Mark is mid-recording.
+        window.addEventListener('online', () => { if (!recording && failedClips.length) { say('Back online. Sending your saved recordings.'); retryAll(); } });
+        discardClips.addEventListener('click', async () => {
+          if (!window.confirm('Delete the saved recordings from this phone? What they said will be lost.')) return;
+          await discardAllClips();
+          failedClips = []; showRetry();
+          say('Saved recordings deleted.');
         });
+        // Recordings left from earlier (the page was reloaded or closed before they could be sent) are offered, never sent on their own:
+        // they may belong to a different quote.
+        void waitingClips().then((rows) => {
+          if (!rows.length || recording || failedClips.length) return;
+          failedClips = rows.map((row) => ({ blob: row.blob, id: row.id }));
+          showRetry();
+          const minutes = Math.max(1, Math.round((Date.now() - rows[0].at) / 60000));
+          say(`${rows.length} recording${rows.length === 1 ? ' was' : 's were'} saved on this phone from ${minutes < 60 ? `${minutes} minute${minutes === 1 ? '' : 's'}` : `${Math.round(minutes / 60)} hour${Math.round(minutes / 60) === 1 ? '' : 's'}`} ago and ${rows.length === 1 ? 'has' : 'have'} not been written out. Tap Retry to add ${rows.length === 1 ? 'it' : 'them'} to these notes, or delete ${rows.length === 1 ? 'it' : 'them'} if ${rows.length === 1 ? 'it belongs' : 'they belong'} to another quote.`, true);
+        });
+
+        // A live level meter, so Mark can see the microphone is hearing him, and a warning if it is not (covered, wrong input).
+        let audioCtx: AudioContext | null = null;
+        let meterFrame = 0;
+        const startMeter = (source: MediaStream) => {
+          try {
+            const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            if (!Ctx || !(levelEl instanceof HTMLElement) || !(levelBar instanceof HTMLElement)) return;
+            audioCtx = new Ctx();
+            void audioCtx.resume().catch(() => {});
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 1024;
+            audioCtx.createMediaStreamSource(source).connect(analyser);
+            const samples = new Uint8Array(analyser.fftSize);
+            const watch = createSilenceWatch();
+            levelEl.hidden = false;
+            const loop = () => {
+              analyser.getByteTimeDomainData(samples);
+              const level = rmsOfBytes(samples);
+              levelBar.style.transform = `scaleX(${meterFill(level)})`;
+              const change = watch.feed(level, Date.now());
+              if (change === 'silent') say("I am not hearing anything. Is something covering the microphone, or is it the wrong one?", true);
+              else if (change === 'recovered') say('Recording. Keep the screen on and tap Stop when you finish the room.');
+              meterFrame = requestAnimationFrame(loop);
+            };
+            meterFrame = requestAnimationFrame(loop);
+          } catch { audioCtx = null; /* no meter on this browser; recording still works */ }
+        };
+        const stopMeter = () => {
+          cancelAnimationFrame(meterFrame);
+          if (levelEl instanceof HTMLElement) levelEl.hidden = true;
+          void audioCtx?.close().catch(() => {});
+          audioCtx = null;
+        };
 
         const startSegment = () => {
           if (!stream || !recording) return;
@@ -788,6 +906,7 @@ const catalog = {
           stream = null;
           void wakeLock?.release().catch(() => {});
           wakeLock = null;
+          stopMeter();
           if (micSelect instanceof HTMLSelectElement) micSelect.disabled = false;
           recToggle.classList.remove('qb-rec-live');
           recLabel.textContent = 'Record';
@@ -821,12 +940,72 @@ const catalog = {
           tick = window.setInterval(() => { recLabel.textContent = `Stop  ${clock()}`; }, 500);
           buzz(20);
           say('Recording. Keep the screen on and tap Stop when you finish the room.');
+          if (stream) startMeter(stream);
           try { wakeLock = (await navigator.wakeLock?.request('screen')) ?? null; } catch { /* the screen may sleep; the hint says to keep it on */ }
           startSegment();
         });
         // Leaving the page or locking the phone ends the recording: send what was captured instead of losing it.
         window.addEventListener('pagehide', () => { if (recording) stopRecording(); });
         document.addEventListener('visibilitychange', () => { if (document.hidden && recording) { draftAfterStop = false; stopRecording(); say('Recording stopped because the screen turned off. What you said so far is being written out; tap Record to continue.', true); } });
+      }
+    }
+
+    // ── From Measurements: the worksheet Mark filled in with a tape -> editable quote lines ─────────────────
+    // Shows exactly what will be added (so he can read it back against the worksheet), adds the lines with the same
+    // price-book starting prices as every other draft (types the price book does not have come in at $0, flagged), keeps
+    // sizes in the standard form, and can be undone exactly. Existing lines are never touched.
+    const measurePanel = form.querySelector('[data-measure-panel]');
+    const measureSummary = form.querySelector('[data-measure-summary]');
+    const measureList = form.querySelector('[data-measure-list]');
+    const measureChecks = form.querySelector('[data-measure-checks]');
+    const measureAdd = form.querySelector('[data-measure-add]');
+    const measureUndo = form.querySelector('[data-measure-undo]');
+    const measureStatus = form.querySelector('[data-measure-status]');
+    if (measurePanel instanceof HTMLElement && measureSummary instanceof HTMLElement && measureList instanceof HTMLElement && measureChecks instanceof HTMLElement && measureAdd instanceof HTMLButtonElement && measureUndo instanceof HTMLButtonElement && measureStatus instanceof HTMLElement) {
+      const sheet = readWorksheet(store.get(MEASUREMENT_KEY));
+      if (sheet) {
+        const plan = worksheetToLines(sheet);
+        const units = sheet.openings.reduce((n, o) => n + o.quantity, 0);
+        measurePanel.hidden = false;
+        measureSummary.textContent = `${sheet.openings.length} opening${sheet.openings.length === 1 ? '' : 's'} (${units} unit${units === 1 ? '' : 's'}) in your Measurements worksheet${sheet.jobName ? ` for ${sheet.jobName}` : ''}. Check them, then add them to this quote.`;
+        for (const o of sheet.openings) {
+          const li = document.createElement('li');
+          const size = plan.lines[sheet.openings.indexOf(o)];
+          li.textContent = `${o.room || 'Opening'} · ${o.type} · ${size && 'size' in size && size.size ? size.size : o.type === 'Other' || size?.type === 'custom' ? 'see line' : 'no size'}${o.quantity > 1 ? ` · x${o.quantity}` : ''}`;
+          measureList.append(li);
+        }
+        if (plan.checks.length) { measureChecks.hidden = false; measureChecks.textContent = plan.checks.join(' '); }
+        let importedItems: LineItem[] = [];
+        const measureSay = (message: string) => { measureStatus.hidden = message === ''; measureStatus.textContent = message; };
+        measureAdd.addEventListener('click', () => {
+          if (importedItems.length) return;
+          const added: LineItem[] = [];
+          for (const line of plan.lines) {
+            const item = draftLineToItem(line, catalog as DraftCatalog, workType);
+            if (item) { items.push(item); added.push(item); }
+          }
+          importedItems = added;
+          for (const [field, value] of [['address', sheet.jobAddress]] as const) {
+            const el = form.elements.namedItem(field);
+            if (value && el instanceof HTMLInputElement && el.value.trim() === '') el.value = value;
+          }
+          const block = measurementNotes(sheet);
+          const notesField = form.elements.namedItem('notes');
+          if (block && notesField instanceof HTMLTextAreaElement) notesField.value = mergeNotes(notesField.value, block);
+          render();
+          measureAdd.disabled = true;
+          measureUndo.hidden = false;
+          const zero = added.filter(needsPrice).length;
+          measureSay(`Added ${added.length} line${added.length === 1 ? '' : 's'} from Measurements.${zero ? ` ${zero} still need${zero === 1 ? 's' : ''} a price (shown at $0).` : ''} Check every price and quantity before you save.`);
+        });
+        measureUndo.addEventListener('click', () => {
+          for (const item of importedItems) { const at = items.indexOf(item); if (at >= 0) items.splice(at, 1); }
+          importedItems = [];
+          measureAdd.disabled = false;
+          measureUndo.hidden = true;
+          render();
+          measureSay('Removed. Your worksheet is untouched.');
+        });
       }
     }
 
@@ -1134,7 +1313,12 @@ const catalog = {
   .qb-mic select { width: 100%; }
   .qb-sizes { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); border: 1px solid var(--line-strong); font-variant-numeric: tabular-nums; }
   .qb-sizes strong { white-space: nowrap; }
-  .qb-auto { display: flex; align-items: center; gap: .5rem; margin-top: var(--space-s); }
+  .qb-measure-list { margin: 0 0 var(--space-s); padding-left: 1.2rem; font-variant-numeric: tabular-nums; }
+  .qb-level { height: .5rem; margin-top: var(--space-s); border-radius: 999px; background: var(--line); overflow: hidden; }
+  .qb-level span { display: block; height: 100%; width: 100%; background: var(--accent, #1f6f43); transform-origin: left; transform: scaleX(0); transition: transform .08s linear; }
+  @media (prefers-reduced-motion: reduce) { .qb-level span { transition: none; } }
+  /* The shared .choice rule never wraps; these labels are sentences. */
+  .qb-auto { display: flex; align-items: flex-start !important; gap: .5rem; margin-top: var(--space-s); white-space: normal !important; }
   [data-rough-notes] { width: 100%; }
   .qb-note-status { margin: var(--space-s) 0 0; padding: .5rem .7rem; border-radius: var(--radius-md); background: var(--paper-raised); border: 1px solid var(--line-strong); }
   .qb-note-status.qb-note-problem { border-color: var(--danger, #9b2c2c); }

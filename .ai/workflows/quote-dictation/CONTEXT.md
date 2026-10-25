@@ -51,6 +51,24 @@ model: no customer record, no prices, no history.
    anything the price book does not cover starts at $0, highlighted. Sizes and remarks go to the internal notes, not
    the printed line. Empty customer fields are filled; filled ones are not touched. *Undo draft* removes the lines.
 
+## Also on the new-quote page
+
+- **From Measurements** (`src/lib/measurement-lines.ts`): the Tools > Measurements worksheet becomes draft lines in one tap,
+  after a preview Mark can read back. Every worksheet type has a defined result: price-book types (single/double-hung,
+  slider, casement, picture, awning, bay/bow, patio door) come in as window lines with the usual starting price; an entry
+  door or "Other" comes in as an unpriced custom line flagged at $0. Sizes are written `35 1/2 x 47 3/4`; a half-measured
+  size is called out, never filled in. Existing lines are untouched, a second tap cannot duplicate (Undo removes exactly
+  what was added), and job/opening notes go to the internal notes once. This replaced an older decimal-label import that
+  lived in `InternalLayout.astro`.
+- **Recordings survive a bad signal** (`src/lib/clip-store.ts`): a clip is saved on the phone (IndexedDB) before it is sent
+  and deleted once written out; with no signal it waits and sends itself on the `online` event; after a reload it is
+  offered with Retry / Delete, never sent on its own (it may belong to another quote); kept at most 12 hours, 12 clips.
+  A clip the server refuses outright (too long) is not kept. Audio is still never stored on our servers.
+- **Level meter and silence warning** (`src/lib/audio-level.ts`): a live bar while recording, and after six seconds of near
+  silence the page says it is not hearing anything (covered or wrong microphone).
+- **Sizes read back aloud** (optional, off by default): after the microphone is off, as "35 and a half by 47 and three
+  quarters" (`spokenSize`).
+
 ## Output
 
 Editable lines in the quote builder plus a notes block, then the normal flow: Mark edits prices, saves, Build Plan.
