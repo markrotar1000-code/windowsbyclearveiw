@@ -62,6 +62,7 @@ jobs:
       - run: npm run test:quote-amounts
       - run: npm run test:guard-quotes
       - run: npm run test:quote-price-edit
+      - run: npm run test:quote-view-hardening
       - run: npm run test:review-request
       - run: npm run test:pages-quotes
       - run: npm run test:visitor-errors

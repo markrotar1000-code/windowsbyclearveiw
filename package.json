@@ -97,6 +97,7 @@
     "test:quote-amounts": "node --disable-warning=ExperimentalWarning scripts/test-quote-amounts.mjs",
     "test:guard-quotes": "node --disable-warning=ExperimentalWarning scripts/test-guard-quotes.mjs",
     "test:quote-price-edit": "node --disable-warning=ExperimentalWarning scripts/test-quote-price-edit.mjs",
+    "test:quote-view-hardening": "node --disable-warning=ExperimentalWarning scripts/test-quote-view-hardening.mjs",
     "test:quote-signing": "node --disable-warning=ExperimentalWarning scripts/test-quote-signing.mjs",
     "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs",
     "find:google-place-id": "node scripts/find-google-place-id.mjs",
