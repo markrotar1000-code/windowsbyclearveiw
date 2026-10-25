@@ -1,3 +1,7 @@
+## 2026-10-25 - Setup check
+
+`setup-check.mjs`, `/internal/api/setup-check`, Tools card, `scripts/test-setup-check.mjs`, audit flow 22.
+
 ## 2026-10-25 - Payment history and search placeholder
 
 `job_payment_log` + history on the Payments page; `FindBar` placeholder; `scripts/test-payment-history.mjs`; audit flow 21.

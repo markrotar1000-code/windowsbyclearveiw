@@ -456,5 +456,44 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await ctx.close(); ok('Payments shows each change (received or corrected) and a saved correction adds to it');
 }
 
+// 22. Setup check: what needs attention comes first, the phone's own microphone checks are included, and it recovers from a failed load.
+{
+  const run = async (policy) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+    let calls = 0;
+    await page.route('**/internal/api/setup-check', (r) => {
+      calls += 1;
+      if (calls === 1) return r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Could not check."}' });
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ allRequiredOk: true, items: [
+        { id: 'database', required: true, ok: true, label: 'Database', unlocks: 'Everything.', fix: 'Bindings.' },
+        { id: 'voice', required: false, ok: false, label: 'Voice recording', unlocks: 'The Record button on a new quote.', fix: 'Cloudflare Pages > Settings > Bindings: Workers AI binding named AI.' },
+        { id: 'drafting', required: false, ok: true, label: 'AI drafting', unlocks: 'Draft lines from notes.', fix: 'Keys.', note: 'One provider is set. Setting both lets one back up the other.' } ] }) });
+    });
+    await page.route('**/internal/tools', (r) => (r.request().method() === 'HEAD' ? r.fulfill({ status: 200, headers: policy ? { 'permissions-policy': policy } : {}, body: '' }) : r.fallback()));
+    await page.route('**/internal/api/**', (r) => (/setup-check|feature-usage/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+    await page.goto(`${base}/internal/tools`);
+    await page.waitForFunction(() => /Tap Check again to try again/.test(document.querySelector('[data-setup-line]').textContent));
+    await page.click('[data-setup-reload]');
+    await page.waitForFunction(() => !document.querySelector('[data-setup-list]').hidden);
+    const rows = await page.$$eval('.setup-list li', (l) => l.map((x) => ({ bad: x.classList.contains('setup-bad'), text: x.textContent.replace(/\s+/g, ' ').trim() })));
+    const line = await page.textContent('[data-setup-line]');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    await ctx.close();
+    return { rows, line, overflow, errors };
+  };
+  const blocked = await run('camera=(), microphone=(), geolocation=()');
+  assert.match(blocked.line, /^2 things to look at\./);
+  assert.ok(blocked.rows[0].bad && blocked.rows[1].bad && !blocked.rows[2].bad, 'what needs attention is listed first');
+  assert.ok(blocked.rows.some((r) => /Microphone allowed on these pages.*Blocked|Blocked.*Microphone allowed on these pages/.test(r.text) && /Permissions-Policy/.test(r.text)), 'a site-level microphone block is reported, with its real cause');
+  assert.ok(blocked.rows.some((r) => /Voice recording/.test(r.text) && /To fix: Cloudflare Pages > Settings > Bindings: Workers AI binding named AI\./.test(r.text) && /Not set up/.test(r.text)));
+  assert.ok(blocked.rows.some((r) => /One provider is set\./.test(r.text)), 'notes are shown');
+  assert.equal(blocked.overflow, 0, 'no sideways scroll'); assert.deepEqual(blocked.errors, []);
+  const allowed = await run('camera=(), microphone=(self), geolocation=()');
+  assert.ok(allowed.rows.some((r) => /Microphone allowed on these pages/.test(r.text) && !r.bad), 'microphone=(self) counts as allowed');
+  assert.ok(!allowed.rows.some((r) => /Microphone allowed on these pages/.test(r.text) && r.bad));
+  ok('Setup check lists what needs attention first, reads the real microphone policy, and recovers from a failed load');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');
