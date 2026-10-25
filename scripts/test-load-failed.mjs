@@ -28,7 +28,7 @@ pass('a dropped connection reads as one plain sentence; a server message is kept
 const today = read('src/pages/internal/today.astro');
 assert.match(today, /loadFailedNode\(message, ?load\)/, 'Today replaces both "Loading…" panels with a message and a retry');
 const quoteView = read('src/pages/internal/quotes/view.astro');
-assert.match(quoteView, /try \{\s*response = await fetch\(`\/internal\/api\/quotes\//, 'the quote screen survives a dropped connection');
+assert.match(quoteView, /try \{\s*data = await fetchJson\(`\/internal\/api\/quotes\//, 'the quote screen survives a dropped connection');
 const approval = read('src/pages/internal/quotes/build-plan-approval.astro');
 assert.match(approval, /Quality checks did not load/, 'the approval screen clears its "Loading quality checks…" line');
 const google = read('src/pages/internal/google-tools.astro');

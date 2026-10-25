@@ -44,7 +44,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   </section>
 
   <p data-loading>Loading…</p>
-  <p class="qv-error" data-error hidden role="alert"></p>
+  <div class="qv-error" data-error hidden role="alert"></div>
 
   <article class="contract" data-contract hidden>
     <header class="contract-head">
@@ -169,6 +169,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 <script>
   import { formatCents } from '../../../lib/money';
   import { workTypeLabel } from '../../../lib/work-type';
+  import { esc, fetchJson, InternalFetchError, isSessionExpired } from '../../../lib/internal-fetch';
+  import { loadFailedNode } from '../../../lib/load-failed';
   function initQuoteView() {
     const root = document.querySelector('[data-contract]');
     if (!(root instanceof HTMLElement) || root.dataset.bound === 'true') return;
@@ -467,20 +469,33 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     }
 
     async function load() {
-      let response: Response;
+      let data: any;
       try {
-        response = await fetch(`/internal/api/quotes/${encodeURIComponent(id!)}`);
+        data = await fetchJson(`/internal/api/quotes/${encodeURIComponent(id!)}`);
+      } catch (error) {
+        // Say what went wrong (signed out, no signal, server problem) with Try again in place, instead of leaving "Loading…" up forever.
+        if (error instanceof InternalFetchError && error.status === 404) {
+          fail('No quote with that id.');
+          return;
+        }
+        const message = error instanceof Error && error.message ? error.message : 'Could not load this quote.';
+        if (loading instanceof HTMLElement) loading.hidden = true;
+        if (errorEl instanceof HTMLElement) {
+          errorEl.hidden = false;
+          // An expired sign-in cannot be fixed by asking again: no button for it.
+          errorEl.replaceChildren(loadFailedNode(message, isSessionExpired(error) ? undefined : () => {
+            errorEl.hidden = true;
+            if (loading instanceof HTMLElement) loading.hidden = false;
+            load();
+          }));
+        }
+        return;
+      }
+      try {
+        render(data.quote, data.items);
       } catch {
-        // No signal: say so, instead of leaving "Loading…" up forever.
-        fail('Could not reach the server. Check your signal, then reload this page.');
-        return;
+        fail('Could not load this quote.');
       }
-      if (!response.ok) {
-        fail(response.status === 404 ? 'No quote with that id.' : 'Could not load this quote.');
-        return;
-      }
-      const { quote, items } = await response.json();
-      render(quote, items);
     }
 
     function render(quote: any, items: any[]) {
@@ -538,7 +553,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         itemsBody.innerHTML = '';
         for (const item of items) {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${escapeHtml(item.label)}</td><td>${item.quantity}</td><td>${money(item.unit_price_cents)}</td><td>${money(item.line_total_cents)}</td>`;
+          row.innerHTML = `<td>${esc(item.label)}</td><td>${esc(item.quantity)}</td><td>${money(item.unit_price_cents)}</td><td>${money(item.line_total_cents)}</td>`;
           itemsBody.append(row);
         }
       }
@@ -588,10 +603,13 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       });
     }
 
-    function escapeHtml(s: string) {
-      const div = document.createElement('div');
-      div.textContent = s ?? '';
-      return div.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    // The stored signature is drawn as an image with a data URL, so the markup is only ever an image and can never run as page DOM.
+    function signatureImage(svg: string) {
+      const img = document.createElement('img');
+      const markup = /<svg\b[^>]*\sxmlns\s*=\s*["']http:\/\/www\.w3\.org\/2000\/svg/.test(svg) ? svg : svg.replace(/<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
+      img.alt = 'Customer signature';
+      return img;
     }
 
     function renderSignatureState(quote: any) {
@@ -609,7 +627,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         if (signedBlock instanceof HTMLElement) {
           signedBlock.hidden = false;
           const host = signedBlock.querySelector('[data-sig-svg-host]');
-          if (host) host.innerHTML = quote.signature_svg;
+          if (host) host.replaceChildren(signatureImage(String(quote.signature_svg)));
           const nameEl = signedBlock.querySelector('[data-sig-signed-name]');
           const atEl = signedBlock.querySelector('[data-sig-signed-at]');
           if (nameEl) nameEl.textContent = quote.signature_name || '';
@@ -620,7 +638,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         if (signedBlock instanceof HTMLElement) {
           signedBlock.hidden = false;
           const host = signedBlock.querySelector('[data-sig-svg-host]');
-          if (host) host.innerHTML = '';
+          if (host) host.replaceChildren();
           const nameEl = signedBlock.querySelector('[data-sig-signed-name]');
           const atEl = signedBlock.querySelector('[data-sig-signed-at]');
           if (nameEl) nameEl.textContent = quote.signature_name ? `Signed by hand — ${quote.signature_name}` : 'Signed by hand';
@@ -1200,7 +1218,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     border-bottom: 1px solid var(--ink);
   }
 
-  .sig-signed-image :global(svg) {
+  .sig-signed-image :global(svg),
+  .sig-signed-image :global(img) {
     width: 100%;
     height: auto;
     display: block;
