@@ -121,6 +121,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 </InternalLayout>
 <script>
   import { barChart, columnChart } from '../../lib/charts';
+  import { fetchJson, isSessionExpired } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
+  import { formatCents } from '../../lib/money';
   type Row = { label: string; value: number };
   type PermitBuilder = {
     name: string; applicants: string[]; permits: number; lots: number; subdivisions: string[]; jurisdictions: string[];
@@ -162,8 +165,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     subdivision: string; connections: SupplierConnection[];
   };
   const nf = new Intl.NumberFormat('en-US');
-  const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-  const dollars = (cents: number | null | undefined) => (typeof cents === 'number' ? money.format(cents / 100) : '—');
+  const dollars = (cents: number | null | undefined) => (typeof cents === 'number' ? formatCents(cents) : '—');
   const count = (value: number | null | undefined) => (typeof value === 'number' ? nf.format(value) : '—');
   const $ = (selector: string) => document.querySelector(selector);
 
@@ -260,13 +262,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   async function loadContacts() {
     try {
-      const response = await fetch('/internal/api/supplier-permits?view=contacts', { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      const result = (await response.json()) as { blocked?: { phone: string }[] };
+      const result = await fetchJson<{ blocked?: { phone: string }[] }>('/internal/api/supplier-permits?view=contacts', { headers: { accept: 'application/json' } });
       blockedPhones.clear();
       for (const b of result.blocked ?? []) blockedPhones.add(b.phone);
     } catch {
@@ -315,11 +311,10 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   async function post(payload: Record<string, unknown>): Promise<{ ok: boolean; error?: string }> {
     try {
-      const response = await fetch('/internal/api/supplier-permits', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(payload) });
-      const result = (await response.json().catch(() => ({}))) as { error?: string };
-      return response.ok ? { ok: true } : { ok: false, error: result.error || 'Could not save. Try again.' };
-    } catch {
-      return { ok: false, error: 'Could not reach the server. Check your signal and try again.' };
+      await fetchJson('/internal/api/supplier-permits', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(payload) });
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: loadFailureMessage(error, 'Could not save. Try again.') };
     }
   }
 
@@ -339,13 +334,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     if (!(history instanceof HTMLElement)) return;
     history.replaceChildren();
     try {
-      const response = await fetch(`/internal/api/supplier-permits?view=contacts&phone=${encodeURIComponent(contactNumber)}`, { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      const result = (await response.json()) as { log?: ContactLog[] };
+      const result = await fetchJson<{ log?: ContactLog[] }>(`/internal/api/supplier-permits?view=contacts&phone=${encodeURIComponent(contactNumber)}`, { headers: { accept: 'application/json' } });
       for (const entry of result.log ?? []) {
         const li = document.createElement('li');
         const when = new Date(entry.at);
@@ -421,7 +410,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     });
   }
 
-  function renderPermits(permit: PermitSummary | undefined) {
+  function renderPermits(permit: PermitSummary | undefined, failure?: unknown) {
     const message = $('[data-permit-message]');
     const hide = () => { show('[data-permit-stats]', false); show('[data-permit-grid]', false); };
     if (!permit || permit.status !== 'ok' || !permit.homeowners || !permit.newHomes) {
@@ -429,9 +418,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       show('[data-permit-message]', true);
       setText('[data-permit-window]', permit?.status === 'empty' ? 'Not loaded' : 'Unavailable');
       if (message instanceof HTMLElement) {
-        message.textContent = permit?.status === 'empty'
-          ? 'No permit data has been loaded yet. Build it with npm run build:permit-leads, then load the SQL file into the database. See the Permit leads section of internal/README.md.'
-          : 'Permit data could not be loaded. Try Refresh; the rest of this page is unaffected.';
+        if (permit?.status === 'empty') message.textContent = 'No permit data has been loaded yet. Build it with npm run build:permit-leads, then load the SQL file into the database. See the Permit leads section of internal/README.md.';
+        else message.replaceChildren(loadFailedNode(failure ? loadFailureMessage(failure) : 'Permit data could not be loaded. The rest of this page is unaffected.', isSessionExpired(failure) ? undefined : () => { void loadPermits(); }));
       }
       return;
     }
@@ -490,15 +478,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   async function loadPermits() {
     try {
-      const response = await fetch('/internal/api/permit-leads', { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      renderPermits((await response.json()) as PermitSummary);
-    } catch {
-      renderPermits(undefined);
+      renderPermits(await fetchJson<PermitSummary>('/internal/api/permit-leads', { headers: { accept: 'application/json' } }));
+    } catch (error) {
+      renderPermits(undefined, error);
     }
   }
 
@@ -515,13 +497,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     }
     button.disabled = true;
     try {
-      const response = await fetch('/internal/api/permit-leads?view=homeowners&limit=150', { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      const rows = ((await response.json()) as { rows?: HomeownerLead[] }).rows ?? [];
+      const rows = (await fetchJson<{ rows?: HomeownerLead[] }>('/internal/api/permit-leads?view=homeowners&limit=150', { headers: { accept: 'application/json' } })).rows ?? [];
       body.replaceChildren();
       for (const r of rows) {
         const mail = r.ownerMailing ? (r.absentee ? `Elsewhere: ${r.ownerMailing}` : 'At the property') : '—';
@@ -540,8 +516,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       homeownersShown = true;
       show('[data-homeowners-wrap]', true);
       button.textContent = 'Hide the list';
-    } catch {
-      setText('[data-status]', 'Could not load the permit list. Try again.');
+    } catch (error) {
+      setText('[data-status]', loadFailureMessage(error, 'Could not load the permit list. Try again.'));
     } finally {
       button.disabled = false;
     }
@@ -668,13 +644,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       }
       button.disabled = true;
       try {
-        const response = await fetch(`/internal/api/supplier-permits?view=list&limit=100&builder=${encodeURIComponent(b.key)}`, { headers: { accept: 'application/json' } });
-        if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-        const result = (await response.json()) as { rows?: SupplierRow[]; total?: number };
+        const result = await fetchJson<{ rows?: SupplierRow[]; total?: number }>(`/internal/api/supplier-permits?view=list&limit=100&builder=${encodeURIComponent(b.key)}`, { headers: { accept: 'application/json' } });
         const rows = result.rows ?? [];
         const detail = document.createElement('tr');
         detail.dataset.builderDetail = b.key;
@@ -693,8 +663,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         row.after(detail);
         button.textContent = 'Hide permits';
         button.setAttribute('aria-expanded', 'true');
-      } catch {
-        setText('[data-status]', 'Could not load that builder\'s permits. Try again.');
+      } catch (error) {
+        setText('[data-status]', loadFailureMessage(error, 'Could not load that builder\'s permits. Try again.'));
       } finally {
         button.disabled = false;
       }
@@ -702,7 +672,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     return button;
   }
 
-  function renderSupplier(data: SupplierSummary | undefined) {
+  function renderSupplier(data: SupplierSummary | undefined, failure?: unknown) {
     const message = $('[data-supplier-message]');
     if (!data || data.status !== 'ok' || !data.totals || !data.meta) {
       show('[data-supplier-stats]', false);
@@ -710,9 +680,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       show('[data-supplier-message]', true);
       setText('[data-supplier-window]', data?.status === 'empty' ? 'Not loaded' : 'Unavailable');
       if (message instanceof HTMLElement) {
-        message.textContent = data?.status === 'empty'
-          ? 'No supplier list loaded yet. Build it with npm run build:supplier-permits from the weekly report, then load the SQL file into the database. See the Supplier permit list section of internal/README.md.'
-          : 'The supplier list could not be loaded. Try Refresh; the rest of this page is unaffected.';
+        if (data?.status === 'empty') message.textContent = 'No supplier list loaded yet. Build it with npm run build:supplier-permits from the weekly report, then load the SQL file into the database. See the Supplier permit list section of internal/README.md.';
+        else message.replaceChildren(loadFailedNode(failure ? loadFailureMessage(failure) : 'The supplier list could not be loaded. The rest of this page is unaffected.', isSessionExpired(failure) ? undefined : () => { void loadSupplier(); }));
       }
       return;
     }
@@ -760,15 +729,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   async function loadSupplier() {
     await loadContacts();
     try {
-      const response = await fetch('/internal/api/supplier-permits', { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      renderSupplier((await response.json()) as SupplierSummary);
-    } catch {
-      renderSupplier(undefined);
+      renderSupplier(await fetchJson<SupplierSummary>('/internal/api/supplier-permits', { headers: { accept: 'application/json' } }));
+    } catch (error) {
+      renderSupplier(undefined, error);
     }
   }
 
@@ -788,13 +751,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     button.disabled = true;
     try {
       const group = select.value;
-      const response = await fetch(`/internal/api/supplier-permits?view=list&limit=300${group ? `&group=${encodeURIComponent(group)}` : ''}`, { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/permits';
-        throw new Error('session expired');
-      }
-      if (!response.ok) throw new Error('bad status');
-      const result = (await response.json()) as { rows?: SupplierRow[]; total?: number };
+      const result = await fetchJson<{ rows?: SupplierRow[]; total?: number }>(`/internal/api/supplier-permits?view=list&limit=300${group ? `&group=${encodeURIComponent(group)}` : ''}`, { headers: { accept: 'application/json' } });
       const rows = result.rows ?? [];
       body.replaceChildren();
       for (const r of rows) {
@@ -826,8 +783,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       supplierShown = true;
       show('[data-supplier-wrap]', true);
       button.textContent = 'Hide the list';
-    } catch {
-      setText('[data-status]', 'Could not load the supplier list. Try again.');
+    } catch (error) {
+      setText('[data-status]', loadFailureMessage(error, 'Could not load the supplier list. Try again.'));
     } finally {
       button.disabled = false;
     }

@@ -122,6 +122,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 </InternalLayout>
 <script>
   import { barChart, columnChart } from '../../lib/charts';
+  import { fetchJson, isSessionExpired } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
+  import { formatCents } from '../../lib/money';
   import { breakEven, breakEvenProblem, trackingLink } from '../../lib/mail-pilot';
 
   type Row = { label: string; value: number };
@@ -145,8 +148,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   const PAGE = 100;
   const nf = new Intl.NumberFormat('en-US');
-  const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-  const usd2 = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+  const dollarsText = (dollars: number) => formatCents(Math.round(dollars * 100));
   const count = (value: number | null | undefined) => (typeof value === 'number' ? nf.format(value) : '—');
   const $ = (selector: string) => document.querySelector(selector);
   const PLAN: Record<string, string> = { wave1: 'Wave 1: mail', compare: 'Later: small test batch', hold: 'Hold' };
@@ -220,15 +222,14 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 
   let waveSize = 0;
 
-  function renderSummary(s: Summary) {
+  function renderSummary(s: Summary, failure?: unknown) {
     const message = $('[data-message]');
     if (s.status !== 'ok' || !s.totals || !s.segments || !s.rules) {
       show('[data-content]', false);
       show('[data-message]', true);
       if (message instanceof HTMLElement) {
-        message.textContent = s.status === 'empty'
-          ? 'No mail pilot data has been loaded yet. Build it with npm run build:mail-pilot, then load the SQL file into the database. See the Mail pilot section of internal/README.md.'
-          : 'The mail pilot could not be loaded. Try Refresh; the rest of the Command Center is unaffected.';
+        if (s.status === 'empty') message.textContent = 'No mail pilot data has been loaded yet. Build it with npm run build:mail-pilot, then load the SQL file into the database. See the Mail pilot section of internal/README.md.';
+        else message.replaceChildren(loadFailedNode(failure ? loadFailureMessage(failure) : 'The mail pilot could not be loaded. The rest of the Command Center is unaffected.', isSessionExpired(failure) ? undefined : () => { void load(); }));
       }
       return false;
     }
@@ -247,7 +248,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     setText('[data-stat="wave1"]', count(t.wave1));
     setText('[data-stat="permits"]', count(t.permits));
     setText('[data-stat="verify"]', count(t.verify));
-    setText('[data-rules]', `A "likely market sale" is a sale priced at ${usd.format(s.rules.minPrice)} or more on a standard deed (${s.rules.likelyDeeds.join(', ')}); "older" means built in or before ${s.rules.cutoffYear}. Both lines are choices, and can be changed when the list is loaded again.`);
+    setText('[data-rules]', `A "likely market sale" is a sale priced at ${dollarsText(s.rules.minPrice)} or more on a standard deed (${s.rules.likelyDeeds.join(', ')}); "older" means built in or before ${s.rules.cutoffYear}. Both lines are choices, and can be changed when the list is loaded again.`);
 
     const body = $('[data-groups]');
     if (body instanceof HTMLElement) {
@@ -287,7 +288,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   const whyText = (r: Property) => {
     const bits: string[] = [];
     if (r.permitType) bits.push(`${PERMIT[r.permitType] ?? r.permitType}${r.permitIssued ? ` ${shortDate(r.permitIssued)}` : ''}`);
-    if (r.saleDate) bits.push(`Sold ${shortDate(r.saleDate)}${typeof r.saleCents === 'number' ? ` · ${usd.format(r.saleCents / 100)}` : ''}`);
+    if (r.saleDate) bits.push(`Sold ${shortDate(r.saleDate)}${typeof r.saleCents === 'number' ? ` · ${formatCents(r.saleCents)}` : ''}`);
     return bits.join(' · ') || '—';
   };
 
@@ -308,10 +309,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     try {
       const query = new URLSearchParams({ view: 'list', limit: String(PAGE), offset: String(shown) });
       if (segments) query.set('segments', segments);
-      const response = await fetch(`/internal/api/mail-pilot?${query}`, { headers: { accept: 'application/json' } });
-      if (response.redirected) { location.href = '/internal/login?next=/internal/mail-pilot'; return; }
-      if (!response.ok) throw new Error('bad status');
-      const data = (await response.json()) as { rows?: Property[]; total?: number };
+      const data = await fetchJson<{ rows?: Property[]; total?: number }>(`/internal/api/mail-pilot?${query}`, { headers: { accept: 'application/json' } });
       const rows = data.rows ?? [];
       total = data.total ?? rows.length;
       for (const r of rows) {
@@ -330,8 +328,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       setText('[data-list-count]', `${nf.format(shown)} of ${nf.format(total)} shown`);
       more.hidden = shown >= total;
       more.textContent = `Show ${nf.format(Math.min(PAGE, total - shown))} more`;
-    } catch {
-      setText('[data-status]', 'Could not load the list. Try again.');
+    } catch (error) {
+      setText('[data-status]', loadFailureMessage(error, 'Could not load the list. Try again.'));
     } finally {
       more.disabled = false;
     }
@@ -383,8 +381,8 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       out.append(p);
       return;
     }
-    line(`The mailing costs ${usd2.format(result.spend)}.`);
-    line(`One signed job earns about ${usd2.format(result.profitPerJob)}.`);
+    line(`The mailing costs ${dollarsText(result.spend)}.`);
+    line(`One signed job earns about ${dollarsText(result.profitPerJob)}.`);
     line(`To break even you need ${nf.format(result.jobsNeeded)} signed ${result.jobsNeeded === 1 ? 'job' : 'jobs'} from this mailing, about ${result.jobsPer1000} for every 1,000 pieces.`, true);
     if (result.requestsNeeded !== null) line(`At that close rate, that means about ${nf.format(result.requestsNeeded)} estimate requests.`);
   }
@@ -394,10 +392,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   async function load() {
     setText('[data-status]', 'Loading the mail pilot…');
     try {
-      const response = await fetch('/internal/api/mail-pilot', { headers: { accept: 'application/json' } });
-      if (response.redirected) { location.href = '/internal/login?next=/internal/mail-pilot'; return; }
-      if (!response.ok) throw new Error('bad status');
-      const ok = renderSummary((await response.json()) as Summary);
+      const ok = renderSummary(await fetchJson<Summary>('/internal/api/mail-pilot', { headers: { accept: 'application/json' } }));
       if (ok) {
         showSampleLink();
         const pieces = form?.querySelector('[name="pieces"]');
@@ -406,9 +401,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         await loadList(true);
       }
       setText('[data-status]', `Updated ${new Date().toLocaleTimeString()}`);
-    } catch {
-      renderSummary({ status: 'unavailable' });
-      setText('[data-status]', 'Could not load the mail pilot. Try Refresh.');
+    } catch (error) {
+      renderSummary({ status: 'unavailable' }, error);
+      setText('[data-status]', 'Could not load the mail pilot.');
     }
   }
   $('[data-refresh]')?.addEventListener('click', load);

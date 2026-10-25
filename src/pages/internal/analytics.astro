@@ -10,6 +10,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     </div>
     <div class="an-hero-actions"><button class="btn btn-ghost" type="button" data-refresh>Refresh</button></div>
   </div>
+  <div data-load-failed></div>
 
   <section class="an-section" aria-labelledby="an-pipe-h">
     <div class="an-head">
@@ -90,6 +91,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 </InternalLayout>
 <script>
   import { barChart, columnChart, donutChart, funnelChart, lineChart } from '../../lib/charts';
+  import { fetchJson, isSessionExpired } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
+  import { formatCents } from '../../lib/money';
 
   type Row = { label: string; value: number };
   type Ga4 = {
@@ -127,8 +131,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   type Payload = { ga4: Ga4; leads: Leads; pipeline?: Pipeline; links: Record<string, string> };
 
   const nf = new Intl.NumberFormat('en-US');
-  const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-  const dollars = (cents: number | null | undefined) => (typeof cents === 'number' ? money.format(cents / 100) : '—');
+  const dollars = (cents: number | null | undefined) => (typeof cents === 'number' ? formatCents(cents) : '—');
   const count = (value: number | null | undefined) => (typeof value === 'number' ? nf.format(value) : '—');
   const $ = (selector: string) => document.querySelector(selector);
 
@@ -253,7 +256,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       setText('[data-ga4-message]', 'Google Analytics is not connected to this page yet. See the Analytics setup section in internal/README.md.');
     } else {
       setText('[data-ga4-state]', 'Unavailable');
-      setText('[data-ga4-message]', 'Google Analytics did not respond. Try Refresh in a minute; the lead numbers above are unaffected.');
+      setText('[data-ga4-message]', 'Google Analytics did not respond. Refresh again in a minute; the lead numbers above are unaffected.');
     }
   }
 
@@ -393,16 +396,13 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
     });
   }
 
+  const failedHost = document.querySelector('[data-load-failed]');
+
   async function load() {
     setText('[data-status]', 'Loading analytics…');
     try {
-      const response = await fetch('/internal/api/analytics', { headers: { accept: 'application/json' } });
-      if (response.status === 401 || response.redirected) {
-        location.href = '/internal/login?next=/internal/analytics';
-        return;
-      }
-      if (!response.ok) throw new Error('bad status');
-      const data = (await response.json()) as Payload;
+      const data = await fetchJson<Payload>('/internal/api/analytics', { headers: { accept: 'application/json' } });
+      failedHost?.replaceChildren();
       renderPipeline(data.pipeline);
       renderSources(data.pipeline);
       renderLeads(data.leads);
@@ -412,8 +412,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         if (el instanceof HTMLAnchorElement && typeof href === 'string' && /^https:\/\//.test(href)) el.href = href;
       });
       setText('[data-status]', `Updated ${new Date().toLocaleTimeString()}`);
-    } catch {
-      setText('[data-status]', 'Could not load analytics. Try Refresh.');
+    } catch (error) {
+      setText('[data-status]', 'Could not load analytics.');
+      failedHost?.replaceChildren(loadFailedNode(loadFailureMessage(error), isSessionExpired(error) ? undefined : load));
     }
   }
 
