@@ -52,6 +52,8 @@
     "test:layout-guards": "node scripts/test-layout-guards.mjs",
     "test:duplicated-facts": "node scripts/test-duplicated-facts.mjs",
     "test:pagination": "node --disable-warning=ExperimentalWarning scripts/test-pagination.mjs",
+    "test:request-guard": "node scripts/test-request-guard.mjs",
+    "test:internal-fetch": "node --disable-warning=ExperimentalWarning scripts/test-internal-fetch.mjs",
     "test:copilot": "node scripts/test-copilot.mjs",
     "test:copilot-snapshot": "node --disable-warning=ExperimentalWarning scripts/test-copilot-snapshot.mjs",
     "test:ai-surfaces": "node scripts/test-ai-surfaces.mjs",
