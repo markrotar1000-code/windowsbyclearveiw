@@ -1,6 +1,7 @@
 import { json } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
 import { WORK_TYPES } from '../../_lib/work-types.mjs';
+import { guardWrite, methodNotAllowed } from '../../_lib/request-guard.mjs';
 
 export async function onRequestGet(context) {
   const { env } = context;
@@ -29,9 +30,10 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const quoteId = String(body?.quoteId || '').trim();
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
 
@@ -44,4 +46,9 @@ export async function onRequestPost(context) {
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Could not create the invoice.' }, 400);
   }
+}
+
+export async function onRequest(context) {
+  const handler = new Map([['GET', onRequestGet], ['POST', onRequestPost]]).get(context.request.method);
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST']);
 }

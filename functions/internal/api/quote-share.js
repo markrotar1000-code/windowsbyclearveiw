@@ -9,6 +9,7 @@
 import { json, clean } from '../_lib/quotes.mjs';
 import { requireApprovedBuildPlan } from '../_lib/quote-gates.mjs';
 import { ensureSigningSchema, newToken, hashToken, linkStatus, LINK_TTL_DAYS } from '../_lib/quote-signing.mjs';
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
 const SITE = 'https://windowsbyclearview.com';
 
@@ -29,11 +30,12 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = context;
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const db = env.QUOTES_DB;
   await ensureSigningSchema(db);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
   const quoteId = clean(body?.quoteId, 64);
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
   const quote = await db.prepare(`SELECT id, status, customer_name, customer_phone, customer_email FROM quotes WHERE id = ?`).bind(quoteId).first();
@@ -70,6 +72,8 @@ export async function onRequestPost(context) {
 
 export async function onRequestDelete(context) {
   const { env, request } = context;
+  const guard = await guardWrite(context, { json: false });
+  if (!guard.ok) return guard.response;
   const db = env.QUOTES_DB;
   await ensureSigningSchema(db);
   const quoteId = clean(new URL(request.url).searchParams.get('quoteId'), 64);
@@ -77,4 +81,9 @@ export async function onRequestDelete(context) {
   await db.prepare(`UPDATE quote_sign_links SET revoked_at = ? WHERE quote_id = ? AND revoked_at IS NULL AND signed_at IS NULL`)
     .bind(new Date().toISOString(), quoteId).run();
   return json({ ok: true, link: linkStatus(await latestLink(db, quoteId)) });
+}
+
+export async function onRequest(context) {
+  const handler = new Map([['GET', onRequestGet], ['POST', onRequestPost], ['DELETE', onRequestDelete]]).get(context.request.method);
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST', 'DELETE']);
 }

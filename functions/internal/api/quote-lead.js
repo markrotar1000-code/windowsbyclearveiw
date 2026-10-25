@@ -6,6 +6,7 @@
 
 import { json, clean } from '../_lib/quotes.mjs';
 import { ensureQuoteLeadColumn, parseLeadId, leadExists, suggestLeads, phoneKey, emailKey } from '../_lib/lead-links.mjs';
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
 async function loadQuote(db, quoteId) {
   return db.prepare(`SELECT id, customer_phone, customer_email, lead_id, lead_linked_at FROM quotes WHERE id = ?`).bind(quoteId).first();
@@ -37,11 +38,12 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = context;
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const db = env.QUOTES_DB;
   await ensureQuoteLeadColumn(db);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
   const quoteId = clean(body?.quoteId, 64);
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
   const parsed = parseLeadId(body?.leadId);
@@ -55,11 +57,6 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequest(context) {
-  const method = context.request.method;
-  if (method === 'GET') return onRequestGet(context);
-  if (method === 'POST') return onRequestPost(context);
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: { allow: 'GET, POST', 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-  });
+  const handler = new Map([['GET', onRequestGet], ['POST', onRequestPost]]).get(context.request.method);
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST']);
 }
