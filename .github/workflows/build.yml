@@ -69,6 +69,7 @@ jobs:
       - run: npm run test:visitor-errors
       - run: npm run test:load-failed
       - run: npm run test:find
+      - run: npm run test:pages-daily
       - run: npm run test:flow
       - run: npm run test:contact-links
       - run: npm run test:layout-guards
