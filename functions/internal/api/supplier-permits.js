@@ -17,6 +17,7 @@
 // so they are separate requests the page makes only when asked, and neither is ever cached (no-store here, and the
 // service worker does not intercept this path).
 
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 import { blockPhone, cleanGroup, logContact, readContacts, readSupplierCsv, readSupplierList, readSupplierSummary, unblockPhone } from '../_lib/supplier-permits.mjs';
 
 function json(data, status = 200) {
@@ -64,10 +65,11 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
   const db = context.env?.QUOTES_DB;
   if (!db) return json({ status: 'unavailable' }, 503);
-  let body;
-  try { body = await context.request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+  const body = guard.body;
   if (!body || typeof body !== 'object') return json({ error: 'Invalid JSON.' }, 400);
   try {
     const result = body.action === 'log' ? await logContact(db, body)
@@ -84,8 +86,5 @@ export async function onRequestPost(context) {
 export async function onRequest(context) {
   if (context.request.method === 'POST') return onRequestPost(context);
   if (context.request.method === 'GET' || context.request.method === 'HEAD') return onRequestGet(context);
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: { allow: 'GET, HEAD, POST', 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-  });
+  return methodNotAllowed(['GET', 'HEAD', 'POST']);
 }

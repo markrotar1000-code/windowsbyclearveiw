@@ -1,6 +1,7 @@
 import { BUILD_PLAN_STATES, transitionPlanState, assertJobEligible } from '../../_lib/build-plan-state.mjs';
 import { lintPlan, sameSource, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
 import { isSidingQuoteId, SIDING_NO_PLAN } from '../_lib/work-types.mjs';
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -65,10 +66,12 @@ export async function onRequestGet({ env, request }) {
   return json({ quoteId, status: loaded.plan.status, version: loaded.plan.version, approvedAt: loaded.plan.approvedAt, approvedBy: loaded.plan.approvedBy, stateHistory: loaded.plan.stateHistory, quality: checked.quality, persistedQuality, stale: checked.stale, sourceSnapshot: checked.currentSource });
 }
 
-export async function onRequestPost({ env, request }) {
+export async function onRequestPost(context) {
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
   await ensureSchema(env.QUOTES_DB);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
+  const body = guard.body;
   if (body === null || typeof body !== 'object') return json({ error: 'Body must be a JSON object.' }, 400);
   const quoteId = clean(body.quoteId);
   const action = clean(body.action);
@@ -110,8 +113,12 @@ export async function onRequestPost({ env, request }) {
   return json({ ok: true, quoteId, status: next.status, version: loaded.plan.version, approvedAt: next.approvedAt, approvedBy: next.approvedBy, stateHistory: next.stateHistory, quality: checked.quality, stale: checked.stale });
 }
 
-export async function onRequestPut({ env, request }) {
-  return onRequestPost({ env, request });
+export async function onRequestPut(context) {
+  return onRequestPost(context);
+}
+
+export async function onRequest() {
+  return methodNotAllowed(['GET', 'POST', 'PUT']);
 }
 
 export { assertJobEligible };
