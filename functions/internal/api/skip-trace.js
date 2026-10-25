@@ -1,4 +1,4 @@
-import { ensureSkipTables, readSkipProspects, STATUSES } from '../_lib/skip-trace.mjs';
+import { ensureSkipTables, readSkipProspects, propertyEligibility, STATUSES } from '../_lib/skip-trace.mjs';
 import { CONTACT_DDL } from '../_lib/supplier-permits.mjs';
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' } });
 export async function onRequestGet({ env }) {
@@ -19,6 +19,11 @@ export async function onRequestPatch({ request, env }) {
     const current = await db.prepare('SELECT * FROM skip_trace_prospects WHERE id = ?').bind(body.id).first();
     if (!current) return json({ error: 'Prospect not found.' }, 404);
     if (current.version !== body.version) return json({ error: 'This prospect changed on another device. Reload before saving.' }, 409);
+    const enrichment = await db.prepare('SELECT data_json FROM skip_trace_enrichment WHERE prospect_id = ?').bind(body.id).first();
+    const eligibility = propertyEligibility(enrichment ? JSON.parse(enrichment.data_json) : null);
+    // A stale tab cannot bypass the cutoff; do-not-contact remains available for any record.
+    if (body.status !== 'do_not_contact' && eligibility.status === 'excluded') return json({ error: eligibility.reason }, 409);
+    if (eligibility.status !== 'eligible' && ['attempted', 'connected', 'interested'].includes(body.status) && body.status !== current.status) return json({ error: eligibility.reason }, 409);
     // Do-not-contact is deliberately not reversible through this prospect editor.
     if (current.status === 'do_not_contact' && body.status !== 'do_not_contact') return json({ error: 'Do-not-contact cannot be removed here.' }, 409);
     const at = new Date().toISOString();
