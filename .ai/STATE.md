@@ -1,3 +1,9 @@
+## 2026-10-25 - PR 307 conflict resolution
+
+Validation after conflict resolution: all 88 canonical steps and the separate 70-page build passed. Synthetic Chromium checks passed at 320/390/768/1280 pixels and 390 pixels with 200% text. Live authenticated UI is unverified behind Cloudflare Access; preview/production deployment verification follows in PR 307.
+
+Merged current main c3ad48e into the construction-year cutoff branch, preserving both sets of entries in STATE, CHANGELOG and HANDOFF. No prospect-code conflicts. Also corrected the new quotes-page test's Windows drive-path handling with fileURLToPath; the prior URL.pathname conversion produced C:\C:\... on Windows. Registry screening remains incomplete: 1Commerce's profile is activated, but ClearView's client/seller profile still needs its own required details and subscription. Authenticated production UI currently reaches Cloudflare Access sign-in. Release validation and merge result are recorded in the task's merge307 logs and PR 307.
+
 ## 2026-10-25 - Command Center hardening batch landed
 
 All state-changing internal handlers go through `functions/internal/_lib/request-guard.mjs` (origin, size cap, JSON 405); internal pages load through `src/lib/internal-fetch.ts` (`fetchJson`, `esc`) and `src/lib/load-failed.ts` (`loadFailedNode`) and money through `src/lib/money.ts`. New code should use these, not a local copy. Canonical suite is 88 steps; the Command Center audit is clean (0 problems).
@@ -10,6 +16,12 @@ Known gaps, in order of how much they matter:
 - `jobs/new.astro` and the field/closeout save paths keep a raw `fetch` (multi-error validation lists, offline semantics).
 - A PATCH on a quote with a JSON `null` body still returns 500.
 - Not checked in a browser: 390/1440 px screenshots and forced 401/500 on Build Plan, Invoices and a few pages (units 5, 6, 8 viewed only some); the audit and `test:all` cover them.
+
+## 2026-10-25 - Prospect construction-year cutoff
+
+ClearView's inclusive 1978 cutoff is enforced by the private prospect API: known homes built in 1978 or earlier are omitted, and unknown/uncertain build years or unresolved parcel exclusions stay on hold. Stale-tab writes cannot advance excluded homes; do-not-contact remains available and still suppresses numbers company-wide. Original source records and history are retained. The card explains property eligibility independently of DNC warnings. Live read-only D1 audit confirmed 47 records: 6 at/before 1978, 24 later years, 17 without a year; later years still require confidence/parcel checks. No source contact rows were committed or deleted.
+
+Validation: all 77 canonical local steps and a separate 70-page build passed; SQLite tests cover inclusive cutoff, unknown/low-confidence years, stale writes and retained do-not-contact suppression. Registry screening has not occurred: business access is not yet set up, and the login route returned technical difficulties. Registration is reachable; authorized representative identity, business address/contact details, certification and account credentials must be completed with the user. GitHub publication and authenticated hosted UI remain pending.
 
 ## 2026-10-25 - Prospect phone numbers visible on cards
 

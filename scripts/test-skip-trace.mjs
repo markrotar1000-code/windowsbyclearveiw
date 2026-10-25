@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createD1 } from './_lib/d1-sqlite.mjs';
-import { normalizeSkipRow, reviewGroup, SKIP_DDL, windowPriority } from '../functions/internal/_lib/skip-trace.mjs';
+import { normalizeSkipRow, reviewGroup, SKIP_DDL, windowPriority, propertyEligibility } from '../functions/internal/_lib/skip-trace.mjs';
 import * as api from '../functions/internal/api/skip-trace.js';
 import { onRequest as gate } from '../functions/internal/_middleware.js';
 const row = { MATCHED_PROPERTY_ADDRESS:'123 Test St', MATCHED_PROPERTY_CITY:'Battle Ground', MATCHED_PROPERTY_STATE:'WA', MATCHED_PROPERTY_ZIP:'98604', FULL_NAME:'Test Owner', MOBILE_PHONE_1:'3605550101', MOBILE_PHONE_1_DNC:'DNC', MOBILE_PHONE_2:'3605550102', MOBILE_PHONE_2_DNC:'', EMAIL_1:'test@example.com', DECEASED:'false', LITIGATOR:'false', TCPA_DNC:'false' };
@@ -8,8 +8,14 @@ const data = normalizeSkipRow(row);
 assert.equal(data.phones[0].dnc,true); assert.equal(data.phones[1].flag,''); assert.equal(reviewGroup(data),'review');
 for (const flag of ['DECEASED','LITIGATOR','TCPA_DNC']) assert.equal(reviewGroup(normalizeSkipRow({...row,[flag]:'true'})),'hold');
 assert.equal(reviewGroup(normalizeSkipRow({...row,MOBILE_PHONE_2:''})),'hold');
-assert.equal(windowPriority({yearBuilt:1978,confidence:'high'},2026).score,60);
-assert.equal(windowPriority({yearBuilt:1978,confidence:'high',windowStatus:'replacement_documented'},2026).score,25);
+for (const yearBuilt of [1700, 1940, 1977, 1978]) {
+  assert.equal(propertyEligibility({yearBuilt,confidence:'high'},2026).status,'excluded');
+  assert.equal(windowPriority({yearBuilt,confidence:'high',windowStatus:'replacement_documented'},2026).score,null);
+}
+assert.equal(windowPriority({yearBuilt:1978,confidence:'unverified'},2026).tier,'excluded');
+assert.equal(propertyEligibility({yearBuilt:1979,confidence:'high'},2026).status,'eligible');
+assert.equal(windowPriority({yearBuilt:1979,confidence:'high'},2026).score,60);
+for (const research of [null, {yearBuilt:null}, {yearBuilt:'1979'}, {yearBuilt:2027,confidence:'high'}, {yearBuilt:1990,confidence:'low'}, {yearBuilt:1990,confidence:'unverified'}, {yearBuilt:1990,confidence:'high',excludeReason:'Parcel unclear'}]) assert.equal(propertyEligibility(research,2026).status,'hold');
 assert.equal(windowPriority({yearBuilt:2019,confidence:'high',windowStatus:'double_pane_documented'},2026).score,10);
 assert.equal(windowPriority({yearBuilt:null,confidence:'unverified'},2026).score,null);
 assert.equal(windowPriority({yearBuilt:1990,confidence:'low',excludeReason:'Parcel identity unclear'},2026).tier,'excluded');
@@ -18,7 +24,9 @@ for (const sql of SKIP_DDL) await db.prepare(sql).run();
 await db.prepare('INSERT INTO skip_trace_prospects (id,batch,data_json,updated_at) VALUES (?,?,?,?)').bind('test','test-batch',JSON.stringify(data),'2026-10-25T00:00:00Z').run();
 const call=(method,body,origin='https://example.com')=>api.onRequest({env,request:new Request('https://example.com/internal/api/skip-trace',{method,headers:{origin,'content-type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})})});
 let response=await call('GET'); assert.match(response.headers.get('cache-control'),/no-store/); assert.equal((await response.json()).prospects.length,1);
+assert.equal((await (await call('GET')).json()).prospects[0].group,'hold');
 const update={id:'test',version:0,status:'researching',notes:'Check owner',follow_up:'2026-11-02'};
+assert.equal((await call('PATCH',{...update,status:'attempted'})).status,409);
 assert.equal((await call('PATCH',update,'https://evil.example')).status,403);
 for (const value of ['2026-02-30','tomorrow','2026-13-01']) assert.equal((await call('PATCH',{...update,follow_up:value})).status,400);
 assert.equal((await call('PATCH',update)).status,200);
@@ -26,9 +34,18 @@ assert.equal((await call('PATCH',update)).status,409);
 assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM skip_trace_history').first()).n,1);
 const current=(await (await call('GET')).json()).prospects[0]; assert.equal(current.notes,'Check owner'); assert.equal(current.follow_up,'2026-11-02');
 await db.prepare('INSERT INTO skip_trace_enrichment VALUES (?,?,?)').bind('test',JSON.stringify({yearBuilt:1978,confidence:'high',windowStatus:'unknown',sources:[]}),new Date().toISOString()).run();
+assert.equal((await (await call('GET')).json()).prospects.length,0);
+assert.equal((await call('PATCH',{...update,version:1,status:'attempted'})).status,409);
+assert.equal((await call('PATCH',{...update,version:1})).status,409);
+assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM skip_trace_prospects').first()).n,1);
+assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM skip_trace_history').first()).n,1);
+// The 1979 boundary returns to the queue; exclusions are read-time policy, not destructive deletion.
+await db.prepare('UPDATE skip_trace_enrichment SET data_json=? WHERE prospect_id=?').bind(JSON.stringify({yearBuilt:1979,confidence:'high',sources:[]}),'test').run();
 assert.equal((await (await call('GET')).json()).prospects[0].priority.tier,'higher');
 await db.prepare('INSERT INTO supplier_contact_blocks (phone,reason,created_at) VALUES (?, ?, ?)').bind('3605550102','registry','2026-10-25').run();
 assert.equal((await (await call('GET')).json()).prospects[0].group,'hold');
+// Even an excluded home may opt out, preserving company-wide phone suppression.
+await db.prepare('UPDATE skip_trace_enrichment SET data_json=? WHERE prospect_id=?').bind(JSON.stringify({yearBuilt:1978,confidence:'high'}),'test').run();
 assert.equal((await call('PATCH',{...update,version:1,status:'do_not_contact'})).status,200);
 assert.equal((await call('PATCH',{...update,version:2,status:'new'})).status,409);
 assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM supplier_contact_blocks').first()).n,2);

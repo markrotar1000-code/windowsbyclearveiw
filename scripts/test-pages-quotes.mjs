@@ -4,12 +4,13 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const assert = (condition, message) => {
   if (!condition) throw new Error(`FAIL: ${message}`);
   console.log(`PASS: ${message}`);
 };
-const root = resolve(new URL('..', import.meta.url).pathname);
+const root = fileURLToPath(new URL('..', import.meta.url));
 const PAGES = {
   'quotes/index': 'src/pages/internal/quotes/index.astro',
   'quotes/build-plan': 'src/pages/internal/quotes/build-plan.astro',

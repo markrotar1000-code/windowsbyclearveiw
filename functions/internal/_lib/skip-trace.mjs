@@ -32,8 +32,18 @@ export function normalizeSkipRow(row) {
 export function reviewGroup(data) {
   return Object.values(data.flags).some(Boolean) || !data.phones.some(p => p.valid && !p.dnc) ? 'hold' : 'review';
 }
+// ClearView's business cutoff is inclusive; preserve source/history but exclude from prospecting.
+export function propertyEligibility(research, year = new Date().getFullYear()) {
+  const built = research?.yearBuilt;
+  if (Number.isInteger(built) && built >= 1700 && built <= 1978) return { status: 'excluded', reason: 'Built in 1978 or earlier: outside ClearView service scope.' };
+  if (research?.excludeReason) return { status: 'hold', reason: research.excludeReason };
+  if (!Number.isInteger(built) || built < 1979 || built > year || !['high', 'medium'].includes(research?.confidence)) return { status: 'hold', reason: 'Verify a build year of 1979 or later before outreach.' };
+  return { status: 'eligible', reason: `Built ${built}: meets the 1979-or-later property cutoff. Phone and owner checks still required.` };
+}
 // Research priority, not a probability or diagnosis. Home age cannot establish window age.
 export function windowPriority(research, year = new Date().getFullYear()) {
+  const eligibility = propertyEligibility(research, year);
+  if (eligibility.status === 'excluded') return { score: null, tier: 'excluded', reasons: [eligibility.reason] };
   if (!research || research.confidence === 'unverified') return { score: null, tier: 'unranked', reasons: ['Property facts not verified.'] };
   if (research.excludeReason) return { score: null, tier: 'excluded', reasons: [research.excludeReason] };
   const built = research.yearBuilt;
@@ -60,8 +70,9 @@ export async function readSkipProspects(db) {
   return results.map(({ data_json, ...row }) => {
     const data = JSON.parse(data_json);
     data.phones = data.phones.map(p => ({ ...p, suppressed: blocked.has(p.number) }));
-    const group = row.status === 'do_not_contact' || reviewGroup(data) === 'hold' || !data.phones.some(p => p.valid && !p.dnc && !p.suppressed) ? 'hold' : 'review';
     const research = byId.get(row.id) || null;
-    return { ...row, ...data, group, research, priority: windowPriority(research) };
-  });
+    const eligibility = propertyEligibility(research);
+    const group = eligibility.status !== 'eligible' || row.status === 'do_not_contact' || reviewGroup(data) === 'hold' || !data.phones.some(p => p.valid && !p.dnc && !p.suppressed) ? 'hold' : 'review';
+    return { ...row, ...data, group, research, eligibility, priority: windowPriority(research) };
+  }).filter(row => row.eligibility.status !== 'excluded');
 }

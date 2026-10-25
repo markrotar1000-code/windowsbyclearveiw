@@ -1,3 +1,9 @@
+## 2026-10-25 - PR 307 conflict resolution
+
+Validation after conflict resolution: all 88 canonical steps and the separate 70-page build passed. Synthetic Chromium checks passed at 320/390/768/1280 pixels and 390 pixels with 200% text. Live authenticated UI is unverified behind Cloudflare Access; preview/production deployment verification follows in PR 307.
+
+Merged current main c3ad48e into the construction-year cutoff branch, preserving both sets of entries in STATE, CHANGELOG and HANDOFF. No prospect-code conflicts. Also corrected the new quotes-page test's Windows drive-path handling with fileURLToPath; the prior URL.pathname conversion produced C:\C:\... on Windows. Registry screening remains incomplete: 1Commerce's profile is activated, but ClearView's client/seller profile still needs its own required details and subscription. Authenticated production UI currently reaches Cloudflare Access sign-in. Release validation and merge result are recorded in the task's merge307 logs and PR 307.
+
 ## 2026-10-25 - Command Center hardening batch (11 units)
 
 Foundation-only: no new features. Two shared helpers (`functions/internal/_lib/request-guard.mjs`, `src/lib/internal-fetch.ts`) and 11 units adopting them (PRs 304, 308 to 319).
@@ -8,6 +14,12 @@ Foundation-only: no new features. Two shared helpers (`functions/internal/_lib/r
 - **Follow-ups in this entry.** `readJsonBounded` streams and stops at the cap (was: read whole body first). `fetchJson` treats only a 401, a redirect, or a 200 HTML page as an expired sign-in (a 502 HTML page is a server error). The Tools Setup check and usage cards use `fetchJson` (the browser's raw "Failed to fetch" is gone). The follow-up summary in `tasks.js` uses the same overdue-wins rule as the Dashboard. The audit server answers HEAD without a body.
 - **Behavior changes to know about.** Invalid JSON on write endpoints reads "Invalid JSON." (was "Body must be JSON."). The invoice email POST returns 400 on a bad body (was treated as empty). Refused writes now answer 400/413 before job-lookup 404/409. A cross-origin supplier-permits write is 403 (was 503 when the database was missing). The Find bar and Mail pilot no longer redirect to login on an expired sign-in; they show the sign-in message. Google tools expenses column is "Amount".
 - Verified: `npm run test:all` 88 steps, `npm run build`, Command Center audit 320 page views, 0 with problems.
+
+## 2026-10-25 - Prospect construction-year cutoff
+
+ClearView's inclusive 1978 cutoff is enforced by the private prospect API: known homes built in 1978 or earlier are omitted, and unknown/uncertain build years or unresolved parcel exclusions stay on hold. Stale-tab writes cannot advance excluded homes; do-not-contact remains available and still suppresses numbers company-wide. Original source records and history are retained. The card explains property eligibility independently of DNC warnings. Live read-only D1 audit confirmed 47 records: 6 at/before 1978, 24 later years, 17 without a year; later years still require confidence/parcel checks. No source contact rows were committed or deleted.
+
+Validation: all 77 canonical local steps and a separate 70-page build passed; SQLite tests cover inclusive cutoff, unknown/low-confidence years, stale writes and retained do-not-contact suppression. Registry screening has not occurred: business access is not yet set up, and the login route returned technical difficulties. Registration is reachable; authorized representative identity, business address/contact details, certification and account credentials must be completed with the user. GitHub publication and authenticated hosted UI remain pending.
 
 ## 2026-10-25 - Prospect phone numbers visible on cards
 
