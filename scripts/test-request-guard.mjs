@@ -41,6 +41,12 @@ const req = (headers = {}, body = JSON.stringify({ a: 1 }), method = 'POST') => 
   r = await readJsonBounded(req({}, ''));
   assert.equal(r.response.status, 400, 'an empty body is not JSON');
   assert.equal(DEFAULT_MAX_BYTES, 65536);
+  // A streamed body with no content-length is cut off at the limit instead of being read whole.
+  let pulled = 0;
+  const stream = new ReadableStream({ pull(controller) { pulled += 1; controller.enqueue(new Uint8Array(1024)); if (pulled > 1000) controller.close(); } });
+  r = await readJsonBounded(new Request('https://site.test/internal/api/x', { method: 'POST', body: stream, duplex: 'half' }), 4096);
+  assert.equal(r.response.status, 413, 'an endless or oversized stream is refused');
+  assert.ok(pulled < 20, `the read stopped at the limit (pulled ${pulled} chunks of 1000)`);
   pass('bounded JSON: parses small bodies; 400 for bad JSON; 413 on declared or actual size; limit is configurable');
 }
 

@@ -71,13 +71,14 @@ export async function onRequestGet(context) {
   const count = await countQuery.bind(...bindings).first();
   const total = Number(count?.total || 0);
   const now = new Date().toISOString(), today = pacificDayRange(new Date(now));
-  // Summaries cover the whole lead/queue, regardless of which page or status is being viewed.
+  // Summaries cover the whole lead/queue, regardless of which page or status is being viewed. Overdue wins: "today" runs from now
+  // to the end of the Pacific day, so a task due earlier today is counted once, as overdue (the same rule as the Dashboard).
   const summary = await env.QUOTES_DB.prepare(`SELECT
     COUNT(*) AS open,
     COALESCE(SUM(CASE WHEN due_at >= ? AND due_at < ? THEN 1 ELSE 0 END), 0) AS today,
     COALESCE(SUM(CASE WHEN due_at < ? THEN 1 ELSE 0 END), 0) AS overdue
     FROM follow_up_tasks WHERE status = 'open' ${leadId ? 'AND lead_id = ?' : ''}`)
-    .bind(today.start, today.end, now, ...(leadId ? [leadId] : [])).first();
+    .bind(now > today.start ? now : today.start, today.end, now, ...(leadId ? [leadId] : [])).first();
   return json({ tasks: result.results || [], page, pageSize: limit, total, totalPages: Math.ceil(total / limit), summary: summary || { open: 0, today: 0, overdue: 0 } });
 }
 
