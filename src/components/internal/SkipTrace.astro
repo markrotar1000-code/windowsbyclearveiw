@@ -1,0 +1,114 @@
+<section class="st" aria-labelledby="st-title" id="skip-trace">
+  <div class="st-heading"><div><p class="kicker">Prospecting · DataSkip</p><h2 id="st-title">Skip-trace prospects</h2><p>Battle Ground · 98604. Property-owner research, separate from estimate requests.</p></div><button class="btn btn-ghost" id="st-reload" type="button">Load / refresh prospects</button></div>
+  <p class="st-notice">DNC numbers and record-level flags stay visible. A blank DNC field means unverified, not permission to call or text. Match results do not establish window condition or interest.</p>
+  <p id="st-message" role="status" aria-live="polite">Load this private list when you need it.</p>
+  <div id="st-content" hidden>
+    <div id="st-stats" class="st-stats"></div>
+    <div class="st-filters">
+      <label>Search prospects<input id="st-search" type="search" placeholder="Name, address, phone, email" /></label>
+      <label>Review group<select id="st-group"><option value="">All prospects</option><option value="review">Phone review needed</option><option value="hold">Hold / other channel review</option><option value="higher">Higher window priority</option><option value="email">Has email</option><option value="due">Follow-up due</option></select></label>
+      <label>Status<select id="st-status"><option value="">All statuses</option></select></label>
+    </div>
+    <p id="st-count" role="status" aria-live="polite"></p>
+    <details class="st-method"><summary>How window priority works</summary><p>Research priority, not a probability of needing windows: home age 40+ years = 60 points; 25–39 = 45; 15–24 = 30; under 15 = 10. A source documenting older/original or single-pane windows adds 30 (maximum 90); documented replacement/new windows subtracts 35 (minimum 0). Double-pane alone does not establish age or condition. Higher = 60+; medium = 30–59; lower = under 30. Unknown ages remain unranked unless older windows are documented. Vacant land is excluded. Sources and limitations appear on each researched record. Confirm window condition, ownership and phone association before outreach.</p></details>
+    <div id="st-list"></div>
+  </div>
+</section>
+<script>
+  const root = document.querySelector('.st');
+  if (root) {
+    const get = (id: string) => root.querySelector('#' + id) as HTMLElement;
+    const search = get('st-search') as HTMLInputElement;
+    const group = get('st-group') as HTMLSelectElement;
+    const status = get('st-status') as HTMLSelectElement;
+    const reload = get('st-reload') as HTMLButtonElement;
+    const labels = { new: 'New', researching: 'Researching', attempted: 'Attempted contact', connected: 'Connected', interested: 'Interested', not_interested: 'Not interested', do_not_contact: 'Do not contact' };
+    let rows: any[] = [];
+    const esc = (value: any) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+    const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+    const options = (selected: string) => Object.entries(labels).map(([k,v]) => `<option value="${k}" ${k === selected ? 'selected' : ''}>${v}</option>`).join('');
+    status.insertAdjacentHTML('beforeend', options(''));
+    function render() {
+      const q = search.value.toLowerCase().trim();
+      const digits = q.replace(/\D/g, '');
+      const filtered = rows.filter(r => (!q || [r.name,r.ownerName,r.address,r.city,r.zip,r.mailing,...r.emails,...r.phones.map(p=>p.number)].join(' ').toLowerCase().includes(q) || digits.length >= 7 && r.phones.some(p=>p.number.includes(digits))) && (!status.value || r.status === status.value) && (!group.value || r.group === group.value || group.value === 'higher' && r.group === 'review' && r.priority?.tier === 'higher' || group.value === 'email' && r.emails.length || group.value === 'due' && r.follow_up && r.follow_up <= today() && !['not_interested','do_not_contact'].includes(r.status))).sort((a,b)=>(a.group==='hold'?1:0)-(b.group==='hold'?1:0) || (b.priority?.score ?? -1)-(a.priority?.score ?? -1) || a.address.localeCompare(b.address));
+      get('st-count').textContent = `${filtered.length} of ${rows.length} prospects`;
+      get('st-list').innerHTML = filtered.map(r => `<article class="st-card" data-id="${esc(r.id)}">
+        <div class="st-card-head"><div><h3>${esc(r.name)}</h3><p>${esc(r.address)}<br>${esc(r.city)}, ${esc(r.state)} ${esc(r.zip)}</p></div><span class="st-badge ${r.group === 'hold' ? 'st-hold' : ''}">${r.group === 'hold' ? 'Hold / review' : 'Phone review needed'}</span></div>
+        <p class="st-meta">Batch: ${esc(r.batch)} · ${esc(r.match)} · ${esc(labels[r.status])}</p>
+        ${r.research ? `<div class="st-research"><strong>Window research priority: ${esc(r.priority.tier)}${r.priority.score === null ? '' : ' · '+r.priority.score+'/90'}</strong><p>${r.priority.reasons.map(esc).join('<br>')}</p><p>${esc(r.research.propertyType || 'Property type unverified')}${r.research.sqft ? ' · '+esc(r.research.sqft)+' sq ft' : ''} · Source confidence: ${esc(r.research.confidence)}</p><details><summary>Property research and sources</summary><p>${esc(r.research.windowEvidence || 'No window-specific evidence found.')}</p><ul>${(r.research.otherFacts || []).map(f=>'<li>'+esc(f)+'</li>').join('')}</ul><p>${(r.research.limitations || []).map(esc).join('<br>')}</p><ul>${(r.research.sources || []).filter(s=>/^https?:\/\//i.test(s.url)).map(s=>'<li><a target="_blank" rel="noopener noreferrer" href="'+esc(s.url)+'">'+esc(s.title || s.url)+'</a><br>'+s.facts.map(esc).join('; ')+'</li>').join('')}</ul><p class="st-meta">Researched ${esc(r.research.researchedAt?.slice(0,10))}. Listing details can be historical.</p></details></div>` : '<p class="st-meta">Property research pending or outside the phone-review group.</p>'}
+        ${Object.entries(r.flags).filter(([,v])=>v).map(([k])=>`<p class="st-flag">Source flag: ${esc({deceased:'Deceased',litigator:'Litigator',tcpaDnc:'TCPA DNC'}[k])} — verify before outreach.</p>`).join('')}
+        <details><summary>Contact and mailing details (${r.phones.length} phones · ${r.emails.length} emails)</summary>
+          <p><strong>Owner in source:</strong> ${esc(r.ownerName)}<br><strong>Mailing:</strong> ${esc(r.mailing)}</p>
+          <ul>${r.phones.map(p=>`<li><span>${esc(p.number)} · ${esc(p.type)}</span><strong class="${p.dnc || p.suppressed ? 'st-flag' : ''}">${p.suppressed ? 'Company do-not-contact' : p.dnc ? 'DNC — do not call/text' : !p.valid ? 'Invalid number — verify' : 'Unverified — DNC check needed'}${p.flag && !p.dnc ? ' · Source: '+esc(p.flag) : ''}</strong></li>`).join('')}</ul>
+          <p>${r.emails.length ? r.emails.map(esc).join('<br>') : 'No email supplied.'}</p>
+        </details>
+        <form data-edit>
+          <div class="st-fields"><label>Status<select name="status">${options(r.status)}</select></label><label>Follow-up date<input name="follow_up" type="date" value="${esc(r.follow_up)}" /></label></div>
+          <label>Notes<textarea name="notes" maxlength="4000" rows="2" placeholder="Research, conversation outcome, next step">${esc(r.notes)}</textarea></label>
+          <div class="st-save"><button class="btn btn-ghost" type="submit">Save prospect</button><span role="status" aria-live="polite" data-save-message></span></div>
+        </form>
+      </article>`).join('') || '<p>No prospects match these filters.</p>';
+    }
+    async function load() {
+      reload.disabled = true; get('st-message').textContent = 'Loading prospects…';
+      try {
+        const response = await fetch('/internal/api/skip-trace', { cache: 'no-store' });
+        if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw Error('Could not load. Check your sign-in and try again.');
+        const data = await response.json(); rows = data.prospects;
+        const phones = rows.flatMap(r=>r.phones);
+        get('st-stats').innerHTML = [[rows.length,'Prospects'],[rows.filter(r=>r.emails.length).length,'With email'],[phones.filter(p=>p.dnc).length,'DNC phone entries'],[rows.filter(r=>r.group==='hold').length,'Hold / review']].map(([n,t])=>`<div><strong>${n}</strong><span>${t}</span></div>`).join('');
+        get('st-content').hidden = false; get('st-message').textContent = rows.length ? 'Private list loaded. Status, notes and follow-up dates sync across devices when saved.' : 'No skip-trace prospects have been imported yet.'; render();
+      } catch (error) { get('st-message').textContent = (error as Error).message; }
+      finally { reload.disabled = false; }
+    }
+    // Never discard a typed note silently when changing the current view.
+    let dirty = false;
+    root.addEventListener('input', e => { if ((e.target as HTMLElement).closest('[data-edit]')) dirty = true; });
+    const canDiscard = () => !dirty || confirm('Discard unsaved prospect edits?');
+    const filter = () => { if (canDiscard()) { dirty = false; render(); } };
+    search.addEventListener('change', filter); group.addEventListener('change', filter); status.addEventListener('change', filter);
+    reload.addEventListener('click', () => { if (canDiscard()) { dirty = false; load(); } });
+    window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+    root.addEventListener('submit', async e => {
+      const form = e.target as HTMLFormElement; if (!form.matches('[data-edit]')) return; e.preventDefault();
+      const card = form.closest('[data-id]') as HTMLElement;
+      const row = rows.find(r=>r.id === card.dataset.id);
+      const button = form.querySelector('button')!; const message = form.querySelector('[data-save-message]')!;
+      const values = Object.fromEntries(new FormData(form));
+      button.disabled = true; message.textContent = 'Saving…';
+      try {
+        const response = await fetch('/internal/api/skip-trace', { method: 'PATCH', headers: {'content-type':'application/json'}, body: JSON.stringify({id:row.id,version:row.version,...values}) });
+        if (!response.headers.get('content-type')?.includes('application/json')) throw Error('Sign in again before saving.');
+        const data = await response.json(); if (!response.ok) throw Error(data.error || 'Could not save.');
+        Object.assign(row,values,{version:data.version});
+        if (row.status === 'do_not_contact') {
+          row.group = 'hold'; const blocked = new Set(row.phones.map(p=>p.number));
+          for (const other of rows) { other.phones.forEach(p=>{if(blocked.has(p.number))p.suppressed=true;}); if(!other.phones.some(p=>p.valid&&!p.dnc&&!p.suppressed))other.group='hold'; }
+        }
+        dirty = [...root.querySelectorAll<HTMLFormElement>('[data-edit]')].some(f=>{const r=rows.find(r=>r.id===(f.closest('[data-id]') as HTMLElement).dataset.id); return [...new FormData(f)].some(([k,v])=>r[k]!==v);});
+        if (!dirty) { render(); get('st-message').textContent = 'Prospect saved.'; }
+        else message.textContent = 'Saved. Other prospect edits are still unsaved.';
+      } catch (error) { message.textContent = (error as Error).message; }
+      finally { button.disabled = false; }
+    });
+  }
+</script>
+<style>
+  .st { margin: 1.5rem 0 2.5rem; padding: clamp(1rem,3vw,1.7rem); border: 1px solid var(--line,#ccd6da); border-radius: 16px; background: var(--surface,#fff); }
+  .st-heading,.st-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+  .st h2 { font-size:clamp(1.5rem,4vw,2rem); margin:0 0 .5rem; } .st h3 { font-size:1.2rem; margin:0; } .st p { margin:.5rem 0; }
+  .st-notice { padding:1rem; background:#eef5f7; color:#233f4d; border-radius:10px; }
+  .st :global(.st-stats) { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.7rem; margin:1rem 0; }
+  .st :global(.st-stats div) { padding:.8rem; background:#eef5f7; border-radius:10px; color:#233f4d; }
+  .st :global(.st-stats strong),.st :global(.st-stats span) { display:block; } .st :global(.st-stats strong) { font-size:1.7rem; }
+  .st-filters,.st :global(.st-fields) { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }
+  .st :global(label) { display:grid; gap:.35rem; min-width:0; } .st :global(input),.st :global(select),.st :global(textarea) { width:100%; min-width:0; min-height:44px; font:inherit; padding:.65rem; box-sizing:border-box; }
+  .st :global(.st-card) { padding:1rem 0; border-top:1px solid #ccd6da; overflow-wrap:anywhere; }
+  .st :global(.st-meta) { font-size:.85rem; opacity:.8; } .st :global(.st-badge) { padding:.35rem .6rem; border-radius:20px; background:#eef5f7; color:#233f4d; font-size:.85rem; }
+  .st :global(.st-research) { padding:.8rem; border-left:3px solid #397b8a; background:#f0f6f7; color:#233f4d; border-radius:6px; margin:.7rem 0; }
+  .st :global(.st-hold),.st :global(.st-flag) { color:#8a291d; } .st :global(summary) { cursor:pointer; min-height:44px; padding:.65rem 0; }
+  .st :global(li) { margin:.5rem 0; } .st :global(li strong) { display:block; font-size:.85rem; } .st :global(form) { margin-top:.8rem; } .st :global(.st-fields) { grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:.8rem; }
+  .st :global(.st-save) { display:flex; align-items:center; gap:1rem; margin-top:.7rem; } .st :global(button) { min-height:44px; }
+  @media(max-width:600px) { .st-filters { grid-template-columns:1fr; } .st :global(.st-stats) { grid-template-columns:repeat(2,minmax(0,1fr)); } .st :global(.st-fields) { grid-template-columns:1fr; } }
+</style>

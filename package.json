@@ -35,7 +35,7 @@
     "test:ask-pricing": "node scripts/test-ask-pricing-sync.mjs",
     "test:ask-handoff": "node scripts/test-ask-handoff.mjs",
     "test:ask-logs": "node --disable-warning=ExperimentalWarning scripts/test-ask-logs.mjs",
-    "test:command-center": "node --disable-warning=ExperimentalWarning scripts/test-command-center-fixes.mjs",
+    "test:command-center": "node --disable-warning=ExperimentalWarning scripts/test-command-center-fixes.mjs && node --disable-warning=ExperimentalWarning scripts/test-skip-trace.mjs",
     "test:recent-fixes": "node scripts/test-recent-fixes.mjs",
     "test:public-terminology": "node scripts/test-public-terminology.mjs",
     "test:seo": "node scripts/test-seo-meta.mjs",
@@ -94,7 +94,9 @@
     "find:google-place-id": "node scripts/find-google-place-id.mjs",
     "test:window-studio": "node scripts/test-window-studio.mjs",
     "test:google-tools": "node --disable-warning=ExperimentalWarning scripts/test-google-tools.mjs",
-    "test:supplier-list": "node --disable-warning=ExperimentalWarning scripts/test-supplier-list.mjs"
+    "test:supplier-list": "node --disable-warning=ExperimentalWarning scripts/test-supplier-list.mjs",
+    "test:skip-trace": "node --disable-warning=ExperimentalWarning scripts/test-skip-trace.mjs",
+    "build:skip-trace": "node scripts/build-skip-trace.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

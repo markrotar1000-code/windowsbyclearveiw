@@ -1,6 +1,7 @@
 ---
 import InternalLayout from '../../layouts/InternalLayout.astro';
 import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
+import SkipTrace from '../../components/internal/SkipTrace.astro';
 ---
 <InternalLayout title="Leads">
   <div class="ld-head">
@@ -16,6 +17,8 @@ import WorkTypeFilter from '../../components/WorkTypeFilter.astro';
     </div>
   </div>
 
+  <SkipTrace />
+  <h2>Inbound estimate requests</h2>
   <p data-loading>Loading…</p>
   <p class="ld-error" data-error hidden role="alert"></p>
   <p data-empty hidden>No estimate requests yet.</p>
