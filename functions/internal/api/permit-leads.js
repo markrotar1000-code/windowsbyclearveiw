@@ -8,6 +8,7 @@
 // only reads it. The homeowner view carries owner names and mailing addresses, so it
 // is a separate request the page makes only when the list is opened.
 
+import { methodNotAllowed } from '../_lib/request-guard.mjs';
 import { readHomeownerLeads, readPermitSummary } from '../_lib/permit-leads.mjs';
 
 function json(data, status = 200) {
@@ -40,8 +41,5 @@ export async function onRequestGet(context) {
 
 export async function onRequest(context) {
   if (context.request.method === 'GET' || context.request.method === 'HEAD') return onRequestGet(context);
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-    status: 405,
-    headers: { allow: 'GET, HEAD', 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-  });
+  return methodNotAllowed(['GET', 'HEAD']);
 }
