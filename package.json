@@ -88,6 +88,7 @@
     "test:analytics": "node --disable-warning=ExperimentalWarning scripts/test-analytics-collection.mjs && node scripts/test-analytics.mjs && node --disable-warning=ExperimentalWarning scripts/test-analytics-pipeline.mjs && node --disable-warning=ExperimentalWarning scripts/test-intent.mjs && node --experimental-strip-types scripts/test-intent-client.mjs",
     "test:estimate": "node --disable-warning=ExperimentalWarning scripts/test-estimate-endpoint.mjs",
     "test:review-request": "node --disable-warning=ExperimentalWarning scripts/test-review-request.mjs",
+    "test:pages-quotes": "node scripts/test-pages-quotes.mjs",
     "test:lead-links": "node --disable-warning=ExperimentalWarning scripts/test-lead-links.mjs",
     "test:quote-dictation": "node --disable-warning=ExperimentalWarning scripts/test-quote-dictation.mjs",
     "test:quote-follow-ups": "node --disable-warning=ExperimentalWarning scripts/test-quote-follow-ups.mjs",
