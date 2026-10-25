@@ -379,5 +379,49 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await off.ctx.close(); ok('sizes are spoken back only when asked, in words, after the microphone is off');
 }
 
+// 19. Saving a quote reports a count only when drafted lines were actually kept.
+{
+  const run = async (keep) => {
+    const { ctx, page } = await open({ drafts: [{ lines: [{ type: 'window', openingId: 'slider', materialId: 'vinyl', brandId: 'cascade', method: null, quantity: 1, room: 'Den', size: '', note: '', heard: '' }] }] });
+    const reported = [];
+    await page.route('**/internal/api/feature-usage', (r) => { reported.push(JSON.parse(r.request().postData()).feature); r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+    await page.route('**/internal/api/quotes', (r) => r.fulfill({ status: 201, contentType: 'application/json', body: '{"id":"Q-1"}' }));
+    await page.fill('[data-rough-notes]', 'Den slider.'); await page.click('[data-draft-go]');
+    await page.waitForFunction(() => document.querySelectorAll('.qb-items tbody tr').length === 1);
+    if (!keep) { await page.click('[data-draft-undo]'); await page.click('[data-custom-add]').catch(() => {}); await page.fill('[data-custom-label]', 'Hand-typed line'); await page.fill('[data-custom-price]', '100'); await page.click('[data-custom-add]'); }
+    await page.fill('[name=name]', 'Dana'); await page.fill('[name=phone]', '3605550142');
+    await page.click('[data-submit]');
+    await page.waitForTimeout(500);
+    await ctx.close();
+    return reported;
+  };
+  assert.deepEqual(await run(true), ['quote_saved_with_draft'], 'a saved quote that kept drafted lines is counted');
+  assert.deepEqual(await run(false), [], 'a quote whose drafted lines were removed is not counted');
+  ok('saving a quote reports a count only when drafted lines were kept');
+}
+
+// 20. The Tools page shows the counts, and recovers from a failure.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  let calls = 0;
+  await page.route('**/internal/api/feature-usage**', (r) => {
+    calls += 1;
+    if (calls === 1) return r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Could not load."}' });
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ days: 30, quotesSaved: 6, features: { dictation_clip: { ok: 14, degraded: 2, days: 4 }, quote_draft: { ok: 5, degraded: 1, days: 3 }, quote_saved_with_draft: { ok: 3, degraded: 0, days: 3 }, measurements_imported: { ok: 1, degraded: 0, days: 1 } } }) });
+  });
+  await page.route('**/internal/api/**', (r) => (/feature-usage/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await page.goto(`${base}/internal/tools`);
+  await page.waitForFunction(() => /Tap Refresh to try again/.test(document.querySelector('[data-usage-line]').textContent));
+  await page.click('[data-usage-reload]');
+  await page.waitForFunction(() => !document.querySelector('[data-usage-stats]').hidden);
+  assert.match(await page.textContent('[data-usage-line]'), /4 of 6 quotes saved in the last 30 days kept lines from voice notes or Measurements/);
+  const text = await page.textContent('[data-usage-stats]');
+  assert.match(text, /Voice clips written out14 \(2 failed or empty\)/); assert.match(text, /Quotes saved with drafted lines3/); assert.match(text, /All quotes saved6/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('the Tools page shows the usage counts and recovers from a failed load');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');

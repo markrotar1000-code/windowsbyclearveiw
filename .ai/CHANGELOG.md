@@ -1,3 +1,7 @@
+## 2026-10-25 - Usage counts and laptop titles
+
+`feature-usage.mjs`, `/internal/api/feature-usage`, Tools card, quote-page report-on-save; laptop h1 size in `InternalLayout.astro`; `test:feature-usage`.
+
 ## 2026-10-25 - Measurements handoff replaced; audio capture hardened
 
 `measurement-lines.ts`, quote-page From Measurements panel, old layout import removed; `clip-store.ts`, `audio-level.ts`, `spokenSize`; tests `test:measurement-handoff`, `test:audio-capture`, audit flows 14 to 18.

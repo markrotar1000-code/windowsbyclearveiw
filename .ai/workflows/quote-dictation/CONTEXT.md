@@ -69,6 +69,11 @@ model: no customer record, no prices, no history.
 - **Sizes read back aloud** (optional, off by default): after the microphone is off, as "35 and a half by 47 and three
   quarters" (`spokenSize`).
 
+- **Is it being used?** (`functions/internal/_lib/feature-usage.mjs`, shown on Tools): counts only, one row per day and feature
+  (voice clips, drafts, quotes saved with drafted lines, quotes saved with Measurements lines) with how many worked and how
+  many did not. No audio, words, customers, phone numbers or IPs; the table has no column that could hold them. A quote is
+  counted only when drafted or imported lines are still on it at save. It exists for the 90-day "does this earn its keep" audit.
+
 ## Output
 
 Editable lines in the quote builder plus a notes block, then the normal flow: Mark edits prices, saves, Build Plan.

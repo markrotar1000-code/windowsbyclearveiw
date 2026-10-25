@@ -148,3 +148,10 @@ assert.ok(read('src/layouts/InternalLayout.astro').includes('.internal-main :whe
 assert.ok(read('src/layouts/InternalLayout.astro').includes('.internal-brand span{color:#33948f'), 'the brand subtitle meets 4.5:1 on the dark header');
 
 console.log('internal mobile: ok');
+
+// Laptop page titles: the marketing display size (74 px) must not leak into the Command Center; the working size is about 41 px at 1440.
+{
+  const layout = read('src/layouts/InternalLayout.astro');
+  assert.match(layout, /\.internal-main :global\(h1\)\{font-size:clamp\(2rem,1\.4rem \+ 1\.3vw,2\.75rem\)!important/, 'Command Center titles have their own laptop size');
+  console.log('PASS: Command Center page titles use a working size on laptops');
+}

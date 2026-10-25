@@ -1,5 +1,6 @@
 import { takeRateLimit } from '../../_lib/abuse-guard.mjs';
 import { extractSizes, formatSize, normalizeSizes } from '../../_lib/dimensions.mjs';
+import { recordUsage } from '../_lib/feature-usage.mjs';
 
 // One short voice clip -> text (Command Center > New quote > Rough notes > Record). Workers AI Whisper through the
 // existing `AI` binding. The audio is decoded for this request only: it is never written to D1 or R2, never logged,
@@ -19,6 +20,9 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
   headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' },
 });
 
+// Counted, never blocking: a clip that worked, or one that did not (silence, no binding, a model error).
+const count = (context, outcome) => { const work = recordUsage(context.env, 'dictation_clip', outcome); if (typeof context.waitUntil === 'function') context.waitUntil(work); return work; };
+
 function sameOrigin(request) {
   const origin = request.headers.get('Origin');
   if (!origin) return true;
@@ -36,7 +40,7 @@ export async function onRequestPost(context) {
   if (!sameOrigin(request)) return json({ error: 'Cross-origin requests are not allowed.' }, 403);
   if (!AUDIO_TYPE.test(request.headers.get('content-type') || '')) return json({ error: 'Send an audio clip.' }, 415);
   if (Number(request.headers.get('content-length') || 0) > MAX_AUDIO_BYTES) return json({ error: 'That clip is too long. Record shorter pieces.' }, 413);
-  if (!env.AI || typeof env.AI.run !== 'function') return json({ error: 'Voice is not connected yet. Type or use the keyboard microphone instead.', degraded: true }, 503);
+  if (!env.AI || typeof env.AI.run !== 'function') { await count(context, 'degraded'); return json({ error: 'Voice is not connected yet. Type or use the keyboard microphone instead.', degraded: true }, 503); }
 
   const limited = await takeRateLimit(env, request, DICTATION_RATE_LIMIT);
   if (limited.limited) return json({ error: 'Too many clips this hour. Type the rest or try again later.' }, 429);
@@ -55,10 +59,12 @@ export async function onRequestPost(context) {
     const text = normalizeSizes(heard).slice(0, MAX_TRANSCRIPT_CHARS);
     // Read from what was actually said: after rewriting, a rounded decimal (71.3) would look exact.
     const found = extractSizes(heard);
+    await count(context, text === '' ? 'degraded' : 'ok');
     // Silence or a muffled pocket clip comes back empty: say so rather than adding nothing silently.
     return json({ text, empty: text === '', sizes: found.map(formatSize), roundedSizes: found.filter((size) => size.rounded).length });
   } catch (error) {
     console.error('quote-dictation-failed', error?.message || error);
+    await count(context, 'degraded');
     return json({ error: "Couldn't hear that clip. Try again, or type it.", degraded: true }, 502);
   }
 }
