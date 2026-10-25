@@ -1,5 +1,6 @@
 import { groqChat, geminiGenerate } from '../../_lib/ai-gateway.mjs';
 import { takeRateLimit } from '../../_lib/abuse-guard.mjs';
+import { recordUsage } from '../_lib/feature-usage.mjs';
 import { MAX_NOTES_CHARS, extractionPrompt, parseModelJson, validateDraft } from '../_lib/quote-notes.mjs';
 
 // Rough notes -> draft quote lines (Command Center > New quote > Rough notes). Read-only: it saves nothing.
@@ -9,6 +10,9 @@ export const NOTES_RATE_LIMIT = { bucket: 'internal-quote-notes', limit: 60, win
 const MAX_BODY_BYTES = 24 * 1024;
 const MAX_OUTPUT_TOKENS = 1400;
 const TIMEOUT_MS = 15000;
+
+// Counted, never blocking: a draft that produced lines, or one that did not (no lines found, or a provider failure).
+const count = (context, outcome) => { const work = recordUsage(context.env, 'quote_draft', outcome); if (typeof context.waitUntil === 'function') context.waitUntil(work); return work; };
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -85,9 +89,10 @@ export async function onRequestPost(context) {
     draft = reply ? parseModelJson(reply) : null;
   }
   // Fail down: no draft, no guessing. The page keeps the notes so Mark can add lines by hand.
-  if (!draft) return json({ error: "Couldn't draft lines from those notes right now. Your notes are kept; add the lines by hand or try again.", degraded: true }, 503);
+  if (!draft) { await count(context, 'degraded'); return json({ error: "Couldn't draft lines from those notes right now. Your notes are kept; add the lines by hand or try again.", degraded: true }, 503); }
 
   const { lines, customer, dropped } = validateDraft(draft, notes);
+  await count(context, lines.length > 0 ? 'ok' : 'degraded');
   return json({ lines, customer, dropped, provider, readOnly: true });
 }
 

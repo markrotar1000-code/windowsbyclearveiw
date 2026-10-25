@@ -26,6 +26,20 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     <a class="tool-card" href="/internal/ask-logs"><span class="tool-icon">✦</span><div><p class="kicker">Intelligence</p><h2>Ask activity</h2><p>See what prospects are asking the Clearview website assistant before they contact the company.</p></div><span class="tool-arrow">Review Ask →</span></a>
   </section>
 
+  <section class="panel setup-card" id="setup" aria-labelledby="setup-title" data-setup>
+    <div class="panel-head"><div><p class="kicker">Is everything connected?</p><h2 id="setup-title">Setup check</h2></div><button class="btn btn-ghost" type="button" data-setup-reload>Check again</button></div>
+    <p class="muted" data-setup-line role="status">Checking...</p>
+    <ul class="setup-list" data-setup-list hidden></ul>
+    <p class="muted setup-fine">Yes or no only. No keys, passwords or values are ever shown here.</p>
+  </section>
+
+  <section class="panel usage-card" id="usage" aria-labelledby="usage-title" data-usage>
+    <div class="panel-head"><div><p class="kicker">Is it being used?</p><h2 id="usage-title">Voice quoting and Measurements, last 30 days</h2></div><button class="btn btn-ghost" type="button" data-usage-reload>Refresh</button></div>
+    <p class="muted" data-usage-line role="status">Loading...</p>
+    <dl class="usage-stats" data-usage-stats hidden></dl>
+    <p class="muted usage-fine">Counts only. No audio, words, customers or phone numbers are recorded here. It exists so you can tell, at the 90-day audit, whether these features earned their keep.</p>
+  </section>
+
   <section class="app-card panel" id="phone-setup" aria-labelledby="app-title" data-app-card>
     <div class="app-copy">
       <p class="kicker">Phone app</p>
@@ -157,7 +171,124 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   }
   initMailDiagnostics();document.addEventListener('astro:page-load',initMailDiagnostics);
 </script>
+<script>
+  type SetupItem = { id: string; required: boolean; ok: boolean; label: string; unlocks: string; fix: string; note?: string };
+  type Row = { label: string; ok: boolean; required: boolean; unlocks: string; fix: string; note: string; state: string };
+  function initSetup() {
+    const root = document.querySelector('[data-setup]');
+    if (!(root instanceof HTMLElement) || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+    const line = root.querySelector('[data-setup-line]');
+    const list = root.querySelector('[data-setup-list]');
+    const reload = root.querySelector('[data-setup-reload]');
+    if (!(line instanceof HTMLElement) || !(list instanceof HTMLElement) || !(reload instanceof HTMLButtonElement)) return;
+
+    // What only this phone can know: does the site allow the microphone on these pages, can the browser record, and has it been blocked here?
+    async function phoneRows(): Promise<Row[]> {
+      const rows: Row[] = [];
+      try {
+        const response = await fetch(location.pathname, { method: 'HEAD', credentials: 'same-origin', cache: 'no-store' });
+        const policy = (response.headers.get('permissions-policy') || '').toLowerCase();
+        const blocked = /microphone=\(\s*\)/.test(policy);
+        rows.push({ label: 'Microphone allowed on these pages', ok: !blocked, required: false, state: blocked ? 'Blocked' : 'Working', unlocks: 'The Record button.', note: '', fix: blocked ? 'The site is telling browsers to block the microphone on these pages (a Permissions-Policy setting). Nothing you change on the phone can undo that; it has to be fixed in the site.' : '' });
+      } catch { /* offline or blocked: leave this row out rather than guess */ }
+      const canRecord = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+      rows.push({ label: 'This browser can record', ok: canRecord, required: false, state: canRecord ? 'Working' : 'Not supported', unlocks: 'The Record button. Typing and the phone keyboard microphone still work without it.', note: '', fix: canRecord ? '' : 'Use Safari on iPhone or Chrome on Android, in the browser rather than a small in-app viewer.' });
+      if (canRecord) {
+        try {
+          const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          const denied = status.state === 'denied';
+          rows.push({ label: 'Microphone permission on this phone', ok: !denied, required: false, state: denied ? 'Blocked' : status.state === 'granted' ? 'Working' : 'Will ask', unlocks: 'The Record button.', note: status.state === 'prompt' ? 'The phone will ask the first time you tap Record.' : '', fix: denied ? 'This phone has blocked the microphone for the site. On a quote page, tap Record and follow the steps shown, or use the browser\'s site settings.' : '' });
+        } catch { /* this browser cannot say */ }
+      }
+      return rows;
+    }
+
+    const make = (row: Row) => {
+      const li = document.createElement('li');
+      li.className = `setup-row ${row.ok ? 'setup-ok' : 'setup-bad'}`;
+      const head = document.createElement('div');
+      const badge = document.createElement('strong'); badge.className = 'setup-badge'; badge.textContent = row.state;
+      const name = document.createElement('span'); name.className = 'setup-name'; name.textContent = row.label;
+      head.append(badge, name);
+      li.append(head);
+      const unlocks = document.createElement('small'); unlocks.textContent = row.unlocks; li.append(unlocks);
+      if (row.note) { const n = document.createElement('small'); n.textContent = row.note; li.append(n); }
+      if (!row.ok && row.fix) { const f = document.createElement('small'); f.className = 'setup-fix'; f.textContent = `To fix: ${row.fix}`; li.append(f); }
+      return li;
+    };
+
+    async function load() {
+      reload.disabled = true; line.textContent = 'Checking...'; list.hidden = true;
+      try {
+        const response = await fetch('/internal/api/setup-check', { credentials: 'same-origin' });
+        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Could not check.');
+        const server: Row[] = (data.items as SetupItem[]).map((item) => ({ label: item.label, ok: item.ok, required: item.required, unlocks: item.unlocks, fix: item.fix, note: item.note || '', state: item.ok ? 'Working' : item.required ? 'Missing' : 'Not set up' }));
+        const rows = [...server, ...(await phoneRows())];
+        const bad = rows.filter((row) => !row.ok);
+        bad.sort((a, b) => Number(b.required) - Number(a.required));
+        list.replaceChildren(...bad.map(make), ...rows.filter((row) => row.ok).map(make));
+        list.hidden = false;
+        line.textContent = bad.length === 0 ? 'Everything is connected.' : `${bad.length} thing${bad.length === 1 ? '' : 's'} to look at. Anything marked Not set up only turns off the feature it names; the rest keeps working.`;
+      } catch (error) {
+        line.textContent = `${error instanceof Error ? error.message : 'Could not check.'} Tap Check again to try again.`;
+      } finally { reload.disabled = false; }
+    }
+    reload.addEventListener('click', () => { void load(); });
+    void load();
+  }
+  initSetup();
+  document.addEventListener('astro:page-load', initSetup);
+</script>
+<script>
+  type Stat = { ok: number; degraded: number; days: number };
+  function initUsage() {
+    const root = document.querySelector('[data-usage]');
+    if (!(root instanceof HTMLElement) || root.dataset.bound === 'true') return;
+    root.dataset.bound = 'true';
+    const line = root.querySelector('[data-usage-line]');
+    const stats = root.querySelector('[data-usage-stats]');
+    const reload = root.querySelector('[data-usage-reload]');
+    if (!(line instanceof HTMLElement) || !(stats instanceof HTMLElement) || !(reload instanceof HTMLButtonElement)) return;
+    const row = (label: string, value: string) => { const wrap = document.createElement('div'); const dt = document.createElement('dt'); const dd = document.createElement('dd'); dt.textContent = label; dd.textContent = value; wrap.append(dt, dd); return wrap; };
+    async function load() {
+      reload.disabled = true; line.textContent = 'Loading...'; stats.hidden = true;
+      try {
+        const response = await fetch('/internal/api/feature-usage?days=30', { credentials: 'same-origin' });
+        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Could not load.');
+        const f = data.features as Record<string, Stat>;
+        const clips = f.dictation_clip, drafts = f.quote_draft, usedDraft = f.quote_saved_with_draft, imported = f.measurements_imported;
+        const nothing = [clips, drafts, usedDraft, imported].every((x) => x.ok + x.degraded === 0);
+        stats.replaceChildren(
+          row('Voice clips written out', `${clips.ok}${clips.degraded ? ` (${clips.degraded} failed or empty)` : ''}`),
+          row('Drafts from notes', `${drafts.ok}${drafts.degraded ? ` (${drafts.degraded} found nothing or failed)` : ''}`),
+          row('Quotes saved with drafted lines', String(usedDraft.ok)),
+          row('Quotes saved with Measurements lines', String(imported.ok)),
+          row('All quotes saved', String(data.quotesSaved)),
+        );
+        stats.hidden = false;
+        line.textContent = nothing
+          ? 'Nothing yet. Once Mark records or drafts a quote it shows here.'
+          : data.quotesSaved > 0
+            ? `${usedDraft.ok + imported.ok} of ${data.quotesSaved} quotes saved in the last ${data.days} days kept lines from voice notes or Measurements.`
+            : 'Used, but no quote has been saved in the last 30 days.';
+      } catch (error) {
+        line.textContent = `${error instanceof Error ? error.message : 'Could not load.'} Tap Refresh to try again.`;
+      } finally { reload.disabled = false; }
+    }
+    reload.addEventListener('click', () => { void load(); });
+    void load();
+  }
+  initUsage();
+  document.addEventListener('astro:page-load', initUsage);
+</script>
 <style>
+.usage-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.75rem;margin:var(--space-s) 0}.usage-stats :global(div){border:1px solid var(--line);border-radius:var(--radius);padding:.6rem .75rem}.usage-stats :global(dt){font-size:var(--step--2);color:var(--ink-soft)}.usage-stats :global(dd){margin:.15rem 0 0;font-size:var(--step-1);font-weight:650;font-variant-numeric:tabular-nums}.usage-fine{font-size:var(--step--2)}
+.setup-list{list-style:none;margin:var(--space-s) 0;padding:0;display:grid;gap:.5rem}.setup-list :global(li){display:grid;gap:.15rem;padding:.65rem .8rem;border:1px solid var(--line);border-radius:var(--radius)}.setup-list :global(li.setup-bad){border-color:var(--danger,#9b2c2c)}.setup-list :global(div){display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem}.setup-list :global(.setup-badge){font-size:var(--step--2);text-transform:uppercase;letter-spacing:.05em}.setup-list :global(.setup-name){font-weight:650}.setup-list :global(small){color:var(--ink-soft);font-size:var(--step--1);line-height:1.4}.setup-list :global(.setup-fix){color:var(--ink)}.setup-fine{font-size:var(--step--2)}
 .tools-head{display:flex;justify-content:space-between;align-items:end;gap:var(--space-m);margin-bottom:var(--space-l)}.mail-test{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(19rem,.9fr);gap:var(--space-l);padding:var(--space-m);margin-bottom:var(--space-l);border-color:color-mix(in srgb,var(--accent) 30%,var(--line));background:linear-gradient(135deg,var(--paper-raised),var(--accent-wash))}.mail-test h2{margin:.15rem 0 .35rem;font-size:var(--step-2)}.mail-test p:not(.kicker){margin:0;color:var(--ink-soft);max-width:54ch}.mail-test-action{display:grid;align-content:center;gap:.65rem}.mail-test-buttons{display:flex;gap:.5rem;flex-wrap:wrap}.mail-test-buttons .btn{min-height:2.75rem}.mail-test-status{font-size:var(--step--2);color:var(--ink-soft);word-break:break-word}.mail-test-results{grid-column:1/-1;border-top:1px solid var(--line);padding-top:var(--space-s);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-l)}.mail-result-block{min-width:0}:global(.mail-row){display:flex;justify-content:space-between;gap:var(--space-m);align-items:start;padding:.6rem 0;border-bottom:1px solid var(--line)}:global(.mail-row:last-child){border-bottom:0}:global(.mail-row strong),:global(.mail-row small){display:block}:global(.mail-row small){margin-top:.15rem;color:var(--ink-soft);font-size:var(--step--2)}:global(.mail-row code){font-size:.68rem;color:var(--ink-faint);word-break:break-all;text-align:right}:global(.mail-domain-state){font-size:var(--step--2);font-weight:800;text-transform:uppercase;letter-spacing:.05em}:global(.mail-empty){font-size:var(--step--2);color:var(--ink-soft)}.tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-s)}.tool-card{display:grid;grid-template-columns:auto 1fr;gap:var(--space-s);padding:var(--space-m);border:1px solid var(--line);border-radius:var(--radius);background:var(--paper-raised);color:inherit;text-decoration:none;min-height:13rem;transition:transform 120ms ease,box-shadow 120ms ease,border-color 120ms ease}.tool-card:hover,.tool-card:focus-visible{border-color:var(--line-strong);transform:translateY(-1px);box-shadow:var(--shadow-sm);outline:none}.tool-primary{border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}.visualizer-card,.field-mode-card{border-color:var(--accent)}.tool-icon{width:2.4rem;height:2.4rem;border-radius:.8rem;display:grid;place-items:center;background:var(--ink);color:var(--on-dark);font-weight:800}.tool-primary .tool-icon{background:var(--accent)}.tool-card h2{margin:.15rem 0 .35rem;font-size:var(--step-1)}.tool-card p:not(.kicker){margin:0;color:var(--ink-soft);max-width:42rem}.tool-arrow{grid-column:2;align-self:end;font-size:var(--step--1);font-weight:700}.roadmap{margin-top:var(--space-l);padding:var(--space-m)}.roadmap h2{margin:.15rem 0 .35rem;font-size:var(--step-1)}.roadmap-flow{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:var(--space-m)}.roadmap-flow span{border:1px solid var(--line);border-radius:999px;padding:.45rem .7rem;font-size:var(--step--2);font-weight:700;background:var(--paper)}.roadmap-flow i{color:var(--ink-faint);font-style:normal}@media(max-width:800px){.mail-test{grid-template-columns:1fr}.mail-test-results{grid-template-columns:1fr}.mail-test-buttons{display:grid;grid-template-columns:1fr}.mail-test-buttons .btn{width:100%}}@media(max-width:700px){.tools-head{align-items:flex-start;flex-direction:column}.tool-grid{grid-template-columns:1fr}:global(.mail-row){gap:.75rem;flex-direction:column}:global(.mail-row code){display:block;text-align:left}}@media(prefers-reduced-motion:reduce){.tool-card{transition:none}}
 
   .app-card{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--space-m);margin-bottom:var(--space-m)}.app-copy h2{margin:.08rem 0 .4rem}.app-copy p{margin:.4rem 0;color:var(--ink-soft);font-size:var(--step--1)}.app-limits strong{color:var(--ink)}

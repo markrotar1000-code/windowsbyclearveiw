@@ -379,5 +379,121 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await off.ctx.close(); ok('sizes are spoken back only when asked, in words, after the microphone is off');
 }
 
+// 19. Saving a quote reports a count only when drafted lines were actually kept.
+{
+  const run = async (keep) => {
+    const { ctx, page } = await open({ drafts: [{ lines: [{ type: 'window', openingId: 'slider', materialId: 'vinyl', brandId: 'cascade', method: null, quantity: 1, room: 'Den', size: '', note: '', heard: '' }] }] });
+    const reported = [];
+    await page.route('**/internal/api/feature-usage', (r) => { reported.push(JSON.parse(r.request().postData()).feature); r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+    await page.route('**/internal/api/quotes', (r) => r.fulfill({ status: 201, contentType: 'application/json', body: '{"id":"Q-1"}' }));
+    await page.fill('[data-rough-notes]', 'Den slider.'); await page.click('[data-draft-go]');
+    await page.waitForFunction(() => document.querySelectorAll('.qb-items tbody tr').length === 1);
+    if (!keep) { await page.click('[data-draft-undo]'); await page.click('[data-custom-add]').catch(() => {}); await page.fill('[data-custom-label]', 'Hand-typed line'); await page.fill('[data-custom-price]', '100'); await page.click('[data-custom-add]'); }
+    await page.fill('[name=name]', 'Dana'); await page.fill('[name=phone]', '3605550142');
+    await page.click('[data-submit]');
+    await page.waitForTimeout(500);
+    await ctx.close();
+    return reported;
+  };
+  assert.deepEqual(await run(true), ['quote_saved_with_draft'], 'a saved quote that kept drafted lines is counted');
+  assert.deepEqual(await run(false), [], 'a quote whose drafted lines were removed is not counted');
+  ok('saving a quote reports a count only when drafted lines were kept');
+}
+
+// 20. The Tools page shows the counts, and recovers from a failure.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  let calls = 0;
+  await page.route('**/internal/api/feature-usage**', (r) => {
+    calls += 1;
+    if (calls === 1) return r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Could not load."}' });
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ days: 30, quotesSaved: 6, features: { dictation_clip: { ok: 14, degraded: 2, days: 4 }, quote_draft: { ok: 5, degraded: 1, days: 3 }, quote_saved_with_draft: { ok: 3, degraded: 0, days: 3 }, measurements_imported: { ok: 1, degraded: 0, days: 1 } } }) });
+  });
+  await page.route('**/internal/api/**', (r) => (/feature-usage/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await page.goto(`${base}/internal/tools`);
+  await page.waitForFunction(() => /Tap Refresh to try again/.test(document.querySelector('[data-usage-line]').textContent));
+  await page.click('[data-usage-reload]');
+  await page.waitForFunction(() => !document.querySelector('[data-usage-stats]').hidden);
+  assert.match(await page.textContent('[data-usage-line]'), /4 of 6 quotes saved in the last 30 days kept lines from voice notes or Measurements/);
+  const text = await page.textContent('[data-usage-stats]');
+  assert.match(text, /Voice clips written out14 \(2 failed or empty\)/); assert.match(text, /Quotes saved with drafted lines3/); assert.match(text, /All quotes saved6/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('the Tools page shows the usage counts and recovers from a failed load');
+}
+
+// 21. Payments: each job shows its change history, and a saved correction adds to it.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  const history = [
+    { at: '2026-10-25T20:10:00.000Z', previous_cents: 500000, new_cents: 450000, method: 'Card' },
+    { at: '2026-10-25T18:00:00.000Z', previous_cents: 200000, new_cents: 500000, method: 'Card' },
+    { at: '2026-10-24T18:00:00.000Z', previous_cents: 0, new_cents: 200000, method: 'Check' } ];
+  const job = { id: 'J-1', job_status: 'ready', work_type: 'windows', scheduled_date: null, customer_name: 'Pat Doe', customer_city: 'Camas', total_cents: 500000, payment_id: 1, amount_paid_cents: 450000, payment_method: 'Card', notes: '', balance_cents: 50000, payment_status: 'partial', history };
+  await page.route('**/internal/api/payments**', (r) => {
+    if (r.request().method() === 'PATCH') {
+      const body = JSON.parse(r.request().postData());
+      const next = [{ at: '2026-10-25T21:00:00.000Z', previous_cents: 450000, new_cents: body.amountPaidCents, method: body.paymentMethod || null }, ...history];
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, payment: { amount_paid_cents: body.amountPaidCents, balance_cents: 500000 - body.amountPaidCents, status: 'partial', payment_method: body.paymentMethod, notes: body.notes }, history: next }) });
+    }
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ jobs: [job] }) });
+  });
+  await page.route('**/internal/api/**', (r) => (/payments/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await page.goto(`${base}/internal/payments`);
+  await page.waitForSelector('.payment-history-box');
+  assert.match(await page.textContent('.payment-history-box summary'), /History \(3\)/);
+  await page.click('.payment-history-box summary');
+  const items = await page.$$eval('.payment-history li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+  assert.match(items[0], /\$500 taken off \(correction\).*paid to date \$4,500.*Card/);
+  assert.match(items[1], /\+\$3,000 received/); assert.match(items[2], /\+\$2,000 received.*Check/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  await page.click('.payment-editor summary'); await page.fill('[data-paid-input]', '4000');
+  await page.click('[data-save]');
+  await page.waitForFunction(() => /History \(4\)/.test(document.querySelector('.payment-history-box summary').textContent));
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('Payments shows each change (received or corrected) and a saved correction adds to it');
+}
+
+// 22. Setup check: what needs attention comes first, the phone's own microphone checks are included, and it recovers from a failed load.
+{
+  const run = async (policy) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+    let calls = 0;
+    await page.route('**/internal/api/setup-check', (r) => {
+      calls += 1;
+      if (calls === 1) return r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"Could not check."}' });
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ allRequiredOk: true, items: [
+        { id: 'database', required: true, ok: true, label: 'Database', unlocks: 'Everything.', fix: 'Bindings.' },
+        { id: 'voice', required: false, ok: false, label: 'Voice recording', unlocks: 'The Record button on a new quote.', fix: 'Cloudflare Pages > Settings > Bindings: Workers AI binding named AI.' },
+        { id: 'drafting', required: false, ok: true, label: 'AI drafting', unlocks: 'Draft lines from notes.', fix: 'Keys.', note: 'One provider is set. Setting both lets one back up the other.' } ] }) });
+    });
+    await page.route('**/internal/tools', (r) => (r.request().method() === 'HEAD' ? r.fulfill({ status: 200, headers: policy ? { 'permissions-policy': policy } : {}, body: '' }) : r.fallback()));
+    await page.route('**/internal/api/**', (r) => (/setup-check|feature-usage/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+    await page.goto(`${base}/internal/tools`);
+    await page.waitForFunction(() => /Tap Check again to try again/.test(document.querySelector('[data-setup-line]').textContent));
+    await page.click('[data-setup-reload]');
+    await page.waitForFunction(() => !document.querySelector('[data-setup-list]').hidden);
+    const rows = await page.$$eval('.setup-list li', (l) => l.map((x) => ({ bad: x.classList.contains('setup-bad'), text: x.textContent.replace(/\s+/g, ' ').trim() })));
+    const line = await page.textContent('[data-setup-line]');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    await ctx.close();
+    return { rows, line, overflow, errors };
+  };
+  const blocked = await run('camera=(), microphone=(), geolocation=()');
+  assert.match(blocked.line, /^2 things to look at\./);
+  assert.ok(blocked.rows[0].bad && blocked.rows[1].bad && !blocked.rows[2].bad, 'what needs attention is listed first');
+  assert.ok(blocked.rows.some((r) => /Microphone allowed on these pages.*Blocked|Blocked.*Microphone allowed on these pages/.test(r.text) && /Permissions-Policy/.test(r.text)), 'a site-level microphone block is reported, with its real cause');
+  assert.ok(blocked.rows.some((r) => /Voice recording/.test(r.text) && /To fix: Cloudflare Pages > Settings > Bindings: Workers AI binding named AI\./.test(r.text) && /Not set up/.test(r.text)));
+  assert.ok(blocked.rows.some((r) => /One provider is set\./.test(r.text)), 'notes are shown');
+  assert.equal(blocked.overflow, 0, 'no sideways scroll'); assert.deepEqual(blocked.errors, []);
+  const allowed = await run('camera=(), microphone=(self), geolocation=()');
+  assert.ok(allowed.rows.some((r) => /Microphone allowed on these pages/.test(r.text) && !r.bad), 'microphone=(self) counts as allowed');
+  assert.ok(!allowed.rows.some((r) => /Microphone allowed on these pages/.test(r.text) && r.bad));
+  ok('Setup check lists what needs attention first, reads the real microphone policy, and recovers from a failed load');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');

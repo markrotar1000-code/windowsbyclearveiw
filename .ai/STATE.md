@@ -1,3 +1,23 @@
+## 2026-10-25 - Setup check on Tools
+
+A missing key or binding used to show up only when a feature quietly stopped working (Record saying "Voice is not connected yet", drafting failing). Tools now has a **Setup check**: plain yes/no for the database, sign-in, voice (the `AI` binding), AI drafting (Groq/Gemini keys), email (Resend), the new-lead phone alert, job photo backup (R2) and spam protection, each saying what it unlocks and where to fix it, anything needing attention listed first. It also checks what only the phone can know: whether the site's own Permissions-Policy blocks the microphone on these pages (read from a HEAD request to the page itself), whether the browser can record, and whether the phone has blocked the microphone. It never returns or shows a value (`test:setup-check` checks that no secret appears in the response). Sign-in notes when the session secret still uses the legacy misspelled name (works, rename when convenient). This replaces the by-hand "pre-flight" checks I listed for Mark's phone.
+
+## 2026-10-25 - Payments keep a history; customer search fits a phone
+
+**Payment history.** Each job stores one "paid to date" number that used to be overwritten, so a mistyped payment and its correction left no trace. New append-only `job_payment_log` (created on first use): a row is written, in the same batch as the update, whenever the paid amount or the method changes (not for a note alone, and never for a refused change). The Payments page shows "History (n)" under each job: "+$3,000 received", "$500 taken off (correction)", "Method changed", with the paid-to-date and method; the newest eight are listed, the full record is kept. Nothing updates or deletes it. The invoice still follows the payment as before. `test:payment-history` (CI).
+
+**Search placeholder.** "Find a customer" said "Name, phone, address or quote number" and was cut off on a phone ("quote numbe"); now "Name, phone, address, quote #", guarded in `test:internal-mobile`.
+
+Reviewed and left alone: the Today, Leads, Jobs, Payments and Dashboard phone screens (seeded, 390 px) look right; the long comb of letters on Today is the audit's deliberate long-word stress data wrapping correctly.
+
+## 2026-10-25 - Command Center: is voice quoting being used, and laptop page titles
+
+**Usage counts.** New `feature_usage` table (created on first use; a day, a feature and two counts, nothing else) written best-effort by the dictation and draft endpoints, plus two events the quote page reports after a save when drafted or Measurements lines were actually kept. Shown on Tools ("Voice quoting and Measurements, last 30 days", with a retry). This is the evidence the 90-day audit needs, and it makes a feature that quietly fails visible. `test:feature-usage` (CI). The table helper remembers its table per database object, not globally (a second or restored database would otherwise never get one).
+
+**Laptop titles.** Every Command Center page title was the marketing site's 74 px display size on a laptop (a long-listed open item); now about 41 px at 1440 wide, phone unchanged. Guarded in `test:internal-mobile`.
+
+**Production reality check (read-only, counts only).** In the Cloudflare account that owns the Pages project (Mark's), database `clearveiw-quotes` (5bd299fc...) held 2 leads (latest 2026-10-22), 0 quotes, 1 job, 0 invoices. A second database with the same name (4700b6f7..., the id in `wrangler.toml` and older notes) exists in Keith's account; a read of it was blocked by the permission system and not retried. **VERIFY (Keith):** which database the live Pages binding uses, and whether Mark has quoted anything through the Command Center yet. Until quotes are being saved, more quote tooling is ahead of revenue (Cathedral order).
+
 ## 2026-10-25 - Measurements to quote handoff, and sturdier audio capture
 
 **Correction:** I told Keith nothing connected the Measurements worksheet to the quote builder. That was wrong. An import already existed, hidden in `InternalLayout.astro` (from the Google operations commit): it clicked the Add line button for each opening and wrote labels like `Kitchen — Double-hung — 35.5" W × 47.75" H` (decimals, which the Build Plan cannot read), silently skipped types not in the price book (bay/bow, entry doors), used a pop-up, and could not be undone. Replaced by a proper panel on the quote page (see `.ai/workflows/quote-dictation/CONTEXT.md`): previewed, standard `35 1/2 x 47 3/4` sizes, every type defined (price-book window line or unpriced $0 custom line), exact Undo, no duplicates, notes written once; the Build Plan reads its sizes. The old code and its CSS are removed.

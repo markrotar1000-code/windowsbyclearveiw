@@ -252,6 +252,9 @@ const catalog = {
 
     const catalog: Catalog = JSON.parse(form.dataset.catalog || '{}');
     const items: LineItem[] = [];
+    // Whether drafted or imported lines are still on the quote when it is saved. Only a count of that is reported (see
+    // functions/internal/_lib/feature-usage.mjs): it is how the 90-day audit sees whether voice and Measurements earn their keep.
+    const kept = { draft: () => false, measure: () => false };
 
     // A problem with something typed into an add-line or line-item field, shown at the bottom of that block
     // (and the field focused) so it is visible on a phone, where the browser's own validation bubble may not be.
@@ -548,6 +551,7 @@ const catalog = {
       let previousConsumed = '';         // restored by Undo
       let lastBatch: LineItem[] = [];    // lines from the last draft (Undo)
       let allDrafted: LineItem[] = [];   // every drafted line still on the quote (replace-all)
+      kept.draft = () => allDrafted.some((item) => items.includes(item));
       let drafting = false;
       let draftAgain = false;
       let pendingClips = 0;
@@ -976,6 +980,7 @@ const catalog = {
         }
         if (plan.checks.length) { measureChecks.hidden = false; measureChecks.textContent = plan.checks.join(' '); }
         let importedItems: LineItem[] = [];
+        kept.measure = () => importedItems.some((item) => items.includes(item));
         const measureSay = (message: string) => { measureStatus.hidden = message === ''; measureStatus.textContent = message; };
         measureAdd.addEventListener('click', () => {
           if (importedItems.length) return;
@@ -1281,6 +1286,9 @@ const catalog = {
         if (!response.ok) throw new Error(result.error || 'Could not save the quote.');
         const id = editId || result.id;
         store.del(NOTES_KEY);
+        for (const [feature, used] of [['quote_saved_with_draft', kept.draft()], ['measurements_imported', kept.measure()]] as const) {
+          if (used) void fetch('/internal/api/feature-usage', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ feature }), keepalive: true }).catch(() => {});
+        }
         window.location.href = `/internal/quotes/view?id=${encodeURIComponent(id)}`;
       } catch (error) {
         status.hidden = false;

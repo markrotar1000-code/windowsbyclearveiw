@@ -1,3 +1,7 @@
+## 2026-10-25 - Two databases named clearveiw-quotes (open question)
+
+`wrangler.toml` and the notes name D1 `4700b6f7-c3d8-46c9-9b19-17cf34accb84` (Keith's Cloudflare account, created 2026-08-28). Mark's account (which owns the Pages project) holds another `clearveiw-quotes`, `5bd299fc-0ca2-4d75-94f5-95c3943e9d79` (created 2026-10-03), with 2 leads, 0 quotes, 1 job, 0 invoices on 2026-10-25. Confirm in Pages > Settings > Bindings which one `QUOTES_DB` points at. The new usage card on Tools reads whichever the live site uses.
+
 ## 2026-10-25 - Recordings saved on the phone (for the next agent)
 
 Unsent dictation clips now wait in the phone's IndexedDB (`clearview-quote-clips`) for up to 12 hours; they are deleted on success or by the "Delete saved recordings" button. If anyone asks whether audio is stored: not on our servers (the endpoint stores and logs nothing); only on the phone, only while unsent. The old Measurements import in the layout is gone; the quote page owns it.
