@@ -57,6 +57,7 @@
     "test:copilot": "node scripts/test-copilot.mjs",
     "test:copilot-snapshot": "node --disable-warning=ExperimentalWarning scripts/test-copilot-snapshot.mjs",
     "test:ai-surfaces": "node scripts/test-ai-surfaces.mjs",
+    "test:handler-tests-ai": "node --disable-warning=ExperimentalWarning scripts/test-handler-tests-ai.mjs",
     "test:google-reviews": "node scripts/test-google-reviews.mjs",
     "test:charts": "node scripts/test-charts.mjs",
     "test:image-delivery": "node scripts/test-image-delivery.mjs",
