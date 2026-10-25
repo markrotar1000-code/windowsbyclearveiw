@@ -6,7 +6,7 @@
     <div id="st-stats" class="st-stats"></div>
     <div class="st-filters">
       <label>Search prospects<input id="st-search" type="search" placeholder="Name, address, phone, email" /></label>
-      <label>Review group<select id="st-group"><option value="">All prospects</option><option value="review">Phone review needed</option><option value="hold">Hold / other channel review</option><option value="higher">Higher window priority</option><option value="email">Has email</option><option value="due">Follow-up due</option></select></label>
+      <label>Review group<select id="st-group"><option value="">All prospects</option><option value="review">Numbers to verify</option><option value="hold">Contact hold</option><option value="higher">Higher window priority</option><option value="email">Has email</option><option value="due">Follow-up due</option></select></label>
       <label>Status<select id="st-status"><option value="">All statuses</option></select></label>
     </div>
     <p id="st-count" role="status" aria-live="polite"></p>
@@ -25,6 +25,7 @@
     const labels = { new: 'New', researching: 'Researching', attempted: 'Attempted contact', connected: 'Connected', interested: 'Interested', not_interested: 'Not interested', do_not_contact: 'Do not contact' };
     let rows: any[] = [];
     const esc = (value: any) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+    const phoneLabel = (number: string) => number.replace(/^(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3');
     const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     const options = (selected: string) => Object.entries(labels).map(([k,v]) => `<option value="${k}" ${k === selected ? 'selected' : ''}>${v}</option>`).join('');
     status.insertAdjacentHTML('beforeend', options(''));
@@ -34,13 +35,13 @@
       const filtered = rows.filter(r => (!q || [r.name,r.ownerName,r.address,r.city,r.zip,r.mailing,...r.emails,...r.phones.map(p=>p.number)].join(' ').toLowerCase().includes(q) || digits.length >= 7 && r.phones.some(p=>p.number.includes(digits))) && (!status.value || r.status === status.value) && (!group.value || r.group === group.value || group.value === 'higher' && r.group === 'review' && r.priority?.tier === 'higher' || group.value === 'email' && r.emails.length || group.value === 'due' && r.follow_up && r.follow_up <= today() && !['not_interested','do_not_contact'].includes(r.status))).sort((a,b)=>(a.group==='hold'?1:0)-(b.group==='hold'?1:0) || (b.priority?.score ?? -1)-(a.priority?.score ?? -1) || a.address.localeCompare(b.address));
       get('st-count').textContent = `${filtered.length} of ${rows.length} prospects`;
       get('st-list').innerHTML = filtered.map(r => `<article class="st-card" data-id="${esc(r.id)}">
-        <div class="st-card-head"><div><h3>${esc(r.name)}</h3><p>${esc(r.address)}<br>${esc(r.city)}, ${esc(r.state)} ${esc(r.zip)}</p></div><span class="st-badge ${r.group === 'hold' ? 'st-hold' : ''}">${r.group === 'hold' ? 'Hold / review' : 'Phone review needed'}</span></div>
+        <div class="st-card-head"><div><h3>${esc(r.name)}</h3><p>${esc(r.address)}<br>${esc(r.city)}, ${esc(r.state)} ${esc(r.zip)}</p></div><span class="st-badge ${r.group === 'hold' ? 'st-hold' : ''}">${r.group === 'hold' ? 'Contact hold' : 'Numbers to verify'}</span></div>
         <p class="st-meta">Batch: ${esc(r.batch)} · ${esc(r.match)} · ${esc(labels[r.status])}</p>
+        <div class="st-phones"><h4>Phone numbers (${r.phones.length})</h4>${r.phones.length ? `<ul>${r.phones.map(p=>`<li><span class="st-phone-number">${esc(phoneLabel(p.number))}</span> <span class="st-meta">${esc(p.type)}</span><strong class="${p.dnc || p.suppressed ? 'st-flag' : ''}">${p.suppressed ? 'Company do-not-contact' : p.dnc ? 'DNC — do not call/text' : !p.valid ? 'Invalid number — verify' : 'Unverified — DNC check needed'}${p.flag && !p.dnc ? ' · Source: '+esc(p.flag) : ''}</strong></li>`).join('')}</ul>` : '<p>No phone numbers supplied.</p>'}</div>
         ${r.research ? `<div class="st-research"><strong>Window research priority: ${esc(r.priority.tier)}${r.priority.score === null ? '' : ' · '+r.priority.score+'/90'}</strong><p>${r.priority.reasons.map(esc).join('<br>')}</p><p>${esc(r.research.propertyType || 'Property type unverified')}${r.research.sqft ? ' · '+esc(r.research.sqft)+' sq ft' : ''} · Source confidence: ${esc(r.research.confidence)}</p><details><summary>Property research and sources</summary><p>${esc(r.research.windowEvidence || 'No window-specific evidence found.')}</p><ul>${(r.research.otherFacts || []).map(f=>'<li>'+esc(f)+'</li>').join('')}</ul><p>${(r.research.limitations || []).map(esc).join('<br>')}</p><ul>${(r.research.sources || []).filter(s=>/^https?:\/\//i.test(s.url)).map(s=>'<li><a target="_blank" rel="noopener noreferrer" href="'+esc(s.url)+'">'+esc(s.title || s.url)+'</a><br>'+s.facts.map(esc).join('; ')+'</li>').join('')}</ul><p class="st-meta">Researched ${esc(r.research.researchedAt?.slice(0,10))}. Listing details can be historical.</p></details></div>` : '<p class="st-meta">Property research pending or outside the phone-review group.</p>'}
         ${Object.entries(r.flags).filter(([,v])=>v).map(([k])=>`<p class="st-flag">Source flag: ${esc({deceased:'Deceased',litigator:'Litigator',tcpaDnc:'TCPA DNC'}[k])} — verify before outreach.</p>`).join('')}
-        <details><summary>Contact and mailing details (${r.phones.length} phones · ${r.emails.length} emails)</summary>
+        <details><summary>Mailing address and emails (${r.emails.length})</summary>
           <p><strong>Owner in source:</strong> ${esc(r.ownerName)}<br><strong>Mailing:</strong> ${esc(r.mailing)}</p>
-          <ul>${r.phones.map(p=>`<li><span>${esc(p.number)} · ${esc(p.type)}</span><strong class="${p.dnc || p.suppressed ? 'st-flag' : ''}">${p.suppressed ? 'Company do-not-contact' : p.dnc ? 'DNC — do not call/text' : !p.valid ? 'Invalid number — verify' : 'Unverified — DNC check needed'}${p.flag && !p.dnc ? ' · Source: '+esc(p.flag) : ''}</strong></li>`).join('')}</ul>
           <p>${r.emails.length ? r.emails.map(esc).join('<br>') : 'No email supplied.'}</p>
         </details>
         <form data-edit>
@@ -105,6 +106,7 @@
   .st-filters,.st :global(.st-fields) { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; }
   .st :global(label) { display:grid; gap:.35rem; min-width:0; } .st :global(input),.st :global(select),.st :global(textarea) { width:100%; min-width:0; min-height:44px; font:inherit; padding:.65rem; box-sizing:border-box; }
   .st :global(.st-card) { padding:1rem 0; border-top:1px solid #ccd6da; overflow-wrap:anywhere; }
+  .st :global(.st-phones) { margin:.8rem 0; } .st :global(.st-phones h4) { margin:0; font-size:1rem; } .st :global(.st-phones ul) { padding-left:1.2rem; } .st :global(.st-phone-number) { font-weight:700; font-variant-numeric:tabular-nums; }
   .st :global(.st-meta) { font-size:.85rem; opacity:.8; } .st :global(.st-badge) { padding:.35rem .6rem; border-radius:20px; background:#eef5f7; color:#233f4d; font-size:.85rem; }
   .st :global(.st-research) { padding:.8rem; border-left:3px solid #397b8a; background:#f0f6f7; color:#233f4d; border-radius:6px; margin:.7rem 0; }
   .st :global(.st-hold),.st :global(.st-flag) { color:#8a291d; } .st :global(summary) { cursor:pointer; min-height:44px; padding:.65rem 0; }
