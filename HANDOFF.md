@@ -1,3 +1,11 @@
+## 2026-10-25 - Vancouver 98662 prospect batch
+
+Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.
+
+Loaded 47 new private prospects and 47 sourced enrichment records from the user-supplied CSV into the confirmed production QUOTES_DB (Mark's account); no ID duplicates with the existing batch. Clark County assessor GIS returned 44 unique exact parcel matches: 29 meet the residential/build-year checks, 12 built at/before 1978 are omitted by the deployed cutoff, and 6 records remain on property verification holds (3 unresolved parcels, 3 nonresidential classes). Source-only grouping yields 25 numbers-to-verify records and 10 contact/property holds among 35 visible new records; existing company suppression also applies. Supplied file has 192 phone entries, 96 DNC flags and 43 records with email. No fresh registry screen or phone-owner verification was performed; property age does not establish window condition or intent.
+
+Private artifacts are ignored under data/skip-trace/import-98662; contact data and research rows are not committed. Production post-load aggregate counts confirmed all 47 prospects and 47 enrichments. Header is generalized from Battle Ground/98604 to Clark County and the existing search placeholder mentions ZIP so both batches are represented accurately. No inbound inquiry, quote, job, outreach or suppression record was created or changed. Local checks and release evidence are in the task's Vancouver batch logs.
+
 ## 2026-10-25 - PR 307 conflict resolution
 
 Validation after conflict resolution: all 88 canonical steps and the separate 70-page build passed. Synthetic Chromium checks passed at 320/390/768/1280 pixels and 390 pixels with 200% text. Live authenticated UI is unverified behind Cloudflare Access; preview/production deployment verification follows in PR 307.
