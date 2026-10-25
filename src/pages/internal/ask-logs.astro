@@ -12,7 +12,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   </div>
 
   <p data-loading>Loading…</p>
-  <div class="al-error" data-error hidden role="alert"><span data-error-text></span> <button class="btn btn-ghost" type="button" data-retry>Try again</button></div>
+  <div data-error hidden></div>
   <p data-empty hidden>No activity yet.</p>
 
   <div class="al-summary" data-summary hidden>
@@ -39,6 +39,9 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
 </InternalLayout>
 
 <script>
+  import { fetchJson, InternalFetchError } from '../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../lib/load-failed';
+
   function initAskLogs() {
     const list = document.querySelector('[data-list]');
     if (!(list instanceof HTMLElement) || list.dataset.bound === 'true') return;
@@ -181,8 +184,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       if (loading instanceof HTMLElement) loading.hidden = true;
       if (errorEl instanceof HTMLElement) {
         errorEl.hidden = false;
-        const text = errorEl.querySelector('[data-error-text]');
-        if (text) text.textContent = message;
+        errorEl.replaceChildren(loadFailedNode(message, () => void load()));
       }
     }
 
@@ -190,9 +192,7 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
       if (errorEl instanceof HTMLElement) errorEl.hidden = true;
       if (loading instanceof HTMLElement) loading.hidden = false;
       try {
-        const response = await fetch('/internal/api/ask-logs');
-        if (!response.ok) throw new Error();
-        const { logs, funnel } = await response.json();
+        const { logs, funnel } = await fetchJson('/internal/api/ask-logs');
         renderFunnel(funnel);
 
         if (loading instanceof HTMLElement) loading.hidden = true;
@@ -214,12 +214,13 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
         list.hidden = false;
         list.replaceChildren(...logs.map(buildCard));
         wireFilters();
-      } catch {
-        showError('Could not load ask activity. Check your signal and try again.');
+      } catch (error) {
+        // An expired sign-in says so (SESSION_EXPIRED_MESSAGE); a dropped connection gets the no-signal line.
+        const fallback = 'Could not load ask activity. Check your signal and try again.';
+        showError(error instanceof InternalFetchError ? loadFailureMessage(error, fallback) : fallback);
       }
     }
 
-    document.querySelector('[data-retry]')?.addEventListener('click', () => void load());
     load();
   }
 
@@ -238,14 +239,6 @@ import InternalLayout from '../../layouts/InternalLayout.astro';
   }
 
   .al-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
-
-  .al-error {
-    color: var(--danger);
-    display: flex;
-    align-items: center;
-    gap: var(--space-s);
-    flex-wrap: wrap;
-  }
 
   .al-filters { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: var(--space-s); }
   .al-filters .filter { border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink-soft); border-radius: 999px; padding: .45rem .85rem; font: inherit; font-size: var(--step--1); font-weight: 700; cursor: pointer; min-height: 2.75rem; }

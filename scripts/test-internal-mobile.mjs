@@ -108,7 +108,7 @@ const askLogs = read('src/pages/internal/ask-logs.astro');
 assert.ok(!/innerHTML/.test(askLogs), 'Ask activity builds its cards as nodes, not HTML strings');
 assert.ok(/al-clamped/.test(askLogs) && /Show the full answer/.test(askLogs), 'a long Ask answer starts folded with a toggle');
 assert.ok(/data-filter="refused"/.test(askLogs) && /data-filter="tools"/.test(askLogs), 'Ask activity can be filtered to unanswered questions and tool use');
-assert.ok(/data-retry/.test(askLogs), 'a failed Ask load offers Try again');
+assert.ok(/loadFailedNode\(message, \(\) => void load\(\)\)/.test(askLogs), 'a failed Ask load offers Try again');
 assert.ok(/:global\(\.al-card-meta\) \{\s*display: flex;\s*flex-wrap: wrap;/.test(askLogs), 'the Ask meta row wraps instead of overflowing');
 const google = read('src/pages/internal/google-tools.astro');
 assert.ok(/panel\.dataset\.off=on\?'false':'true'/.test(google) && /\.tool-grid \.panel\[data-off="true"\]\{order:2/.test(google), 'tools that are not connected fold and sort last');
