@@ -20,6 +20,7 @@ data/mail-pilot/
 
 # supplier permit list: owner names, mailing addresses and phone numbers from a licensed report, repo is public
 data/supplier-permits/
+data/skip-trace/
 
 # environment variables
 .env
