@@ -20,6 +20,7 @@
     "test:icm": "node scripts/test-icm-router.mjs",
     "test:icm-structure": "node scripts/test-icm-structure.mjs",
     "test:all": "node scripts/run-all-tests.mjs",
+    "test:payment-history": "node --disable-warning=ExperimentalWarning scripts/test-payment-history.mjs",
     "test:feature-usage": "node --disable-warning=ExperimentalWarning scripts/test-feature-usage.mjs",
     "test:audio-capture": "node --disable-warning=ExperimentalWarning scripts/test-audio-capture.mjs",
     "test:measurement-handoff": "node --disable-warning=ExperimentalWarning scripts/test-measurement-handoff.mjs",

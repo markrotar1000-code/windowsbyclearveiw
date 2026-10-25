@@ -1,3 +1,11 @@
+## 2026-10-25 - Payments keep a history; customer search fits a phone
+
+**Payment history.** Each job stores one "paid to date" number that used to be overwritten, so a mistyped payment and its correction left no trace. New append-only `job_payment_log` (created on first use): a row is written, in the same batch as the update, whenever the paid amount or the method changes (not for a note alone, and never for a refused change). The Payments page shows "History (n)" under each job: "+$3,000 received", "$500 taken off (correction)", "Method changed", with the paid-to-date and method; the newest eight are listed, the full record is kept. Nothing updates or deletes it. The invoice still follows the payment as before. `test:payment-history` (CI).
+
+**Search placeholder.** "Find a customer" said "Name, phone, address or quote number" and was cut off on a phone ("quote numbe"); now "Name, phone, address, quote #", guarded in `test:internal-mobile`.
+
+Reviewed and left alone: the Today, Leads, Jobs, Payments and Dashboard phone screens (seeded, 390 px) look right; the long comb of letters on Today is the audit's deliberate long-word stress data wrapping correctly.
+
 ## 2026-10-25 - Command Center: is voice quoting being used, and laptop page titles
 
 **Usage counts.** New `feature_usage` table (created on first use; a day, a feature and two counts, nothing else) written best-effort by the dictation and draft endpoints, plus two events the quote page reports after a save when drafted or Measurements lines were actually kept. Shown on Tools ("Voice quoting and Measurements, last 30 days", with a retry). This is the evidence the 90-day audit needs, and it makes a feature that quietly fails visible. `test:feature-usage` (CI). The table helper remembers its table per database object, not globally (a second or restored database would otherwise never get one).

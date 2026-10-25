@@ -155,3 +155,11 @@ console.log('internal mobile: ok');
   assert.match(layout, /\.internal-main :global\(h1\)\{font-size:clamp\(2rem,1\.4rem \+ 1\.3vw,2\.75rem\)!important/, 'Command Center titles have their own laptop size');
   console.log('PASS: Command Center page titles use a working size on laptops');
 }
+
+// The "Find a customer" placeholder must fit a 390 px phone field without being cut off (it was "quote numbe").
+{
+  const bar = read('src/components/internal/FindBar.astro');
+  const placeholder = /placeholder="([^"]+)"/.exec(bar)?.[1] ?? '';
+  assert.ok(placeholder.length > 0 && placeholder.length <= 30, `the search placeholder is short enough for a phone (${placeholder.length} characters)`);
+  console.log('PASS: the customer search placeholder fits a phone');
+}

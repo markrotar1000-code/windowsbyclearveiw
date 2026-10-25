@@ -40,6 +40,7 @@ jobs:
       - run: npm run test:measurement-handoff
       - run: npm run test:audio-capture
       - run: npm run test:feature-usage
+      - run: npm run test:payment-history
       - run: npm run test:copilot
       - run: npm run test:copilot-snapshot
       - run: npm run test:ai-surfaces

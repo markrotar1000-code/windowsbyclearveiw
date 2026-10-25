@@ -47,6 +47,16 @@ async function ensureSchema(db) {
       notes TEXT
     )`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_job_payments_job ON job_payments(job_id)`),
+    // Append-only: one row each time the paid amount or method changes, so a correction never erases what was recorded before it.
+    db.prepare(`CREATE TABLE IF NOT EXISTS job_payment_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      job_id TEXT NOT NULL,
+      at TEXT NOT NULL,
+      previous_cents INTEGER NOT NULL,
+      new_cents INTEGER NOT NULL,
+      method TEXT
+    )`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_job_payment_log_job ON job_payment_log(job_id, id)`),
   ]);
   await ensureJobsSchema(db);
 }
@@ -55,6 +65,24 @@ async function ensurePayment(db, jobId) {
   const now = new Date().toISOString();
   await db.prepare(`INSERT OR IGNORE INTO job_payments (job_id, created_at, updated_at, amount_paid_cents) VALUES (?, ?, ?, 0)`).bind(jobId, now, now).run();
   return db.prepare(`SELECT * FROM job_payments WHERE job_id = ?`).bind(jobId).first();
+}
+
+const HISTORY_PER_JOB = 8;
+
+/** The newest changes for these jobs, newest first, at most HISTORY_PER_JOB each. A missing table reads as no history. */
+async function readHistory(db, jobIds) {
+  const byJob = new Map();
+  if (!jobIds.length) return byJob;
+  try {
+    const marks = jobIds.map(() => '?').join(',');
+    const rows = await db.prepare(`SELECT job_id, at, previous_cents, new_cents, method FROM job_payment_log WHERE job_id IN (${marks}) ORDER BY id DESC LIMIT 2000`).bind(...jobIds).all();
+    for (const row of rows.results || []) {
+      const list = byJob.get(row.job_id) || [];
+      if (list.length < HISTORY_PER_JOB) list.push({ at: row.at, previous_cents: Number(row.previous_cents) || 0, new_cents: Number(row.new_cents) || 0, method: row.method || null });
+      byJob.set(row.job_id, list);
+    }
+  } catch { /* no history yet */ }
+  return byJob;
 }
 
 function buildRecord(job, payment) {
@@ -75,7 +103,7 @@ export async function onRequestGet(context) {
     const job = await env.QUOTES_DB.prepare(`SELECT j.*, COALESCE(q.total_cents, j.agreed_cents) AS total_cents FROM jobs j LEFT JOIN quotes q ON q.id = j.quote_id WHERE j.id = ?`).bind(jobId).first();
     if (!job) return json({ error: 'Job not found.' }, 404);
     const payment = await ensurePayment(env.QUOTES_DB, jobId);
-    return json({ job, payment: buildRecord(job, payment) });
+    return json({ job, payment: buildRecord(job, payment), history: (await readHistory(env.QUOTES_DB, [jobId])).get(jobId) || [] });
   }
 
   const result = await env.QUOTES_DB.prepare(`
@@ -89,10 +117,11 @@ export async function onRequestGet(context) {
     LIMIT 200
   `).all();
 
+  const history = await readHistory(env.QUOTES_DB, (result.results || []).map((row) => row.id));
   const jobs = (result.results || []).map((row) => {
     const total = Math.max(0, Number(row.total_cents) || 0);
     const paid = Math.max(0, Number(row.amount_paid_cents) || 0);
-    return { ...row, amount_paid_cents: paid, balance_cents: Math.max(0, total - paid), payment_status: paid <= 0 ? 'unpaid' : paid >= total ? 'paid' : 'partial' };
+    return { ...row, amount_paid_cents: paid, balance_cents: Math.max(0, total - paid), payment_status: paid <= 0 ? 'unpaid' : paid >= total ? 'paid' : 'partial', history: history.get(row.id) || [] };
   });
   return json({ jobs });
 }
@@ -129,11 +158,14 @@ export async function onRequestPatch(context) {
   const notes = typeof body.notes === 'string' ? body.notes.slice(0, 4000) : current.notes;
   const now = new Date().toISOString();
 
-  await env.QUOTES_DB.prepare(`UPDATE job_payments SET updated_at = ?, amount_paid_cents = ?, payment_method = ?, notes = ? WHERE job_id = ?`)
-    .bind(now, amountPaid, method, notes, jobId).run();
+  // The update and its history row go in together: a payment change is never saved without its record.
+  const changed = amountPaid !== current.amount_paid_cents || (method || null) !== (current.payment_method || null);
+  const statements = [env.QUOTES_DB.prepare(`UPDATE job_payments SET updated_at = ?, amount_paid_cents = ?, payment_method = ?, notes = ? WHERE job_id = ?`).bind(now, amountPaid, method, notes, jobId)];
+  if (changed) statements.push(env.QUOTES_DB.prepare(`INSERT INTO job_payment_log (job_id, at, previous_cents, new_cents, method) VALUES (?, ?, ?, ?, ?)`).bind(jobId, now, Number(current.amount_paid_cents) || 0, amountPaid, method));
+  await env.QUOTES_DB.batch(statements);
 
   if (job.quote_id) await syncInvoiceStatus(env.QUOTES_DB, job.quote_id, amountPaid, now);
 
   const payment = await env.QUOTES_DB.prepare(`SELECT * FROM job_payments WHERE job_id = ?`).bind(jobId).first();
-  return json({ ok: true, payment: buildRecord(job, payment) });
+  return json({ ok: true, payment: buildRecord(job, payment), history: (await readHistory(env.QUOTES_DB, [jobId])).get(jobId) || [] });
 }

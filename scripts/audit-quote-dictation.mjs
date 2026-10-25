@@ -423,5 +423,38 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   await ctx.close(); ok('the Tools page shows the usage counts and recovers from a failed load');
 }
 
+// 21. Payments: each job shows its change history, and a saved correction adds to it.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  const history = [
+    { at: '2026-10-25T20:10:00.000Z', previous_cents: 500000, new_cents: 450000, method: 'Card' },
+    { at: '2026-10-25T18:00:00.000Z', previous_cents: 200000, new_cents: 500000, method: 'Card' },
+    { at: '2026-10-24T18:00:00.000Z', previous_cents: 0, new_cents: 200000, method: 'Check' } ];
+  const job = { id: 'J-1', job_status: 'ready', work_type: 'windows', scheduled_date: null, customer_name: 'Pat Doe', customer_city: 'Camas', total_cents: 500000, payment_id: 1, amount_paid_cents: 450000, payment_method: 'Card', notes: '', balance_cents: 50000, payment_status: 'partial', history };
+  await page.route('**/internal/api/payments**', (r) => {
+    if (r.request().method() === 'PATCH') {
+      const body = JSON.parse(r.request().postData());
+      const next = [{ at: '2026-10-25T21:00:00.000Z', previous_cents: 450000, new_cents: body.amountPaidCents, method: body.paymentMethod || null }, ...history];
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, payment: { amount_paid_cents: body.amountPaidCents, balance_cents: 500000 - body.amountPaidCents, status: 'partial', payment_method: body.paymentMethod, notes: body.notes }, history: next }) });
+    }
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ jobs: [job] }) });
+  });
+  await page.route('**/internal/api/**', (r) => (/payments/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await page.goto(`${base}/internal/payments`);
+  await page.waitForSelector('.payment-history-box');
+  assert.match(await page.textContent('.payment-history-box summary'), /History \(3\)/);
+  await page.click('.payment-history-box summary');
+  const items = await page.$$eval('.payment-history li', (l) => l.map((x) => x.textContent.replace(/\s+/g, ' ').trim()));
+  assert.match(items[0], /\$500 taken off \(correction\).*paid to date \$4,500.*Card/);
+  assert.match(items[1], /\+\$3,000 received/); assert.match(items[2], /\+\$2,000 received.*Check/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  await page.click('.payment-editor summary'); await page.fill('[data-paid-input]', '4000');
+  await page.click('[data-save]');
+  await page.waitForFunction(() => /History \(4\)/.test(document.querySelector('.payment-history-box summary').textContent));
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('Payments shows each change (received or corrected) and a saved correction adds to it');
+}
+
 await browser.close(); server.close();
 console.log('\nAll Rough notes browser checks passed.');

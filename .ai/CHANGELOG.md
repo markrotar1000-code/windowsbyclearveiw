@@ -1,3 +1,7 @@
+## 2026-10-25 - Payment history and search placeholder
+
+`job_payment_log` + history on the Payments page; `FindBar` placeholder; `scripts/test-payment-history.mjs`; audit flow 21.
+
 ## 2026-10-25 - Usage counts and laptop titles
 
 `feature-usage.mjs`, `/internal/api/feature-usage`, Tools card, quote-page report-on-save; laptop h1 size in `InternalLayout.astro`; `test:feature-usage`.
