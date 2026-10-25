@@ -1,3 +1,16 @@
+## 2026-10-25 - Command Center hardening batch landed
+
+All state-changing internal handlers go through `functions/internal/_lib/request-guard.mjs` (origin, size cap, JSON 405); internal pages load through `src/lib/internal-fetch.ts` (`fetchJson`, `esc`) and `src/lib/load-failed.ts` (`loadFailedNode`) and money through `src/lib/money.ts`. New code should use these, not a local copy. Canonical suite is 88 steps; the Command Center audit is clean (0 problems).
+
+Known gaps, in order of how much they matter:
+- Mail-sending endpoints (`mail-test`, `review-request`) and the others rely on browsers sending `Origin` or `Sec-Fetch-Site`; a request carrying neither is allowed by design (`sameOrigin`).
+- Login `next` check uses `startsWith('/internal')`, so `/internalfoo` passes (same site only; tighten to `/internal` or `/internal/`).
+- Logout is origin-only. A browser that sends `Origin: null` would get a JSON 403 and stay signed in; check on a real phone.
+- None of the AI handlers (copilot, copilot-summary, lead-analyzer) has its own rate limit; `copilot-summary` throws (not a clean 503) on a brand-new database without `follow_up_tasks`.
+- `jobs/new.astro` and the field/closeout save paths keep a raw `fetch` (multi-error validation lists, offline semantics).
+- A PATCH on a quote with a JSON `null` body still returns 500.
+- Not checked in a browser: 390/1440 px screenshots and forced 401/500 on Build Plan, Invoices and a few pages (units 5, 6, 8 viewed only some); the audit and `test:all` cover them.
+
 ## 2026-10-25 - Prospect phone numbers visible on cards
 
 Phone numbers now appear directly below each prospect address with readable formatting and the existing DNC, company-block and unverified warnings beside each number. Replaced the ambiguous Phone review needed label with Numbers to verify and Contact hold; a missing number explicitly says No phone numbers supplied. Mailing details and emails stay expandable. No contact data, API, suppression or outreach behavior changed. All 77 canonical steps passed, including build; synthetic Chromium checks passed at 320/390/768/1280 pixels and 390 pixels with 200% text, covering visible numbers without expanding details, warnings, no-number state, phone search, group filters, escaping and section overflow. Evidence is in the task workspace: prospect-phone-browser-results.json and prospect-phones-phone.png. Independent hosted build and authenticated live UI remain to verify after GitHub publication.

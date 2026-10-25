@@ -40,13 +40,32 @@ export function methodNotAllowed(allowed = []) {
  * actually read, because the declared length can be missing or wrong.
  */
 export async function readJsonBounded(request, maxBytes = DEFAULT_MAX_BYTES) {
+  const tooLarge = () => ({ ok: false, response: jsonResponse({ error: 'That request is too large.' }, 413) });
   const declared = Number(request.headers.get('content-length') || 0);
-  if (declared > maxBytes) return { ok: false, response: jsonResponse({ error: 'That request is too large.' }, 413) };
-  let buffer;
-  try { buffer = await request.arrayBuffer(); } catch { return { ok: false, response: jsonResponse({ error: 'Invalid request.' }, 400) }; }
-  if (buffer.byteLength > maxBytes) return { ok: false, response: jsonResponse({ error: 'That request is too large.' }, 413) };
+  if (declared > maxBytes) return tooLarge();
+  let bytes;
   try {
-    return { ok: true, body: JSON.parse(new TextDecoder().decode(buffer)) };
+    // Read the stream and stop at the cap, so a body with no or a false content-length is never buffered whole.
+    const reader = request.body?.getReader();
+    if (!reader) bytes = new Uint8Array(await request.arrayBuffer());
+    else {
+      const chunks = [];
+      let total = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > maxBytes) { await reader.cancel().catch(() => {}); return tooLarge(); }
+        chunks.push(value);
+      }
+      bytes = new Uint8Array(total);
+      let at = 0;
+      for (const chunk of chunks) { bytes.set(chunk, at); at += chunk.byteLength; }
+    }
+  } catch { return { ok: false, response: jsonResponse({ error: 'Invalid request.' }, 400) }; }
+  if (bytes.byteLength > maxBytes) return tooLarge();
+  try {
+    return { ok: true, body: JSON.parse(new TextDecoder().decode(bytes)) };
   } catch {
     return { ok: false, response: jsonResponse({ error: 'Invalid JSON.' }, 400) };
   }

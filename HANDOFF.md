@@ -1,3 +1,9 @@
+## 2026-10-25 - Command Center hardening batch (for the next agent)
+
+11 units merged (PRs 304, 308 to 319) plus follow-ups; see `.ai/CHANGELOG.md` for what changed and `.ai/STATE.md` for known gaps. What the next agent must know: use `guardWrite` for any new write handler and `fetchJson` + `loadFailedNode` + `esc` + `formatCents` for any new internal page; do not copy them. Parallel units each run `audit-command-center.mjs`, which binds fixed port 4440: run one audit at a time (`fuser -k 4440/tcp` frees a stale one). The GitHub repo URL reports as `markrotar1000-code/windowsbyclearveiw`.
+
+Still needs the owner or a real phone (not code): which `clearveiw-quotes` D1 is live; Stripe; deploying `workers/ops-cron`; R2 for job photos; Mark's real prices; fractional-quantity rule; the pages.dev door; contract and recording-consent legal review; Milgard naming rule; siding QC rules; iOS recording, level meter, dead-zone resend, logout with `Origin: null`.
+
 ## 2026-10-25 - Prospect phone numbers visible on cards
 
 Phone numbers now appear directly below each prospect address with readable formatting and the existing DNC, company-block and unverified warnings beside each number. Replaced the ambiguous Phone review needed label with Numbers to verify and Contact hold; a missing number explicitly says No phone numbers supplied. Mailing details and emails stay expandable. No contact data, API, suppression or outreach behavior changed. All 77 canonical steps passed, including build; synthetic Chromium checks passed at 320/390/768/1280 pixels and 390 pixels with 200% text, covering visible numbers without expanding details, warnings, no-number state, phone search, group filters, escaping and section overflow. Evidence is in the task workspace: prospect-phone-browser-results.json and prospect-phones-phone.png. Independent hosted build and authenticated live UI remain to verify after GitHub publication.

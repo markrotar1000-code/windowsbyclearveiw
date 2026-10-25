@@ -221,10 +221,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     async function load() {
       reload.disabled = true; line.textContent = 'Checking...'; list.hidden = true;
       try {
-        const response = await fetch('/internal/api/setup-check', { credentials: 'same-origin' });
-        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not check.');
+        const data = await fetchJson('/internal/api/setup-check');
         const server: Row[] = (data.items as SetupItem[]).map((item) => ({ label: item.label, ok: item.ok, required: item.required, unlocks: item.unlocks, fix: item.fix, note: item.note || '', state: item.ok ? 'Working' : item.required ? 'Missing' : 'Not set up' }));
         const rows = [...server, ...(await phoneRows())];
         const bad = rows.filter((row) => !row.ok);
@@ -256,10 +253,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     async function load() {
       reload.disabled = true; line.textContent = 'Loading...'; stats.hidden = true;
       try {
-        const response = await fetch('/internal/api/feature-usage?days=30', { credentials: 'same-origin' });
-        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not load.');
+        const data = await fetchJson('/internal/api/feature-usage?days=30');
         const f = data.features as Record<string, Stat>;
         const clips = f.dictation_clip, drafts = f.quote_draft, usedDraft = f.quote_saved_with_draft, imported = f.measurements_imported;
         const nothing = [clips, drafts, usedDraft, imported].every((x) => x.ok + x.degraded === 0);

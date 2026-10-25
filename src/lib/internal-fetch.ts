@@ -35,9 +35,10 @@ export async function fetchJson<T = any>(url: string, init: RequestInit = {}): P
   } catch {
     throw new InternalFetchError('network', NO_SIGNAL_MESSAGE);
   }
-  // Behind the login, an expired session is answered with the login page (HTML, often after a redirect) or a 401.
+  // Behind the login, an expired session is answered with a 401 or the login page: HTML with a 200, or a redirect to it.
+  // An HTML error page with a 5xx status is the server failing, not a sign-in problem, so it falls through to 'server'.
   const type = response.headers.get('content-type') || '';
-  if (response.status === 401 || (!type.includes('json') && (response.redirected || type.includes('html')))) {
+  if (response.status === 401 || (!type.includes('json') && (response.redirected || (response.ok && type.includes('html'))))) {
     throw new InternalFetchError('session', SESSION_EXPIRED_MESSAGE, response.status);
   }
   let data: any;

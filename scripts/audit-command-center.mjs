@@ -100,7 +100,7 @@ const server=http.createServer(async(req,res)=>{try{const u=new URL(req.url,'htt
   if(!fs.existsSync(root+'/functions/internal/api/'+f)){res.writeHead(404);return res.end('{"error":"no route"}')}
   const chunks=[];for await(const c of req)chunks.push(c);const r=await api(req.method,{f,p:u.pathname+u.search},chunks.length?Buffer.concat(chunks).toString():undefined,params);res.writeHead(r.status,{'content-type':r.type});return res.end(r.body)}
  let file=null;for(const c of [p,p+'.html',p+'/index.html'])if(fs.existsSync(dist+c)&&fs.statSync(dist+c).isFile()){file=dist+c;break}
- if(!file){res.writeHead(404);return res.end('404')}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});fs.createReadStream(file).pipe(res)}catch(e){console.error('SERVER ERR',e.message);res.writeHead(500);res.end(String(e.message))}});
+ if(!file){res.writeHead(404);return res.end('404')}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});if(req.method==='HEAD')return res.end();fs.createReadStream(file).pipe(res)}catch(e){console.error('SERVER ERR',e.message);res.writeHead(500);res.end(String(e.message))}});
 await new Promise((resolve) => server.listen(PORT, resolve));
 console.log(`Command Center on http://127.0.0.1:${PORT}/internal (seeded; Ctrl-C to stop)`);
 
