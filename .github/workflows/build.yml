@@ -87,6 +87,7 @@ jobs:
       - run: npm run test:internal-mobile
       - run: npm run test:internal-pwa
       - run: npm run test:job-photos
+      - run: npm run test:pages-jobs
       - run: npm run test:photo-sync
       - run: npm run test:abuse-guard
       - run: npm run test:ops-cron
