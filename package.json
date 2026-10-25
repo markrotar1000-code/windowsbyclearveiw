@@ -73,6 +73,7 @@
     "eval:retrieval": "node scripts/eval-retrieval.mjs",
     "test:embeddings": "node --disable-warning=ExperimentalWarning scripts/test-embeddings-gateway.mjs",
     "test:access": "node --disable-warning=ExperimentalWarning scripts/test-access.mjs",
+    "test:handler-tests-core": "node --disable-warning=ExperimentalWarning scripts/test-handler-tests-core.mjs",
     "test:ops-cron": "node --disable-warning=ExperimentalWarning scripts/test-ops-cron.mjs",
     "test:abuse-guard": "node --disable-warning=ExperimentalWarning scripts/test-abuse-guard.mjs",
     "test:general-jobs": "node --disable-warning=ExperimentalWarning scripts/test-general-jobs.mjs",
