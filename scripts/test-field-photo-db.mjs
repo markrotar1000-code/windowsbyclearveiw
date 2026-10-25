@@ -24,7 +24,17 @@ for (const file of files(src)) {
   if (relative(src, file).split(sep).join('/') === 'lib/field-photo-db.ts') continue;
   const text = readFileSync(file, 'utf8');
   assert.ok(!/clearview-field-tools/.test(text), `${file.slice(src.length + 1)} names the photo database directly; use openPhotoDb()`);
+  // One other database is allowed, and only in its own file: the unsent quote-dictation clips (lib/clip-store.ts). It has
+  // its own name, is opened in exactly one place, creates its store, and repairs itself if the store is ever missing.
+  if (relative(src, file).split(sep).join('/') === 'lib/clip-store.ts') continue;
   assert.ok(!/indexedDB\.open\(/.test(text), `${file.slice(src.length + 1)} opens IndexedDB directly; use openPhotoDb()`);
+}
+{
+  const clips = read('lib/clip-store.ts');
+  assert.equal((clips.match(/indexedDB\.open\(/g) || []).length, 1, 'the clip database is opened in exactly one place');
+  assert.ok(/createObjectStore\(STORE/.test(clips) && /objectStoreNames\.contains\(STORE\)/.test(clips) && /deleteDatabase\(DB\)/.test(clips), 'it creates its store and repairs a database left without it');
+  assert.ok(!/clearview-field-tools|PHOTO_STORE/.test(clips), 'it never touches the photo database');
+  assert.ok(/const DB = 'clearview-quote-clips'/.test(clips), 'it has its own database name');
 }
 for (const page of ['pages/internal/tools/photos.astro', 'pages/internal/jobs/field.astro']) {
   assert.ok(/openPhotoDb/.test(read(page)) && /field-photo-db/.test(read(page)), `${page} opens photos through the shared helper`);

@@ -158,3 +158,24 @@ export function normalizeSizes(text) {
   }
   return out + source.slice(at);
 }
+
+const FRACTION_WORDS = { 1: ['a sixteenth', 'sixteenths'], 2: ['an eighth', 'eighths'], 4: ['a quarter', 'quarters'], 8: ['a half', 'halves'] };
+const NUMBER_WORDS = ['', '', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen'];
+
+/** "35 1/2" as it is said aloud: "35 and a half". For reading a size back to someone standing at the window. */
+export function spokenInches(sixteenths) {
+  const n = Math.round(sixteenths);
+  const inches = Math.floor(n / SIXTEENTH);
+  const rest = n % SIXTEENTH;
+  if (!rest) return String(inches);
+  // Whole sixteenths reduced to a spoken fraction: 8 = a half, 4 = a quarter, 12 = three quarters, 6 = three eighths.
+  const g = gcd(rest, SIXTEENTH);
+  const numerator = rest / g;
+  const denominator = SIXTEENTH / g;
+  const unit = FRACTION_WORDS[SIXTEENTH / denominator];
+  const spoken = numerator === 1 ? unit[0] : `${NUMBER_WORDS[numerator]} ${unit[1] === 'halves' ? 'halves' : unit[1]}`;
+  return inches ? `${inches} and ${spoken}` : spoken;
+}
+
+/** "35 and a half by 47 and three quarters". */
+export const spokenSize = (size) => `${spokenInches(size.w)} by ${spokenInches(size.h)}`;

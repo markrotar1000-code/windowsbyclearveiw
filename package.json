@@ -20,6 +20,8 @@
     "test:icm": "node scripts/test-icm-router.mjs",
     "test:icm-structure": "node scripts/test-icm-structure.mjs",
     "test:all": "node scripts/run-all-tests.mjs",
+    "test:audio-capture": "node --disable-warning=ExperimentalWarning scripts/test-audio-capture.mjs",
+    "test:measurement-handoff": "node --disable-warning=ExperimentalWarning scripts/test-measurement-handoff.mjs",
     "test:dimensions": "node --disable-warning=ExperimentalWarning scripts/test-dimensions.mjs",
     "test:plan-extras": "node scripts/test-plan-extras.mjs",
     "test:build-plan-state": "node scripts/test-build-plan-state.mjs",

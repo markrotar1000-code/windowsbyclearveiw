@@ -119,46 +119,6 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
           document.addEventListener('click', (event) => { if (event.target instanceof Node && !moreMenu.contains(event.target) && !moreButton.contains(event.target)) closeMore(); });
           document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !moreMenu.hidden) { closeMore(); moreButton.focus(); } });
         }
-        const MEASUREMENT_KEY = 'clearview:measurement-worksheet:v1';
-        const normalize = (value) => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-
-        function mountMeasurementImport() {
-          if (location.pathname !== '/internal/quotes/new') return;
-          const form = document.getElementById('quote-form');
-          if (!(form instanceof HTMLFormElement) || form.dataset.measurementImportReady === 'true') return;
-          let worksheet;
-          try { worksheet = JSON.parse(localStorage.getItem(MEASUREMENT_KEY) || 'null'); } catch { worksheet = null; }
-          if (!worksheet || !Array.isArray(worksheet.openings) || worksheet.openings.length === 0) return;
-          const submit = form.querySelector('[data-submit]');
-          const anchor = submit?.closest('fieldset') || form.firstElementChild;
-          if (!(anchor instanceof Element)) return;
-          const bar = document.createElement('div'); bar.className = 'measurement-import-bar';
-          bar.innerHTML = `<div><strong>Saved field measurements found</strong><span>${worksheet.openings.length} opening${worksheet.openings.length === 1 ? '' : 's'} ready to import.</span></div><button type="button" class="btn btn-ghost" data-import-measurements>Import measurements</button>`;
-          anchor.before(bar); form.dataset.measurementImportReady = 'true';
-          const button = bar.querySelector('[data-import-measurements]'); if (!(button instanceof HTMLButtonElement)) return;
-          button.addEventListener('click', () => {
-            if (!window.confirm(`Import ${worksheet.openings.length} measured opening${worksheet.openings.length === 1 ? '' : 's'} into this quote? Existing quote lines will be kept.`)) return;
-            button.disabled = true; button.textContent = 'Importing…';
-            const setIfBlank = (name, value) => { const field = form.elements.namedItem(name); if ((field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) && !field.value.trim()) field.value = String(value ?? ''); };
-            setIfBlank('name', worksheet.jobName || ''); setIfBlank('address', worksheet.jobAddress || '');
-            if (worksheet.jobNotes) { const notes = form.elements.namedItem('notes'); if (notes instanceof HTMLTextAreaElement && !notes.value.includes('Field measurement notes:')) notes.value = notes.value.trim() ? `${notes.value.trim()}\n\nField measurement notes:\n${worksheet.jobNotes}` : `Field measurement notes:\n${worksheet.jobNotes}`; }
-            const openingSelect = form.querySelector('[data-catalog-opening]'); const qtyInput = form.querySelector('[data-catalog-qty]'); const addButton = form.querySelector('[data-catalog-add]'); const itemsBody = form.querySelector('[data-items-body]'); const options = openingSelect instanceof HTMLSelectElement ? Array.from(openingSelect.options) : [];
-            let imported = 0; let skipped = 0;
-            if (openingSelect instanceof HTMLSelectElement && qtyInput instanceof HTMLInputElement && addButton instanceof HTMLButtonElement && itemsBody instanceof HTMLElement) {
-              for (const opening of worksheet.openings) {
-                const target = normalize(opening.type);
-                const option = options.find((candidate) => normalize(candidate.textContent) === target) || options.find((candidate) => normalize(candidate.textContent).includes(target) || target.includes(normalize(candidate.textContent)));
-                if (!option) { skipped += 1; continue; }
-                openingSelect.value = option.value; qtyInput.value = String(Math.max(1, Number(opening.quantity) || 1)); addButton.click();
-                const rows = itemsBody.querySelectorAll('tr'); const lastRow = rows[rows.length - 1]; const labelInput = lastRow?.querySelector('td:first-child input');
-                if (labelInput instanceof HTMLInputElement) { const width = opening.width === '' ? '?' : Number(opening.width).toLocaleString('en-US'); const height = opening.height === '' ? '?' : Number(opening.height).toLocaleString('en-US'); const room = opening.room ? `${opening.room} — ` : ''; labelInput.value = `${room}${opening.type} — ${width}\" W × ${height}\" H`; labelInput.dispatchEvent(new Event('input', { bubbles: true })); }
-                imported += 1;
-              }
-            }
-            const summary = bar.querySelector('span'); if (summary) summary.textContent = skipped ? `${imported} imported · ${skipped} skipped (not in price book)` : `${imported} opening${imported === 1 ? '' : 's'} imported into the quote.`;
-            button.textContent = imported ? 'Imported' : 'Nothing imported';
-          });
-        }
 
         function mountFollowUpPrefill() {
           if (location.pathname !== '/internal/follow-up') return;
@@ -262,7 +222,7 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
         settleNav();
         document.addEventListener('astro:page-load', settleNav);
 
-        function mountInternalEnhancements() { mountMeasurementImport(); mountFollowUpPrefill(); mountJobPhotoLink(); mountQuoteInvoiceActions(); }
+        function mountInternalEnhancements() { mountFollowUpPrefill(); mountJobPhotoLink(); mountQuoteInvoiceActions(); }
         mountInternalEnhancements();
         document.addEventListener('astro:page-load', mountInternalEnhancements);
       })();
@@ -292,10 +252,10 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
       .internal-nav a{position:relative;color:var(--on-dark-soft);text-decoration:none;font-size:var(--step--2);font-weight:650;padding:.48rem .58rem;border-radius:var(--radius);white-space:nowrap}.internal-nav a::after{content:'';position:absolute;left:.58rem;right:.58rem;bottom:.16rem;height:2px;border-radius:999px;background:var(--accent-bright);transform:scaleX(0);transform-origin:center;transition:transform 140ms ease}.internal-nav a:hover,.internal-nav a:focus-visible,.internal-nav a.active{color:var(--on-dark);background:rgb(255 255 255 / .08)}.internal-nav a.active::after{transform:scaleX(1)}
       .internal-logout{background:transparent;border:1px solid var(--dark-line-strong);color:var(--on-dark-soft);border-radius:var(--radius);padding:.48rem .78rem;font:inherit;font-size:var(--step--2);font-weight:650;cursor:pointer;white-space:nowrap}.internal-logout:hover{border-color:var(--accent-bright);color:var(--on-dark)}
       .internal-main{max-width:76rem;margin-inline:auto;padding:clamp(1.25rem,3vw,2rem) var(--space-m) clamp(5.5rem,8vw,7rem);overflow-wrap:anywhere}.internal-main :global(:is(button,select,th,[role=tab],.btn,[class*="btn"],[class*="filter"],[class*="pill"],[class*="chip"],[class*="tab"])){overflow-wrap:normal}.internal-mobile-nav,.internal-more-menu{display:none}
-      .measurement-import-bar{margin:0 0 var(--space-m);padding:.9rem var(--space-m);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:var(--radius);background:var(--accent-wash);display:flex;justify-content:space-between;align-items:center;gap:var(--space-m)}.measurement-import-bar>div{display:grid;gap:.15rem}.measurement-import-bar span{color:var(--ink-soft);font-size:var(--step--2)}
+      
       .quote-invoice-status{display:inline-flex;align-items:center;padding:.42rem .65rem;border:1px solid var(--line);border-radius:var(--radius);font-size:var(--step--2);color:var(--ink-soft);white-space:nowrap}
       @media(max-width:980px){.internal-header-inner{gap:var(--space-s)}.internal-header-right{flex:1;justify-content:flex-end}.internal-nav a{padding-inline:.45rem}.internal-nav a::after{left:.45rem;right:.45rem}.internal-brand span{display:none}}
-      @media(max-width:680px){.internal-header-inner{padding:.72rem var(--space-s)}.internal-brand{font-size:.95rem}.internal-logout{min-height:44px;padding:.5rem .68rem}.internal-nav{display:none}.internal-main{padding:1rem var(--space-s) 6.25rem}.internal-mobile-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:.35rem .35rem calc(.35rem + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--black) 98%,transparent);border-top:1px solid var(--dark-line-strong);box-shadow:0 -10px 30px rgb(0 0 0 / .12);backdrop-filter:blur(16px)}.internal-mobile-nav a,.internal-mobile-nav button{min-width:0;min-height:3.7rem;display:grid;place-items:center;align-content:center;gap:.16rem;color:var(--on-dark-soft);text-decoration:none;border:0;background:transparent;border-radius:.75rem;font:inherit;font-size:.64rem;font-weight:700;line-height:1.05;cursor:pointer}.internal-mobile-nav a.active,.internal-mobile-nav button.active{color:var(--on-dark);background:rgb(255 255 255 / .09)}.mobile-nav-icon{font-size:1.15rem;line-height:1;font-weight:600}.internal-more-menu{position:fixed;left:.6rem;right:.6rem;bottom:calc(5rem + env(safe-area-inset-bottom));z-index:51;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;padding:.65rem;border:1px solid var(--dark-line-strong);border-radius:1rem;background:var(--black);box-shadow:var(--shadow-lg)}.internal-more-menu{max-height:calc(100dvh - 9rem - env(safe-area-inset-bottom) - env(safe-area-inset-top));overflow-y:auto;overscroll-behavior:contain}.internal-more-menu[hidden]{display:none}.internal-more-menu a{min-height:48px;display:flex;align-items:center;padding:.65rem .8rem;border-radius:.65rem;color:var(--on-dark);text-decoration:none;font-size:.82rem;font-weight:700}.internal-more-menu a[aria-current=page]{background:rgb(255 255 255 / .1);color:var(--accent-bright)}.field-mode .internal-mobile-nav{display:none}.measurement-import-bar{align-items:flex-start;flex-direction:column;padding:.85rem}.measurement-import-bar .btn{width:100%}.quote-invoice-status{width:100%}}
+      @media(max-width:680px){.internal-header-inner{padding:.72rem var(--space-s)}.internal-brand{font-size:.95rem}.internal-logout{min-height:44px;padding:.5rem .68rem}.internal-nav{display:none}.internal-main{padding:1rem var(--space-s) 6.25rem}.internal-mobile-nav{position:fixed;left:0;right:0;bottom:0;z-index:50;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:.35rem .35rem calc(.35rem + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--black) 98%,transparent);border-top:1px solid var(--dark-line-strong);box-shadow:0 -10px 30px rgb(0 0 0 / .12);backdrop-filter:blur(16px)}.internal-mobile-nav a,.internal-mobile-nav button{min-width:0;min-height:3.7rem;display:grid;place-items:center;align-content:center;gap:.16rem;color:var(--on-dark-soft);text-decoration:none;border:0;background:transparent;border-radius:.75rem;font:inherit;font-size:.64rem;font-weight:700;line-height:1.05;cursor:pointer}.internal-mobile-nav a.active,.internal-mobile-nav button.active{color:var(--on-dark);background:rgb(255 255 255 / .09)}.mobile-nav-icon{font-size:1.15rem;line-height:1;font-weight:600}.internal-more-menu{position:fixed;left:.6rem;right:.6rem;bottom:calc(5rem + env(safe-area-inset-bottom));z-index:51;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;padding:.65rem;border:1px solid var(--dark-line-strong);border-radius:1rem;background:var(--black);box-shadow:var(--shadow-lg)}.internal-more-menu{max-height:calc(100dvh - 9rem - env(safe-area-inset-bottom) - env(safe-area-inset-top));overflow-y:auto;overscroll-behavior:contain}.internal-more-menu[hidden]{display:none}.internal-more-menu a{min-height:48px;display:flex;align-items:center;padding:.65rem .8rem;border-radius:.65rem;color:var(--on-dark);text-decoration:none;font-size:.82rem;font-weight:700}.internal-more-menu a[aria-current=page]{background:rgb(255 255 255 / .1);color:var(--accent-bright)}.field-mode .internal-mobile-nav{display:none}.quote-invoice-status{width:100%}}
       @media(max-width:420px){.internal-main{padding-inline:.7rem}.internal-logout{font-size:.7rem}.internal-mobile-nav a{min-height:3.55rem;font-size:.6rem}}
       /* Phone: the page title and its one-line description took half of the first screen before any work showed.
          Smaller type, tighter spacing; laptops keep the large title. */
@@ -318,7 +278,7 @@ const isMoreActive = mobileMoreItems.some((item) => isActive(item.href));
         .internal-nav a::after{transition:none}
         .internal :global(*),.internal :global(*::before),.internal :global(*::after){animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
       }
-      @media print{.internal-header,.internal-mobile-nav{display:none}.internal-main{max-width:none;padding:0}.measurement-import-bar,.quote-invoice-status{display:none}}
+      @media print{.internal-header,.internal-mobile-nav{display:none}.internal-main{max-width:none;padding:0}.quote-invoice-status{display:none}}
 
       /* Runtime-rendered records are populated after page load, so these
          shared selectors intentionally bypass Astro component scoping. */

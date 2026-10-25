@@ -20,7 +20,7 @@ const base = `http://localhost:${server.address().port}`;
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const ok = (m) => console.log(`PASS: ${m}`);
 
-async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = false, drafts = [], init = null } = {}) {
+async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = false, alwaysFail = false, drafts = [], init = null, speak = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', (e) => errors.push(e.message));
@@ -30,12 +30,14 @@ async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = f
     navigator.mediaDevices.getUserMedia = async () => ({ getTracks: () => [{ stop() {} }] });
     window.MediaRecorder = class { static isTypeSupported() { return true; } constructor() { this.state = 'inactive'; this.mimeType = 'audio/webm'; } start() { this.state = 'recording'; } stop() { this.state = 'inactive'; this.ondataavailable?.({ data: new Blob([new Uint8Array(5000)], { type: 'audio/webm' }) }); window.__recorders += 1; this.onstop?.(); } };
   });
+  if (speak) await page.addInitScript(() => { window.__spoken = []; Object.defineProperty(window, 'speechSynthesis', { value: { speak: (u) => window.__spoken.push(u.text), cancel() {} }, configurable: true }); });
   if (init) await page.addInitScript(init);
   await page.route('**/internal/api/quote-dictation', async (r) => {
     const n = calls.dictation++;
+    if (alwaysFail) return r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: "Couldn't hear that clip." }) });
     if (failFirst && n === 0) return r.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: "Couldn't hear that clip." }) });
     await new Promise((res) => setTimeout(res, n === 0 ? 300 : 20)); // the first clip is the slowest
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: transcripts[(failFirst ? n - 1 : n) % transcripts.length] || 'x' }) });
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: transcripts[(failFirst ? n - 1 : n) % transcripts.length] || 'x', sizes: sizesFor(transcripts[(failFirst ? n - 1 : n) % transcripts.length] || '') }) });
   });
   await page.route('**/internal/api/quote-notes', async (r) => {
     const notes = JSON.parse(r.request().postData()).notes; calls.notes.push(notes);
@@ -46,6 +48,7 @@ async function open({ transcripts = ['Kitchen two double-hungs.'], failFirst = f
   await page.goto(`${base}/internal/quotes/new`);
   return { ctx, page, errors, calls };
 }
+const sizesFor = (text) => (/35 1\/2 x 47 3\/4/.test(text) ? ['35 1/2 x 47 3/4'] : []);
 const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.querySelector('input').value));
 
 // 1. Record, stop, lines draft by themselves; the button shows a live timer and the dot state.
@@ -271,6 +274,109 @@ const rows = (page) => page.$$eval('.qb-items tbody tr', (t) => t.map((x) => x.q
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
   assert.deepEqual(errors, []);
   await ctx.close(); ok('Measurements takes 35 1/2, shows 35 1/2, and never saves a size it did not understand');
+}
+
+// 14. Measurements -> quote: the panel previews what will be added, adds editable lines with slash sizes, and undoes exactly.
+{
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const sheet = { jobName: 'Whitfield kitchen', jobAddress: '12 Oak St', jobNotes: 'Dog in back yard.', openings: [
+    { room: 'Kitchen', type: 'Double-hung', width: 35.5, height: 47.75, quantity: 2, notes: 'wants grids' },
+    { room: 'Front', type: 'Entry door', width: 36, height: 80, quantity: 1, notes: '' },
+    { room: 'Den', type: 'Picture', width: 48, height: '', quantity: 1, notes: '' } ] };
+  await ctx.addInitScript((value) => { try { localStorage.setItem('clearview:measurement-worksheet:v1', JSON.stringify(value)); } catch {} }, sheet);
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  await page.route('**/internal/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.goto(`${base}/internal/quotes/new`);
+  await page.waitForSelector('[data-measure-panel]:not([hidden])');
+  assert.match(await page.textContent('[data-measure-summary]'), /3 openings \(4 units\).*for Whitfield kitchen/);
+  const preview = await page.$$eval('[data-measure-list] li', (l) => l.map((x) => x.textContent));
+  assert.deepEqual(preview, ['Kitchen · Double-hung · 35 1/2 x 47 3/4 · x2', 'Front · Entry door · see line', 'Den · Picture · no size']);
+  assert.match(await page.textContent('[data-measure-checks]'), /Den: only the width \(48\)/);
+  await page.click('[data-measure-add]');
+  assert.deepEqual(await rows(page), ['Kitchen: Double-hung — 35 1/2 x 47 3/4', 'Front: Entry door — 36 x 80', 'Den: Picture / fixed']);
+  assert.equal(await page.inputValue('[name=address]'), '12 Oak St');
+  assert.match(await page.inputValue('[name=notes]'), /Field measurement notes:\nJob: Whitfield kitchen\nDog in back yard\.\n- Kitchen: wants grids/);
+  assert.match(await page.textContent('[data-measure-status]'), /Added 3 lines.*1 still needs a price/);
+  assert.equal(await page.isDisabled('[data-measure-add]'), true, 'a second tap cannot duplicate the lines');
+  assert.equal(await page.locator('.qb-items tbody tr.qb-row-unpriced').count(), 1, 'the entry door is flagged at $0');
+  await page.click('[data-measure-undo]');
+  assert.equal((await rows(page)).length, 0); assert.equal(await page.isEnabled('[data-measure-add]'), true);
+  await page.click('[data-measure-add]'); assert.equal((await rows(page)).length, 3, 'adding again after Undo works');
+  assert.equal((await page.inputValue('[name=notes]')).split('Field measurement notes:').length, 2, 'the notes block is written once');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'no sideways scroll');
+  assert.deepEqual(errors, []);
+  await ctx.close(); ok('Measurements -> quote: previewed, added with slash sizes, flagged at $0, undone exactly, never duplicated');
+}
+
+// 15. No signal: the recording is saved on the phone, and goes out by itself when the signal returns.
+{
+  const { ctx, page, calls } = await open({ transcripts: ['Kitchen two double-hungs 35 1/2 x 47 3/4.'] });
+  await ctx.setOffline(true);
+  await page.click('[data-rec-toggle]'); await page.click('[data-rec-toggle]');
+  await page.waitForSelector('[data-retry-clips]:not([hidden])');
+  assert.match(await page.textContent('[data-notes-status]'), /No signal right now\. Your recording is kept on this phone/);
+  assert.equal(calls.dictation, 0, 'nothing was sent without a signal');
+  const stored = () => page.evaluate(() => new Promise((res) => { const r = indexedDB.open('clearview-quote-clips', 1); r.onsuccess = () => { const q = r.result.transaction('clips').objectStore('clips').count(); q.onsuccess = () => res(q.result); }; r.onerror = () => res(-1); }));
+  assert.equal(await stored(), 1, 'the clip is saved on this phone');
+  await ctx.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForFunction(() => /35 1\/2 x 47 3\/4/.test(document.querySelector('[data-rough-notes]').value));
+  assert.equal(await page.isHidden('[data-retry-clips]'), true);
+  await page.waitForFunction(() => document.querySelectorAll('.qb-items tbody tr').length === 0 || true);
+  assert.equal(await stored(), 0, 'once written out the saved copy is deleted');
+  assert.equal(calls.dictation, 1);
+  await ctx.close(); ok('no signal: the recording is saved on the phone and sent by itself when the signal returns, then deleted');
+}
+
+// 16. A recording that could not be sent survives a reload, is offered (never sent on its own), and can be deleted.
+{
+  const { ctx, page, calls } = await open({ alwaysFail: true });
+  await page.click('[data-rec-toggle]'); await page.click('[data-rec-toggle]');
+  await page.waitForSelector('[data-retry-clips]:not([hidden])');
+  await page.reload();
+  await page.waitForSelector('[data-retry-clips]:not([hidden])');
+  assert.match(await page.textContent('[data-notes-status]'), /1 recording was saved on this phone from \d+ minutes? ago and has not been written out/);
+  assert.equal(calls.dictation, 1, 'the old recording is not sent on its own');
+  assert.equal(await page.isVisible('[data-discard-clips]'), true);
+  page.once('dialog', (d) => d.accept());
+  await page.click('[data-discard-clips]');
+  await page.waitForSelector('[data-retry-clips][hidden]', { state: 'attached' });
+  await page.reload(); await page.waitForTimeout(400);
+  assert.equal(await page.isHidden('[data-retry-clips]'), true, 'deleted recordings stay deleted');
+  await ctx.close(); ok('a recording that could not be sent survives a reload, is offered not sent, and can be deleted');
+}
+
+// 17. The level meter moves with real audio (Chromium fake microphone) and goes away when recording stops.
+{
+  const meterBrowser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
+  const ctx = await meterBrowser.newContext({ viewport: { width: 390, height: 844 }, permissions: ['microphone'] });
+  const page = await ctx.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  await page.route('**/internal/api/quote-dictation', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: 'Kitchen.', sizes: [] }) }));
+  await page.route('**/internal/api/**', (r) => (/quote-dictation/.test(r.request().url()) ? r.fallback() : r.fulfill({ status: 200, contentType: 'application/json', body: '{}' })));
+  await page.goto(`${base}/internal/quotes/new`);
+  await page.click('[data-rec-toggle]');
+  await page.waitForSelector('[data-level]:not([hidden])');
+  await page.waitForFunction(() => { const t = document.querySelector('[data-level-bar]').style.transform; const m = /scaleX\(([\d.]+)\)/.exec(t); return m && Number(m[1]) > 0.05; }, null, { timeout: 8000 });
+  await page.click('[data-rec-toggle]');
+  assert.equal(await page.isHidden('[data-level]'), true, 'the meter goes away when recording stops');
+  assert.deepEqual(errors, []);
+  await ctx.close(); await meterBrowser.close(); ok('the level meter moves with real microphone audio and goes away when recording stops');
+}
+
+// 18. Sizes are read back out loud only when asked, and only after the microphone is off.
+{
+  const on = await open({ transcripts: ['Kitchen 35 1/2 x 47 3/4.'], speak: true });
+  await on.page.waitForSelector('[data-speak-row]:not([hidden])');
+  await on.page.click('[data-speak-sizes]');
+  await on.page.click('[data-rec-toggle]'); await on.page.click('[data-rec-toggle]');
+  await on.page.waitForFunction(() => window.__spoken.length > 0);
+  assert.deepEqual(await on.page.evaluate(() => window.__spoken), ['35 and a half by 47 and three quarters']);
+  await on.ctx.close();
+  const off = await open({ transcripts: ['Kitchen 35 1/2 x 47 3/4.'], speak: true });
+  await off.page.click('[data-rec-toggle]'); await off.page.click('[data-rec-toggle]');
+  await off.page.waitForFunction(() => /35 1\/2 x 47 3\/4/.test(document.querySelector('[data-rough-notes]').value));
+  assert.deepEqual(await off.page.evaluate(() => window.__spoken), [], 'off by default');
+  await off.ctx.close(); ok('sizes are spoken back only when asked, in words, after the microphone is off');
 }
 
 await browser.close(); server.close();
