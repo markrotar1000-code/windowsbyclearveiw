@@ -94,3 +94,5 @@ jobs:
       - run: npm run test:contact-import
       - run: npm run test:internal-audit
       - run: npm run test:pagination
+      - run: npm run test:request-guard
+      - run: npm run test:internal-fetch
