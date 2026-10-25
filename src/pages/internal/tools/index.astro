@@ -161,13 +161,13 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
   document.addEventListener('astro:page-load', initAppCard);
 </script>
 <script>
+  import { esc, fetchJson, InternalFetchError, SESSION_EXPIRED_MESSAGE } from '../../../lib/internal-fetch';
   function initMailDiagnostics(){
     const sendButton=document.querySelector('[data-mail-test]'),checkButton=document.querySelector('[data-mail-check]'),status=document.querySelector('[data-mail-status]'),results=document.querySelector('[data-mail-results]'),sends=document.querySelector('[data-mail-sends]'),domains=document.querySelector('[data-mail-domains]');
     if(!(sendButton instanceof HTMLButtonElement)||!(checkButton instanceof HTMLButtonElement)||!(status instanceof HTMLElement)||!(results instanceof HTMLElement)||!(sends instanceof HTMLElement)||!(domains instanceof HTMLElement)||sendButton.dataset.bound==='true')return;sendButton.dataset.bound='true';
-    const esc=(v)=>{const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML;};
     function render(data){results.hidden=false;const emailRows=Array.isArray(data.emails)?data.emails:[];sends.innerHTML=emailRows.length?emailRows.map((email)=>`<div class="mail-row"><div><strong>${esc(email.subject||'Untitled')}</strong><small>${esc(email.created_at||'')} · ${esc(email.last_event||'no event reported')}</small></div><code>${esc(email.id||'')}</code></div>`).join(''):'<p class="mail-empty">No recent sent email records returned by Resend.</p>';const domainRows=Array.isArray(data.domains)?data.domains:[];domains.innerHTML=domainRows.length?domainRows.map((domain)=>`<div class="mail-row"><div><strong>${esc(domain.name||'Unnamed domain')}</strong><small>${esc(domain.region||'')}</small></div><span class="mail-domain-state">${esc(domain.status||'unknown')}</span></div>`).join(''):'<p class="mail-empty">No sending domains returned by Resend.</p>';}
-    async function check(){checkButton.disabled=true;checkButton.textContent='Checking…';status.textContent='Reading Resend activity…';try{const response=await fetch('/internal/api/mail-test',{headers:{'cache-control':'no-cache'}});const data=await response.json().catch(()=>({}));if(!response.ok||!data.ok)throw new Error(data.error||`Resend activity check failed (${response.status}).`);render(data);status.textContent=`Resend activity checked · HTTP ${data.emailsStatus}/${data.domainsStatus}`;}catch(error){status.textContent=error instanceof Error?error.message:'Resend activity check failed.';}finally{checkButton.disabled=false;checkButton.textContent='Check Resend activity';}}
-    sendButton.addEventListener('click',async()=>{if(!window.confirm('Send one controlled production test through the same Resend configuration as the live estimate form?'))return;sendButton.disabled=true;checkButton.disabled=true;sendButton.textContent='Sending…';status.textContent='Contacting Resend…';try{const response=await fetch('/internal/api/mail-test',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});const data=await response.json().catch(()=>({}));if(!response.ok||!data.ok)throw new Error(`${data.error||'Resend rejected the production mail test.'} (HTTP ${data.resendStatus||response.status})`);status.textContent=`Accepted by Resend · HTTP ${data.resendStatus}${data.messageId?` · ${data.messageId}`:''}`;await check();}catch(error){status.textContent=error instanceof Error?error.message:'Production mail test failed.';}finally{sendButton.disabled=false;checkButton.disabled=false;sendButton.textContent='Send production test';}});checkButton.addEventListener('click',check);
+    async function check(){checkButton.disabled=true;checkButton.textContent='Checking…';status.textContent='Reading Resend activity…';try{const data=await fetchJson('/internal/api/mail-test',{headers:{'cache-control':'no-cache'}});if(!data.ok)throw new Error(data.error||'Resend activity check failed.');render(data);status.textContent=`Resend activity checked · HTTP ${data.emailsStatus}/${data.domainsStatus}`;}catch(error){status.textContent=error instanceof InternalFetchError&&error.kind==='server'?`${error.message} (HTTP ${error.status})`:error instanceof Error?error.message:'Resend activity check failed.';}finally{checkButton.disabled=false;checkButton.textContent='Check Resend activity';}}
+    sendButton.addEventListener('click',async()=>{if(!window.confirm('Send one controlled production test through the same Resend configuration as the live estimate form?'))return;sendButton.disabled=true;checkButton.disabled=true;sendButton.textContent='Sending…';status.textContent='Contacting Resend…';try{const response=await fetch('/internal/api/mail-test',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});if(response.status===401||(response.redirected&&!(response.headers.get('content-type')||'').includes('json')))throw new Error(SESSION_EXPIRED_MESSAGE);const data=await response.json().catch(()=>({}));if(!response.ok||!data.ok)throw new Error(`${data.error||'Resend rejected the production mail test.'} (HTTP ${data.resendStatus||response.status})`);status.textContent=`Accepted by Resend · HTTP ${data.resendStatus}${data.messageId?` · ${data.messageId}`:''}`;await check();}catch(error){status.textContent=error instanceof Error?error.message:'Production mail test failed.';}finally{sendButton.disabled=false;checkButton.disabled=false;sendButton.textContent='Send production test';}});checkButton.addEventListener('click',check);
   }
   initMailDiagnostics();document.addEventListener('astro:page-load',initMailDiagnostics);
 </script>
@@ -221,10 +221,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     async function load() {
       reload.disabled = true; line.textContent = 'Checking...'; list.hidden = true;
       try {
-        const response = await fetch('/internal/api/setup-check', { credentials: 'same-origin' });
-        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not check.');
+        const data = await fetchJson('/internal/api/setup-check');
         const server: Row[] = (data.items as SetupItem[]).map((item) => ({ label: item.label, ok: item.ok, required: item.required, unlocks: item.unlocks, fix: item.fix, note: item.note || '', state: item.ok ? 'Working' : item.required ? 'Missing' : 'Not set up' }));
         const rows = [...server, ...(await phoneRows())];
         const bad = rows.filter((row) => !row.ok);
@@ -256,10 +253,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
     async function load() {
       reload.disabled = true; line.textContent = 'Loading...'; stats.hidden = true;
       try {
-        const response = await fetch('/internal/api/feature-usage?days=30', { credentials: 'same-origin' });
-        if (!(response.headers.get('content-type') || '').includes('json')) throw new Error('Your sign-in expired. Sign in again.');
-        const data = await response.json();
-        if (!response.ok) throw new Error(data?.error || 'Could not load.');
+        const data = await fetchJson('/internal/api/feature-usage?days=30');
         const f = data.features as Record<string, Stat>;
         const clips = f.dictation_clip, drafts = f.quote_draft, usedDraft = f.quote_saved_with_draft, imported = f.measurements_imported;
         const nothing = [clips, drafts, usedDraft, imported].every((x) => x.ok + x.degraded === 0);

@@ -11,25 +11,25 @@ import WorkTypeFilter from '../../../components/WorkTypeFilter.astro';
 </InternalLayout>
 <script>
   import { formatCents } from '../../../lib/money';
+  import { fetchJson, esc } from '../../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../../lib/load-failed';
   import { bindWorkTypeFilter, workTypeBadge } from '../../../lib/work-type';
   function initInvoiceList(){
     const list=document.querySelector('[data-list]');if(!(list instanceof HTMLElement)||list.dataset.bound==='true')return;list.dataset.bound='true';
     const loading=document.querySelector('[data-loading]'),errorEl=document.querySelector('[data-error]'),emptyEl=document.querySelector('[data-empty]');
     const money=formatCents;const labels:Record<string,string>={draft:'Draft',open:'Open',sent:'Sent',paid:'Paid',void:'Void'};
-    const esc=(s:unknown)=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;')};
     let workType:''|'windows'|'siding'='';let pending:AbortController|null=null;
     async function load(){
       pending?.abort();const request=new AbortController();pending=request;
       if(loading instanceof HTMLElement)loading.hidden=false;if(errorEl instanceof HTMLElement)errorEl.hidden=true;if(emptyEl instanceof HTMLElement)emptyEl.hidden=true;list.innerHTML='';
       try{
-        const response=await fetch(`/internal/api/invoices${workType?`?workType=${workType}`:''}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});
-        const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not load invoices.');if(pending!==request)return;
+        const data=await fetchJson(`/internal/api/invoices${workType?`?workType=${workType}`:''}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});if(pending!==request)return;
         if(loading instanceof HTMLElement)loading.hidden=true;
         if(!data.invoices?.length){if(emptyEl instanceof HTMLElement){emptyEl.hidden=false;emptyEl.textContent=workType?`No ${workType} invoices yet.`:'No invoices yet. Start a quote to create one automatically.';}return}
         list.innerHTML=data.invoices.map((invoice:any)=>`<article class="invoice-card"><div class="invoice-main"><div class="invoice-top"><span class="invoice-status invoice-status-${esc(invoice.status)}">${labels[invoice.status]||esc(invoice.status)}</span>${workTypeBadge(invoice.work_type)}<span>${esc(invoice.invoice_number)}</span><time>${new Date(invoice.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</time></div><h2>${esc(invoice.customer_name)}</h2><p>${esc([invoice.customer_city,invoice.quote_id].filter(Boolean).join(' · ')||'Linked quote')}</p></div><div class="invoice-value"><strong>${money(invoice.total_cents)}</strong><span>${invoice.sent_at?`Sent ${new Date(invoice.sent_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:'Not sent'}</span></div><div class="invoice-actions"><a class="btn btn-ghost btn-small" href="/internal/invoices/view?id=${encodeURIComponent(invoice.id)}">Open invoice</a><a class="btn btn-ghost btn-small" href="/internal/quotes/view?id=${encodeURIComponent(invoice.quote_id)}">Source quote</a>${invoice.status==='open'||invoice.status==='sent'?`<a class="btn btn-primary btn-small" href="/internal/invoices/view?id=${encodeURIComponent(invoice.id)}">${invoice.status==='sent'?'Email again':'Send invoice'}</a>`:''}</div></article>`).join('');
       }catch(e){
         if(pending!==request||request.signal.aborted)return;
-        if(loading instanceof HTMLElement)loading.hidden=true;if(errorEl instanceof HTMLElement){errorEl.hidden=false;errorEl.textContent=e instanceof Error?e.message:'Could not load invoices.'}
+        if(loading instanceof HTMLElement)loading.hidden=true;list.replaceChildren(loadFailedNode(loadFailureMessage(e),load));
       }
     }
     workType=bindWorkTypeFilter(document,(next)=>{workType=next;load()});

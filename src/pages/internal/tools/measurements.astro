@@ -76,6 +76,7 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
 
 <script>
   import { bindFractionBar, readInches, showInches } from '../../../lib/size-input';
+  import { esc } from '../../../lib/internal-fetch';
 
   type Opening = {
     room: string;
@@ -149,7 +150,6 @@ import InternalLayout from '../../../layouts/InternalLayout.astro';
       }
     }
 
-    const esc = (v: unknown) => { const d = document.createElement('div'); d.textContent = String(v ?? ''); return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     const num = (v: unknown) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const fmt = (v: number) => v.toFixed(2).replace(/\.00$/, '');
 

@@ -3,6 +3,7 @@ import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.
 import { ensureQuoteLeadColumn, parseLeadId, leadExists } from '../../_lib/lead-links.mjs';
 import { sourceSnapshot } from '../../../_lib/build-plan-rules.mjs';
 import { WORK_TYPES, ensureQuoteWorkTypeColumn, workTypeOf } from '../../_lib/work-types.mjs';
+import { guardWrite, methodNotAllowed } from '../../_lib/request-guard.mjs';
 
 function newQuoteId() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -86,9 +87,10 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const parsed = parseQuoteBody(body);
   if (parsed.error) return json({ error: parsed.error }, 400);
   const { name, phone, email, address, city, role, notes, discountReason, cleanItems, subtotalCents, discountCents, totalCents, workType } = parsed;
@@ -121,4 +123,9 @@ export async function onRequestPost(context) {
 
   const record = await ensureInvoiceForQuote(env.QUOTES_DB, id);
   return json({ id, status, workType, totalCents, leadId: lead.leadId, invoiceId: record?.invoice?.id || `INV-${id.replace(/^Q-/, '')}` }, 201);
+}
+
+export async function onRequest(context) {
+  const handler = new Map([['GET', onRequestGet], ['POST', onRequestPost]]).get(context.request.method);
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST']);
 }

@@ -1,3 +1,4 @@
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 import { ensureInvoiceSchema } from '../_lib/invoices.mjs';
 import { ensureJobsSchema } from '../_lib/jobs-schema.mjs';
 import { formatCents } from '../_lib/money.mjs';
@@ -127,7 +128,10 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { env, request } = context;
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);
   await ensureSchema(env.QUOTES_DB);
   await ensureInvoiceSchema(env.QUOTES_DB);
   const jobId = new URL(context.request.url).searchParams.get('jobId');
@@ -137,8 +141,6 @@ export async function onRequestPatch(context) {
   if (!job) return json({ error: 'Job not found.' }, 404);
   if (job.status === 'cancelled') return json({ error: 'Cancelled jobs cannot receive payment records.' }, 409);
 
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
 
   const total = Math.max(0, Number(job.total_cents) || 0);
   const current = await ensurePayment(env.QUOTES_DB, jobId);
@@ -168,4 +170,10 @@ export async function onRequestPatch(context) {
 
   const payment = await env.QUOTES_DB.prepare(`SELECT * FROM job_payments WHERE job_id = ?`).bind(jobId).first();
   return json({ ok: true, payment: buildRecord(job, payment), history: (await readHistory(env.QUOTES_DB, [jobId])).get(jobId) || [] });
+}
+
+// Dispatches by method and answers anything else with a JSON 405.
+export async function onRequest(context) {
+  const handler = ({ GET: onRequestGet, PATCH: onRequestPatch })[context.request.method];
+  return handler ? handler(context) : methodNotAllowed(['GET', 'PATCH']);
 }

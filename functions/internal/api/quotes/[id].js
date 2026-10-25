@@ -4,6 +4,7 @@ import { requireApprovedBuildPlan } from '../../_lib/quote-gates.mjs';
 import { ensureSigningSchema, renderSignatureSvg } from '../../_lib/quote-signing.mjs';
 import { ensureFollowUpSchema } from '../../_lib/quote-follow-ups.mjs';
 import { ensureQuoteWorkTypeColumn, workTypeOf } from '../../_lib/work-types.mjs';
+import { guardWrite, methodNotAllowed } from '../../_lib/request-guard.mjs';
 
 export async function onRequestGet(context) {
   const { env, params } = context;
@@ -27,15 +28,16 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPut(context) {
-  const { request, env, params } = context;
+  const { env, params } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const id = String(params.id || '');
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is already finalized and can no longer be edited.' }, 409);
 
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
   const parsed = parseQuoteBody(body);
   if (parsed.error) return json({ error: parsed.error }, 400);
   // The type is fixed when the quote is created. A window quote must not lose its Build Plan gate
@@ -76,6 +78,8 @@ export async function onRequestPut(context) {
 
 export async function onRequestDelete(context) {
   const { env, params } = context;
+  const guard = await guardWrite(context, { json: false });
+  if (!guard.ok) return guard.response;
   const id = String(params.id || '');
   const quote = await env.QUOTES_DB.prepare('SELECT status FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
@@ -95,14 +99,16 @@ export async function onRequestDelete(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { request, env, params } = context;
+  const { env, params } = context;
+  // A drawn signature is JSON pen strokes (up to MAX_POINTS points), which can pass the 64 KB default.
+  const guard = await guardWrite(context, { maxBytes: 512 * 1024 });
+  if (!guard.ok) return guard.response;
+  const body = guard.body;
   const id = String(params.id || '');
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is not awaiting a signature.' }, 409);
 
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Body must be JSON.' }, 400); }
   const now = new Date().toISOString();
 
   if (body.confirmPen) {
@@ -138,4 +144,9 @@ export async function onRequestPatch(context) {
   if (signed?.meta?.changes === 0) return json({ error: 'This quote is not awaiting a signature.' }, 409);
   await ensureInvoiceForQuote(env.QUOTES_DB, id, { finalize: true });
   return json({ ok: true, signedAt: now });
+}
+
+export async function onRequest(context) {
+  const handler = new Map([['GET', onRequestGet], ['PUT', onRequestPut], ['DELETE', onRequestDelete], ['PATCH', onRequestPatch]]).get(context.request.method);
+  return handler ? handler(context) : methodNotAllowed(['GET', 'PUT', 'DELETE', 'PATCH']);
 }

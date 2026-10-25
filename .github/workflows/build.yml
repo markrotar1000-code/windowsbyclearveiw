@@ -45,23 +45,31 @@ jobs:
       - run: npm run test:copilot
       - run: npm run test:copilot-snapshot
       - run: npm run test:ai-surfaces
+      - run: npm run test:handler-tests-ai
       - run: npm run test:google-tools
       - run: npm run test:google-reviews
+      - run: npm run test:pages-tools
       - run: npm run test:analytics
       - run: npm run test:permit-leads
       - run: npm run test:mail-pilot
+      - run: npm run test:pages-reports
       - run: npm run test:supplier-permits
+      - run: npm run test:guard-misc
       - run: npm run test:estimate
       - run: npm run test:quote-to-job
       - run: npm run test:lead-links
       - run: npm run test:quote-follow-ups
       - run: npm run test:quote-signing
       - run: npm run test:quote-amounts
+      - run: npm run test:guard-quotes
       - run: npm run test:quote-price-edit
+      - run: npm run test:quote-view-hardening
       - run: npm run test:review-request
+      - run: npm run test:pages-quotes
       - run: npm run test:visitor-errors
       - run: npm run test:load-failed
       - run: npm run test:find
+      - run: npm run test:pages-daily
       - run: npm run test:flow
       - run: npm run test:contact-links
       - run: npm run test:layout-guards
@@ -83,14 +91,17 @@ jobs:
       - run: npm run test:internal-mobile
       - run: npm run test:internal-pwa
       - run: npm run test:job-photos
+      - run: npm run test:pages-jobs
       - run: npm run test:photo-sync
       - run: npm run test:abuse-guard
       - run: npm run test:ops-cron
       - run: npm run test:access
+      - run: npm run test:handler-tests-core
       - run: npm run test:embeddings
       - run: npm run test:dashboard-first-run
       - run: npm run test:field-photo-db
       - run: npm run test:general-jobs
+      - run: npm run test:guard-jobs
       - run: npm run test:contact-import
       - run: npm run test:internal-audit
       - run: npm run test:pagination

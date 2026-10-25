@@ -54,7 +54,11 @@ export async function onRequestGet(context) {
   await syncQuoteFollowUps(env.QUOTES_DB).catch((error) => console.error('quote-follow-up-sync-failed', error));
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const now = new Date().toISOString();
-  const today = pacificDayRange(new Date(now));
+  // An open task belongs to exactly one of "overdue" (due before this moment, the same test the pages use to
+  // mark a row overdue) and "due today" (due from this moment to the end of the Pacific business day).
+  // So a task due at 9am that is still open at noon is overdue only, never counted in both.
+  const day = pacificDayRange(new Date(now));
+  const today = { start: day.start > now ? day.start : now, end: day.end };
 
   const [counts, recentLeads, recentQuotes, sources, cities, tasks, recentJobs] = await Promise.all([
     env.QUOTES_DB.prepare(`

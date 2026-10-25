@@ -1,3 +1,4 @@
+import { methodNotAllowed } from '../_lib/request-guard.mjs';
 import { ensureLeadIntentColumn, intentSummary } from '../../_lib/intent.mjs';
 import { ensureQuoteLeadColumn } from '../_lib/lead-links.mjs';
 import { ensureLeadServiceColumn } from '../../_lib/lead-service.mjs';
@@ -42,4 +43,9 @@ export async function onRequestGet(context) {
      FROM leads ORDER BY created_at DESC, id DESC LIMIT 200`,
   ).all();
   return json({ leads: (results || []).map((lead) => ({ ...lead, intent: (() => { try { return intentSummary(JSON.parse(lead.intent_json || "null"), Date.parse(lead.created_at)); } catch { return null; } })(), ...(quoteByLead.get(lead.id) || { quote_count: 0 }) })) });
+}
+
+export async function onRequest(context) {
+  if (context.request.method === 'HEAD') return onRequestGet(context);
+  return methodNotAllowed(['GET', 'HEAD']);
 }

@@ -63,6 +63,8 @@ import { site } from '../../../data/site';
 
 <script>
   import { formatCents } from '../../../lib/money';
+  import { fetchJson, esc } from '../../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../../lib/load-failed';
   import { workTypeLabel } from '../../../lib/work-type';
   function initInvoiceView() {
     const sheet = document.querySelector('[data-sheet]');
@@ -76,7 +78,6 @@ import { site } from '../../../data/site';
     const statusEl = document.querySelector('[data-status]');
     const emailBtn = document.querySelector('[data-email]');
     const money = formatCents;
-    const esc = (value) => { const d = document.createElement('div'); d.textContent = String(value ?? ''); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
 
     function fail(message) {
       if (loading instanceof HTMLElement) loading.hidden = true;
@@ -85,13 +86,16 @@ import { site } from '../../../data/site';
 
     if (!id) { fail('No invoice id in the URL.'); return; }
 
+    let failed = null;
     async function load() {
+      failed?.remove(); failed = null;
+      if (loading instanceof HTMLElement) loading.hidden = false;
       try {
-        const response = await fetch(`/internal/api/invoices/${encodeURIComponent(id)}`, { headers: { 'cache-control': 'no-cache' } });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'Could not load this invoice.');
+        const data = await fetchJson(`/internal/api/invoices/${encodeURIComponent(id)}`, { headers: { 'cache-control': 'no-cache' } });
         render(data.invoice, data.items || []);
-      } catch (e) { fail(e instanceof Error ? e.message : 'Could not load this invoice.'); }
+      } catch (e) {
+        if (loading instanceof HTMLElement) { loading.hidden = true; failed = loadFailedNode(loadFailureMessage(e), load); loading.after(failed); }
+      }
     }
 
     function render(invoice, items) {
@@ -150,14 +154,12 @@ import { site } from '../../../data/site';
         button.disabled = true; button.textContent = 'Sending…';
         if (errorEl instanceof HTMLElement) errorEl.hidden = true;
         try {
-          const response = await fetch(`/internal/api/invoices/${encodeURIComponent(invoice.id)}`, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ action:'email' }) });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(result.error || 'Could not send the invoice.');
+          const result = await fetchJson(`/internal/api/invoices/${encodeURIComponent(invoice.id)}`, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ action:'email' }) });
           if (statusEl instanceof HTMLElement) { statusEl.hidden = false; statusEl.textContent = `Sent ${new Date(result.sentAt || Date.now()).toLocaleString('en-US')}`; }
           button.textContent = 'Email invoice again';
           button.disabled = false;
         } catch (e) {
-          if (errorEl instanceof HTMLElement) { errorEl.hidden = false; errorEl.textContent = e instanceof Error ? e.message : 'Could not send the invoice.'; }
+          if (errorEl instanceof HTMLElement) { errorEl.hidden = false; errorEl.textContent = loadFailureMessage(e); }
           button.textContent = 'Email invoice'; button.disabled = false;
         }
       });

@@ -14,17 +14,19 @@ import WorkTypeFilter from '../../../components/WorkTypeFilter.astro';
 </InternalLayout>
 <script>
   import { formatCents } from '../../../lib/money';
+  import { fetchJson, esc } from '../../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../../lib/load-failed';
   import { bindWorkTypeFilter, workTypeBadge } from '../../../lib/work-type';
   function initQuoteList(){
     const list=document.querySelector('[data-list]');if(!(list instanceof HTMLElement)||list.dataset.bound==='true')return;list.dataset.bound='true';
     const loading=document.querySelector('[data-loading]'),errorEl=document.querySelector('[data-error]'),emptyEl=document.querySelector('[data-empty]'),emptyFiltered=document.querySelector('[data-empty-filtered]'),search=document.querySelector('[data-search]'),note=document.querySelector('[data-result-note]');
-    const money = formatCents;const esc=(s:unknown)=>{const d=document.createElement('div');d.textContent=String(s??'');return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;')};
+    const money = formatCents;
     const quoteLabel=(s:string)=>s==='finalized'?'Finalized':'Draft';const invoiceLabel=(s?:string)=>({draft:'Draft invoice',open:'Invoice open',sent:'Invoice sent',paid:'Paid',void:'Void'}[s||'']||'No invoice');
     const planLabel=(p:any)=>{if(!p||p.error)return 'Plan unavailable';if(p.status==='approved'&&!p.stale)return 'Plan approved';if(p.stale)return 'Plan stale';if((p.quality?.blockers||[]).length)return 'Plan blocked';if(p.status==='review')return 'Plan in review';if(p.status==='reopened')return 'Plan reopened';if(p.generated)return 'Plan not saved';return 'Plan draft';};
     const planClass=(p:any)=>{if(!p||p.error)return 'plan-unavailable';if(p.status==='approved'&&!p.stale)return 'plan-approved';if(p.stale)return 'plan-stale';if((p.quality?.blockers||[]).length)return 'plan-blocked';if(p.status==='review')return 'plan-review';if(p.status==='reopened')return 'plan-reopened';return 'plan-draft';};
     const planAction=(p:any)=>p?.status==='approved'&&!p?.stale?'Open plan':p?.status==='review'?'Review plan':'Build plan';
     let workType:''|'windows'|'siding'='';let pending:AbortController|null=null;let searchTimer:ReturnType<typeof setTimeout>;let quotes:any[]=[];let plans:Record<string,any>={},page=1,totalPages=1,total=0;
-    async function loadPlans(items:any[],signal:AbortSignal){await Promise.all(items.filter(x=>x.status!=='finalized'&&x.work_type!=='siding').map(async x=>{try{const r=await fetch(`/internal/api/build-plan?quoteId=${encodeURIComponent(x.id)}`,{signal,headers:{'cache-control':'no-cache'}});const result=r.ok?await r.json():{error:true};if(!signal.aborted)plans[x.id]=result;}catch{if(!signal.aborted)plans[x.id]={error:true};}}));}
+    async function loadPlans(items:any[],signal:AbortSignal){await Promise.all(items.filter(x=>x.status!=='finalized'&&x.work_type!=='siding').map(async x=>{try{const result=await fetchJson(`/internal/api/build-plan?quoteId=${encodeURIComponent(x.id)}`,{signal,headers:{'cache-control':'no-cache'}});if(!signal.aborted)plans[x.id]=result;}catch{if(!signal.aborted)plans[x.id]={error:true};}}));}
     function render(){
       const term=search instanceof HTMLInputElement?search.value.trim():'';const visible=quotes;
       if(note)note.textContent=quotes.length?`${visible.length} of ${quotes.length} quotes`:'';if(emptyFiltered instanceof HTMLElement)emptyFiltered.hidden=!((term||workType)&&!visible.length);if(!visible.length){if(!quotes.length&&!term&&!workType&&emptyEl instanceof HTMLElement)emptyEl.hidden=false;list.innerHTML='';return;}if(emptyEl instanceof HTMLElement)emptyEl.hidden=true;
@@ -38,8 +40,7 @@ import WorkTypeFilter from '../../../components/WorkTypeFilter.astro';
       if(emptyEl instanceof HTMLElement)emptyEl.hidden=true;if(emptyFiltered instanceof HTMLElement)emptyFiltered.hidden=true;list.innerHTML='';
       try{
         const params=new URLSearchParams({page:String(page)});const term=search instanceof HTMLInputElement?search.value.trim():'';if(term)params.set('search',term);if(workType)params.set('workType',workType);
-        const response=await fetch(`/internal/api/quotes?${params}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});
-        const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not load quotes.');if(pending!==request)return;
+        const data=await fetchJson(`/internal/api/quotes?${params}`,{signal:request.signal,headers:{'cache-control':'no-cache'}});if(pending!==request)return;
         const rows=Array.isArray(data.quotes)?data.quotes:[];
         await loadPlans(rows,request.signal);if(pending!==request||request.signal.aborted)return;
         quotes=rows;page=data.page||page;totalPages=Math.max(1,data.totalPages||0);total=data.total||0;
@@ -48,7 +49,7 @@ import WorkTypeFilter from '../../../components/WorkTypeFilter.astro';
         if(emptyEl instanceof HTMLElement)emptyEl.hidden=Boolean(term||workType||quotes.length);
         const label=document.querySelector('[data-page-label]');if(label)label.textContent=`Page ${page} of ${totalPages}`;
         if(prev instanceof HTMLButtonElement)prev.disabled=page<=1;if(next instanceof HTMLButtonElement)next.disabled=page>=totalPages;
-      }catch(e){if(pending!==request||request.signal.aborted)return;if(errorEl instanceof HTMLElement){errorEl.hidden=false;errorEl.textContent=e instanceof Error?e.message:'Could not load quotes.';}list.innerHTML='<button class="btn btn-ghost" type="button" data-retry>Try again</button>';list.querySelector('[data-retry]')?.addEventListener('click',load);}
+      }catch(e){if(pending!==request||request.signal.aborted)return;list.replaceChildren(loadFailedNode(loadFailureMessage(e),load));}
       finally{if(pending===request&&loading instanceof HTMLElement)loading.hidden=true;}
     }
     search?.addEventListener('input',()=>{clearTimeout(searchTimer);pending?.abort();page=1;searchTimer=setTimeout(load,250)});document.querySelector('[data-page-prev]')?.addEventListener('click',()=>{if(page>1){page--;load()}});document.querySelector('[data-page-next]')?.addEventListener('click',()=>{if(page<totalPages){page++;load()}});workType=bindWorkTypeFilter(document,(next)=>{workType=next;pending?.abort();page=1;load()});load();

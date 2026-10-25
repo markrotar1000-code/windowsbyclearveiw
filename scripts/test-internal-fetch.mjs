@@ -31,6 +31,9 @@ try {
   await fails('session', (e) => assert.equal(e.status, 401));
   answer('<html>login</html>', { status: 200, headers: { 'content-type': 'text/plain' }, redirected: true });
   await fails('session');
+  // An HTML error page from a failing server is not an expired sign-in.
+  answer('<html>Bad gateway</html>', { status: 502, headers: { 'content-type': 'text/html' } });
+  await fails('server', (e) => { assert.equal(e.status, 502); assert.notEqual(e.message, SESSION_EXPIRED_MESSAGE, 'a 502 page does not tell someone to sign in again'); });
   answer('{"error":"Job not found."}', { status: 404, headers: { 'content-type': 'application/json' } });
   await fails('server', (e) => { assert.equal(e.message, 'Job not found.', 'the server\'s own sentence is used'); assert.equal(e.status, 404); });
   answer('{}', { status: 500, headers: { 'content-type': 'application/json' } });

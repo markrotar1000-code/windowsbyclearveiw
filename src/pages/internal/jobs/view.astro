@@ -121,6 +121,8 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
 
 <script>
   import { formatCents } from '../../../lib/money';
+  import { fetchJson, esc } from '../../../lib/internal-fetch';
+  import { loadFailedNode, loadFailureMessage } from '../../../lib/load-failed';
   import { directionsUrl, smsUrl } from '../../../lib/contact-links';
   type Job = {
     id: string;
@@ -161,17 +163,23 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
       }
     }
 
+    function failBox(message: string, retry: () => void) {
+      if (!(error instanceof HTMLElement)) return;
+      error.hidden = true;
+      const subtitle = document.querySelector('[data-subtitle]');
+      if (subtitle) subtitle.textContent = '';
+      document.querySelector('[data-load-failed]')?.remove();
+      const node = loadFailedNode(message, () => { node.remove(); retry(); });
+      node.setAttribute('data-load-failed', '');
+      error.after(node);
+    }
+
     if (!id) {
       showError('No job id in the URL.');
       return;
     }
 
     const money = formatCents;
-    const esc = (value: unknown) => {
-      const element = document.createElement('div');
-      element.textContent = String(value ?? '');
-      return element.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    };
     const statusLabel = (status: string) => status === 'in-progress' ? 'In progress' : status.charAt(0).toUpperCase() + status.slice(1);
 
     function renderPlan(plan: any, version: number, knowledge: string | null, attachedAt: string | null) {
@@ -313,13 +321,11 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
 
     async function load() {
       try {
-        const response = await fetch(`/internal/api/jobs?id=${encodeURIComponent(id)}`, { headers: { 'cache-control': 'no-cache' } });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || 'Could not load this job.');
+        const data = await fetchJson(`/internal/api/jobs?id=${encodeURIComponent(id)}`, { headers: { 'cache-control': 'no-cache' } });
         job = data.job;
         render(data.items || [], data.buildPlan, data.buildPlanVersion, data.buildPlanKnowledgeVersion, data.buildPlanAttachedAt);
       } catch (cause) {
-        showError(cause instanceof Error ? cause.message : 'Could not load this job.');
+        failBox(loadFailureMessage(cause, 'Could not load this job.'), load);
       }
     }
 
@@ -330,13 +336,11 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
       button.disabled = true;
       button.textContent = 'Attaching…';
       try {
-        const response = await fetch(`/internal/api/jobs?id=${encodeURIComponent(job.id)}`, {
+        await fetchJson(`/internal/api/jobs?id=${encodeURIComponent(job.id)}`, {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ action: 'reconcileBuildPlan' })
         });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(result.error || 'Could not attach the Build Plan.');
         await load();
       } catch (cause) {
         showError(cause instanceof Error ? cause.message : 'Could not attach the Build Plan.');
@@ -353,7 +357,7 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
       saveButton.disabled = true;
       saveButton.textContent = 'Saving…';
       try {
-        const response = await fetch(`/internal/api/jobs?id=${encodeURIComponent(job.id)}`, {
+        await fetchJson(`/internal/api/jobs?id=${encodeURIComponent(job.id)}`, {
           method: 'PATCH',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
@@ -375,8 +379,6 @@ import FlowBar from '../../../components/internal/FlowBar.astro';
             closeoutNotes: q('[data-closeout-notes]').value
           })
         });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(result.error || 'Could not save changes.');
         state.textContent = `Saved ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
         await load();
       } catch (cause) {
