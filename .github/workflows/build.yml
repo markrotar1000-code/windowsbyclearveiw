@@ -87,6 +87,7 @@ jobs:
       - run: npm run test:abuse-guard
       - run: npm run test:ops-cron
       - run: npm run test:access
+      - run: npm run test:handler-tests-core
       - run: npm run test:embeddings
       - run: npm run test:dashboard-first-run
       - run: npm run test:field-photo-db
