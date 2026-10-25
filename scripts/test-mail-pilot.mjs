@@ -222,7 +222,7 @@ try {
 }
 const pageSource = fs.readFileSync(`${root}src/pages/internal/mail-pilot.astro`, 'utf8');
 assert.ok(!/innerHTML|insertAdjacentHTML|document\.write/.test(pageSource), 'rows are built with textContent, never HTML');
-assert.deepEqual([...new Set([...pageSource.matchAll(/['"`](\/internal\/[\w/-]+(?:\?[^'"`]*)?)/g)].map((m) => m[1].split('?')[0]))].sort(), ['/internal/api/mail-pilot', '/internal/login'], 'the page talks to its one endpoint and the login page');
+assert.deepEqual([...new Set([...pageSource.matchAll(/['"`](\/internal\/[\w/-]+(?:\?[^'"`]*)?)/g)].map((m) => m[1].split('?')[0]))].sort(), ['/internal/api/mail-pilot'], 'the page talks to its one endpoint (an expired sign-in is reported by the shared fetchJson)');
 assert.match(fs.readFileSync(`${root}src/pages/internal/tools/index.astro`, 'utf8'), /href="\/internal\/mail-pilot"/, 'Tools links to the page');
 pass('the address endpoint is behind the session gate, and nothing with addresses can be committed');
 

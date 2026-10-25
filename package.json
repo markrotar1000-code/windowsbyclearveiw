@@ -85,6 +85,7 @@
     "test:pricing-health": "node .github/scripts/check-pricing.mjs",
     "test:permit-leads": "node scripts/test-permit-leads.mjs",
     "test:mail-pilot": "node --disable-warning=ExperimentalWarning scripts/test-mail-pilot.mjs",
+    "test:pages-reports": "node scripts/test-pages-reports.mjs",
     "test:supplier-permits": "node --disable-warning=ExperimentalWarning scripts/test-supplier-permits.mjs",
     "test:guard-misc": "node --disable-warning=ExperimentalWarning scripts/test-guard-misc.mjs",
     "test:analytics": "node --disable-warning=ExperimentalWarning scripts/test-analytics-collection.mjs && node scripts/test-analytics.mjs && node --disable-warning=ExperimentalWarning scripts/test-analytics-pipeline.mjs && node --disable-warning=ExperimentalWarning scripts/test-intent.mjs && node --experimental-strip-types scripts/test-intent-client.mjs",
