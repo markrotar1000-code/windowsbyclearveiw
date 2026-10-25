@@ -2,6 +2,7 @@
 // closeout is finalized. Email goes through Resend; "sms" returns a prefilled
 // sms: link so Mark texts from his own phone (no SMS provider, no A2P
 // registration) and records that he did. D1 is the record of who was asked.
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 import { reviewEmail, reviewUrl, smsBody } from '../../_lib/review-request.mjs';
 
 const FROM = 'Clearview Windows <estimates@windowsbyclearveiw.com>';
@@ -69,9 +70,14 @@ export async function onRequestGet({ env, request }) {
   return json({ jobId, customerName: job.customer_name, ...rest });
 }
 
-export async function onRequestPost({ env, request }) {
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
+// Sends email, so the body cap is tight: the only fields are a job id and a channel.
+const MAX_BODY_BYTES = 8 * 1024;
+
+export async function onRequestPost(context) {
+  const { env } = context;
+  const guard = await guardWrite(context, { maxBytes: MAX_BODY_BYTES });
+  if (!guard.ok) return guard.response;
+  const body = guard.body && typeof guard.body === 'object' ? guard.body : {};
   const jobId = typeof body.jobId === 'string' ? body.jobId.trim() : '';
   const channel = body.channel === 'email' || body.channel === 'sms' ? body.channel : '';
   if (!jobId || !channel) return json({ error: 'jobId and a channel of email or sms are required.' }, 400);
@@ -126,4 +132,10 @@ export async function onRequestPost({ env, request }) {
   }
 
   return json({ ok: true, channel, sentAt: now, smsHref: channel === 'sms' ? state.smsHref : undefined });
+}
+
+// Dispatches by method and answers anything else with a JSON 405.
+export async function onRequest(context) {
+  const handler = ({ GET: onRequestGet, POST: onRequestPost })[context.request.method];
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST']);
 }

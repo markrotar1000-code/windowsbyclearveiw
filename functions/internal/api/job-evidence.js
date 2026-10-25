@@ -1,3 +1,4 @@
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -62,10 +63,9 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { env, request }=context; await ensureSchema(env.QUOTES_DB); const url=new URL(request.url); const jobId=url.searchParams.get('jobId');
+  const { env, request }=context; const guard=await guardWrite(context); if(!guard.ok)return guard.response; const body=guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400); await ensureSchema(env.QUOTES_DB); const url=new URL(request.url); const jobId=url.searchParams.get('jobId');
   if(!jobId)return json({error:'jobId is required.'},400); const job=await ensureJob(env.QUOTES_DB,jobId); if(!job)return json({error:'Job not found.'},404);
   if(String(job.status).toLowerCase()==='cancelled')return json({error:'Cancelled jobs cannot receive field evidence.',code:'JOB_CANCELLED'},409);
-  let body; try{body=await request.json();}catch{return json({error:'Invalid JSON.'},400);}
   const openingIndex=Number(body.openingIndex); if(!Number.isInteger(openingIndex)||openingIndex<0||openingIndex>999)return json({error:'openingIndex must be a non-negative integer.'},400);
   let openings=[]; try{const parsed=JSON.parse(job.build_plan_json||'{}');openings=Array.isArray(parsed?.openings)?parsed.openings:[];}catch{openings=[];}
   if(openings.length&&openingIndex>=openings.length)return json({error:'Opening is outside the attached Build Plan snapshot.',code:'OPENING_NOT_IN_SNAPSHOT'},409);
@@ -82,4 +82,10 @@ export async function onRequestPatch(context) {
   await env.QUOTES_DB.prepare(`INSERT INTO job_opening_evidence (job_id, opening_index, measurements_json, notes, exception_status, exception_notes, material_usage_json, photo_summary_json, created_at, updated_at, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'mark') ON CONFLICT(job_id, opening_index) DO UPDATE SET measurements_json=excluded.measurements_json, notes=excluded.notes, exception_status=excluded.exception_status, exception_notes=excluded.exception_notes, material_usage_json=excluded.material_usage_json, photo_summary_json=excluded.photo_summary_json, updated_at=excluded.updated_at, updated_by=excluded.updated_by`).bind(jobId,openingIndex,JSON.stringify(measurements),notes,exceptionStatus,exceptionNotes,JSON.stringify(materialUsage),JSON.stringify(photoSummary),existing?.created_at||now,now).run();
   const saved=await env.QUOTES_DB.prepare(`SELECT * FROM job_opening_evidence WHERE job_id = ? AND opening_index = ?`).bind(jobId,openingIndex).first();
   return json({ok:true,evidence:{...saved,measurements,materialUsage,photoSummary}});
+}
+
+// Dispatches by method and answers anything else with a JSON 405.
+export async function onRequest(context) {
+  const handler = ({ GET: onRequestGet, PATCH: onRequestPatch })[context.request.method];
+  return handler ? handler(context) : methodNotAllowed(['GET', 'PATCH']);
 }

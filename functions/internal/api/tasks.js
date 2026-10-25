@@ -1,3 +1,4 @@
+import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 import { pacificDayRange } from '../_lib/pacific-day.mjs';
 import { syncQuoteFollowUps } from '../_lib/quote-follow-ups.mjs';
 
@@ -81,10 +82,11 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = context;
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);
   await ensureSchema(env.QUOTES_DB);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
   const title = typeof body.title === 'string' ? body.title.trim().slice(0, 240) : '';
   if (!title) return json({ error: 'Task title is required.' }, 400);
   const leadId = body.leadId !== null && body.leadId !== '' && body.leadId !== undefined && Number.isInteger(Number(body.leadId)) && Number(body.leadId) > 0 ? Number(body.leadId) : null;
@@ -99,12 +101,13 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequestPatch(context) {
-  const { env, request } = context;
+  const { env } = context;
+  const guard = await guardWrite(context);
+  if (!guard.ok) return guard.response;
+  const body = guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);
   await ensureSchema(env.QUOTES_DB);
   const id = new URL(context.request.url).searchParams.get('id');
   if (!id) return json({ error: 'Task id is required.' }, 400);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: 'Invalid JSON.' }, 400); }
   const current = await env.QUOTES_DB.prepare(`SELECT * FROM follow_up_tasks WHERE id = ?`).bind(id).first();
   if (!current) return json({ error: 'Task not found.' }, 404);
   const status = ['open', 'done'].includes(body.status) ? body.status : current.status;
@@ -116,4 +119,10 @@ export async function onRequestPatch(context) {
   await env.QUOTES_DB.prepare(`UPDATE follow_up_tasks SET updated_at = ?, title = ?, due_at = ?, notes = ?, status = ? WHERE id = ?`)
     .bind(new Date().toISOString(), title, dueAt, notes, status, id).run();
   return json({ ok: true });
+}
+
+// Dispatches by method and answers anything else with a JSON 405.
+export async function onRequest(context) {
+  const handler = ({ GET: onRequestGet, POST: onRequestPost, PATCH: onRequestPatch })[context.request.method];
+  return handler ? handler(context) : methodNotAllowed(['GET', 'POST', 'PATCH']);
 }
