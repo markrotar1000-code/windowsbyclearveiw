@@ -1,3 +1,11 @@
+## 2026-10-27 - Calling workbook is live
+
+Activation complete under the user's explicit approval. Worker clearview-calling-sync uses its dedicated Google secret, real production D1/workbook bindings, and a five-minute schedule. workers.dev and preview URLs remain disabled. The service identity has no project IAM roles and access only to the workbook, including protected source-tab editing. Its local downloaded key was removed. Production version: 0772da74-a7e0-4db5-a4ec-7fdbce4e93d2. Detailed private evidence: originating task outputs/calling-desk/activation-status.md.
+
+Two live scheduled runs verified synthetic call status/notes/follow-up and mirror refresh, then identical replay without duplicate history or version increment. The test fixture was removed; all 94 real prospects remain unchanged. The existing Command Center reads the verified D1 and displays changes after Load / refresh prospects. Browser UI verification was blocked by Cloudflare Access denying the signed-in account. Phone verification is not performed by this feature. Review Error rows and clear Sync status to retry; do not sort/edit rows during submission. The shared workbook shows a live sync timestamp. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed.
+
+IMPORTANT: Checked-in Worker defaults remain disabled. Future production deploys MUST supply the explicit workbook ID and enabled overrides described in .ai/references/calling-sheet-sync.md. Source PR 323 is separate from the already-deployed standalone Worker.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.

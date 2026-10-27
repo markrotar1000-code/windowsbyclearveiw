@@ -1,3 +1,7 @@
+## 2026-10-27 - Activate Google calling workbook synchronization
+
+Add transactional call history, field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A private five-minute Worker reads approved call rows and refreshes protected source mirrors. PDF extraction leaves rows for review. Dedicated workbook-only credentials and production activation are configured under operator approval. Two live scheduled runs verified a synthetic save and replay without duplicate history; the fixture was removed. All 94 real prospects remain unchanged. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed. Browser UI verification remains blocked by Cloudflare Access, separately from verified D1 and Sheets behavior.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.
