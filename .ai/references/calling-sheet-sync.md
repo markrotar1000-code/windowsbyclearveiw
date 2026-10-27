@@ -22,3 +22,8 @@ Missing configuration, changed headers, duplicate IDs, invalid data, version con
 ## Completion
 Run npm run test:skip-trace-calls, npm run test:skip-trace, npm run test:all and npm run build. Deploy only after account setup, set the secret and workbook ID, protect the source mirror, then enable the schedule. Verify a synthetic call and duplicate retry. A PR alone does not activate Google access or the Worker.
 
+## Operating the deployed service
+The checked-in configuration defaults to disabled and an empty workbook ID. Production deployments must explicitly supply the intended CALLING_SHEET_ID and CALLING_SYNC_ENABLED=true overrides; do not deploy the default configuration over an active service. Wrangler preserves the existing Worker secret. Never commit a service-account key or copy it into a cell or browser-delivered script.
+
+Verify the last-sync timestamp on Start here, each submitted call's Synced timestamp, and the corresponding D1 prospect/history. Existing Command Center pages display the saved values after Load / refresh prospects. A failed browser sign-in does not establish a database failure; distinguish direct D1 verification from authenticated UI verification.
+

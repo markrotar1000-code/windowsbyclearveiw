@@ -1,6 +1,6 @@
-## 2026-10-27 - Stage Google calling workbook synchronization
+## 2026-10-27 - Activate Google calling workbook synchronization
 
-Add transactional skip_trace_calls history, strict call-field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A disabled private cron Worker reads reviewed Google call rows, acknowledges outcomes and refreshes protected source mirrors. PDF extraction is deterministic and leaves rows unapproved. Dedicated credentials and live activation are not yet configured. Local canonical suite: 89 checks passed; focused adapter tests also cover mirror refresh and conflict retries.
+Add transactional call history, field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A private five-minute Worker reads approved call rows and refreshes protected source mirrors. PDF extraction leaves rows for review. Dedicated workbook-only credentials and production activation are configured under operator approval. Two live scheduled runs verified a synthetic save and replay without duplicate history; the fixture was removed. All 94 real prospects remain unchanged. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed. Browser UI verification remains blocked by Cloudflare Access, separately from verified D1 and Sheets behavior.
 
 ## 2026-10-25 - Vancouver 98662 prospect batch
 

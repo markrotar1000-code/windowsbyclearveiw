@@ -1,8 +1,8 @@
-## 2026-10-27 - Calling sheet sync staged, not activated
+## 2026-10-27 - Calling sheet sync activated and verified
 
-Added a disabled dedicated scheduled Worker, deterministic call-PDF extractor and transactional call ledger. Approved call rows update existing prospect notes/status/follow-up and suppression with ID replay checks and version conflicts. Prospects and Phone review are protected source mirrors; call details are entered in Call log. Contract: references/calling-sheet-sync.md.
+The private calling-sync Worker is enabled every five minutes with a dedicated Google identity shared only onto the workbook and no project IAM roles. The key is a Worker secret; its local downloaded copy was removed. Prospects and Phone review remain protected source mirrors; details belong in Call log. See references/calling-sheet-sync.md.
 
-Validation: 89 canonical checks passed, including the build; the new adapter checks passed again after phone-mirror/schema refinements. Google workbook and fillable PDF were separately created and shared under operator authority. No production prospect mutation occurred. Persistent service-account setup, Worker deployment/enabling and synthetic live verification remain pending. Do not describe sync as active.
+89 canonical checks, focused adapter tests, GitHub build and Pages checks passed. At 22:40 UTC the live scheduled run saved a synthetic call and refreshed the source mirrors. At 22:45 UTC an identical retry saved zero new calls, preserved version 1 and exactly one history entry, and acknowledged Synced again. The test fixture was removed from D1 and Sheets, returning to 94 real prospects unchanged. Authenticated Command Center UI was not verified because Cloudflare Access denied the browser account; the production D1 and Sheets round-trip were verified directly.
 
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
