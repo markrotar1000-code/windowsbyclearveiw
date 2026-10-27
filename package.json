@@ -107,6 +107,7 @@
     "test:google-tools": "node --disable-warning=ExperimentalWarning scripts/test-google-tools.mjs",
     "test:supplier-list": "node --disable-warning=ExperimentalWarning scripts/test-supplier-list.mjs",
     "test:skip-trace": "node --disable-warning=ExperimentalWarning scripts/test-skip-trace.mjs",
+    "test:skip-trace-calls": "node --disable-warning=ExperimentalWarning scripts/test-skip-trace-calls.mjs",
     "build:skip-trace": "node scripts/build-skip-trace.mjs"
   },
   "dependencies": {

@@ -1,3 +1,9 @@
+## 2026-10-27 - Calling sheet sync staged, not activated
+
+Added a disabled dedicated scheduled Worker, deterministic call-PDF extractor and transactional call ledger. Approved call rows update existing prospect notes/status/follow-up and suppression with ID replay checks and version conflicts. Prospects and Phone review are protected source mirrors; call details are entered in Call log. Contract: references/calling-sheet-sync.md.
+
+Validation: 89 canonical checks passed, including the build; the new adapter checks passed again after phone-mirror/schema refinements. Google workbook and fillable PDF were separately created and shared under operator authority. No production prospect mutation occurred. Persistent service-account setup, Worker deployment/enabling and synthetic live verification remain pending. Do not describe sync as active.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.

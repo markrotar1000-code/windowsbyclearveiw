@@ -1,3 +1,7 @@
+## 2026-10-27 - Stage Google calling workbook synchronization
+
+Add transactional skip_trace_calls history, strict call-field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A disabled private cron Worker reads reviewed Google call rows, acknowledges outcomes and refreshes protected source mirrors. PDF extraction is deterministic and leaves rows unapproved. Dedicated credentials and live activation are not yet configured. Local canonical suite: 89 checks passed; focused adapter tests also cover mirror refresh and conflict retries.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.

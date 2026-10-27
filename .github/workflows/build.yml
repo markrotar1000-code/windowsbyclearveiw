@@ -107,3 +107,4 @@ jobs:
       - run: npm run test:pagination
       - run: npm run test:request-guard
       - run: npm run test:internal-fetch
+      - run: npm run test:skip-trace-calls

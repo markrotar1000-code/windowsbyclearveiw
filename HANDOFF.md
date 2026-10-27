@@ -1,3 +1,7 @@
+## 2026-10-27 - Calling workbook activation remains pending
+
+The dedicated Worker at workers/calling-sync is disabled and has no public endpoint. See .ai/references/calling-sheet-sync.md. Operator approval for new persistent Google access was requested in the originating task; verify that reply before setup. Need a dedicated service account shared only on the calling workbook, its key in CALLING_GOOGLE_SERVICE_ACCOUNT_JSON, CALLING_SHEET_ID configured, and that identity added to protected source sheet editors. Then deploy, enable and verify one synthetic call plus duplicate retry without modifying real prospects. The existing Command Center reads D1 and needs no UI release for new notes/status/follow-up to appear after reload. Phone verification is not performed by this feature. Error rows require explicit review and reset; submitted rows should not be sorted/edited during sync. No production leads were updated during development. The Google workbook is shared with the operator and Robert, with setup-pending visible. Local checks: 89 canonical steps passed; focused adapter recheck passed after refinements.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.
