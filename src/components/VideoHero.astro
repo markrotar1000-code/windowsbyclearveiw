@@ -20,7 +20,7 @@ const insetPhoto = findWork('blue-pair-installday');
 // project root — where "public/" always lives — is process.cwd() in both
 // `astro dev` and `astro build`.
 //
-// The approved satin logo, exported as a short 1280x720 H.264 fade with faststart.
+// Preserve the original ClearView reveal film as the hero background.
 // Phones and constrained connections use the responsive photo; desktop plays once.
 const HERO_VIDEO = 'logo-reveal-1-optimized';
 const hasVideo = existsSync(join(process.cwd(), `public/video/${HERO_VIDEO}.mp4`));
@@ -47,7 +47,7 @@ const heroStatic = await getImage({
       <video
         class="hero-media"
         id="hero-video"
-        data-src={`/video/${HERO_VIDEO}.mp4?v=20261028`}
+        data-src={`/video/${HERO_VIDEO}.mp4?v=20261029-reveal`}
         muted
         playsinline
         preload="none"

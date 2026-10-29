@@ -1145,3 +1145,7 @@ gold stars and initials avatar, larger quote, Google source badge and separate
 author footer. Shared review-cards.css applies to both curated and live cards.
 Checked desktop and 375px layout without horizontal overflow; review tests and
 production build passed. Updated the same PR branch; production is still pending.
+
+## 2026-10-29 — Preserve original hero reveal
+Restored the original five-second ClearView reveal MP4 after owner clarification. The refreshed satin logo remains in website branding; the hero retains its original reveal film and existing playback/fallback behavior. Asset URL revised to bypass the replaced clip's cache. Production verification follows deployment.
+

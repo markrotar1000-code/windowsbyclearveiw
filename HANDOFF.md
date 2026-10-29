@@ -960,3 +960,7 @@ Jobs status filtering moved into the existing API before pagination; `activeTota
 ## 2026-10-03 — Schedule and quote discovery (PR #182 continuation)
 
 The jobs list API now supports a validated 1–31 day from/to interval (inclusive start/exclusive end), used by Schedule to query only its week before pagination and read every matching page. Calendar anchors come from Pacific business dates and use UTC calendar arithmetic. Quotes accept status/search before pagination; the quote-item subquery uses identical filters and stable ordering, so freshness checks remain correct. Quote search resets pagination, debounces and cancels pending requests. Jobs loads all finalized-quote pages into the creation dropdown. No migrations/bindings required. Tests execute both loaders and real SQLite filters/freshness. Browser/iPhone verification remains pending; changes stay in PR #182.
+
+## 2026-10-29 — Preserve original hero reveal
+Restored the original five-second ClearView reveal MP4 after owner clarification. The refreshed satin logo remains in website branding; the hero retains its original reveal film and existing playback/fallback behavior. Asset URL revised to bypass the replaced clip's cache. Production verification follows deployment.
+
