@@ -1,3 +1,7 @@
+## 2026-10-28 - Satin brand refresh
+
+Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
+
 ## 2026-10-27 - Calling sheet sync activated and verified
 
 The private calling-sync Worker is enabled every five minutes with a dedicated Google identity shared only onto the workbook and no project IAM roles. The key is a Worker secret; its local downloaded copy was removed. Prospects and Phone review remain protected source mirrors; details belong in Call log. See references/calling-sheet-sync.md.

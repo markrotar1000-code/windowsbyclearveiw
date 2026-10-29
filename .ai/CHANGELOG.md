@@ -1,3 +1,7 @@
+## 2026-10-28 - Satin brand refresh
+
+Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
+
 ## 2026-10-27 - Activate Google calling workbook synchronization
 
 Add transactional call history, field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A private five-minute Worker reads approved call rows and refreshes protected source mirrors. PDF extraction leaves rows for review. Dedicated workbook-only credentials and production activation are configured under operator approval. Two live scheduled runs verified a synthetic save and replay without duplicate history; the fixture was removed. All 94 real prospects remain unchanged. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed. Browser UI verification remains blocked by Cloudflare Access, separately from verified D1 and Sheets behavior.

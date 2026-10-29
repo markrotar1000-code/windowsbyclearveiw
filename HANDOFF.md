@@ -1,3 +1,7 @@
+## 2026-10-28 - Satin brand refresh
+
+Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
+
 ## 2026-10-27 - Calling workbook is live
 
 Activation complete under the user's explicit approval. Worker clearview-calling-sync uses its dedicated Google secret, real production D1/workbook bindings, and a five-minute schedule. workers.dev and preview URLs remain disabled. The service identity has no project IAM roles and access only to the workbook, including protected source-tab editing. Its local downloaded key was removed. Production version: 0772da74-a7e0-4db5-a4ec-7fdbce4e93d2. Detailed private evidence: originating task outputs/calling-desk/activation-status.md.

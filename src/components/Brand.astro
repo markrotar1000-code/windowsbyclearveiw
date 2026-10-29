@@ -1,12 +1,6 @@
 ---
-// The link's accessible name must contain its visible text ("Clearview" and,
-// above 380 px, "Vancouver, WA") or a voice-control user who says what they
-// see ("click Clearview Vancouver") cannot activate it (WCAG 2.5.3, axe:
-// label-content-name-mismatch). The old label said "Clearview Windows home",
-// which dropped "Vancouver, WA". The explicit space between the two lines of
-// the wordmark matters: they are separate flex items, so nothing renders it,
-// but assistive-tech and axe read the text as "ClearviewVancouver, WA" without
-// it. scripts/test-a11y-names.mjs guards this.
+// Keep the accessible name aligned with both visible lines (WCAG 2.5.3).
+// The explicit space joins the flex items for assistive technology.
 interface Props {
   compact?: boolean;
 }
@@ -15,13 +9,13 @@ const { compact = false } = Astro.props;
 <a
   class:list={['brand', compact && 'is-compact']}
   href="/"
-  aria-label="Clearview Vancouver, WA home"
+  aria-label="ClearView Windows and Trim home"
 >
   <img
     class="brand-mark"
-    src="/logo/icon-mark@128.webp"
-    srcset="/logo/icon-mark@64.webp 64w, /logo/icon-mark@128.webp 128w, /logo/icon-mark@256.webp 256w"
-    sizes={compact ? '34px' : '38px'}
+    src="/logo/icon-mark@128.webp?v=20261028"
+    srcset="/logo/icon-mark@64.webp?v=20261028 64w, /logo/icon-mark@128.webp?v=20261028 128w, /logo/icon-mark@256.webp?v=20261028 256w"
+    sizes={compact ? '38px' : '44px'}
     width="256"
     height="256"
     alt=""
@@ -29,8 +23,8 @@ const { compact = false } = Astro.props;
     decoding="async"
   />
   <span class="brand-type">
-    <strong>Clearview</strong>{' '}
-    <span class="brand-sub">Vancouver, WA</span>
+    <strong>ClearView</strong>{' '}
+    <span class="brand-sub">Windows and Trim</span>
   </span>
 </a>
 
@@ -44,14 +38,14 @@ const { compact = false } = Astro.props;
     align-items: center;
     /* The wordmark may give way before the Menu button does (large text on a phone). */
     min-width: 0;
-    gap: 0.7rem;
+    gap: 0.5rem;
     text-decoration: none;
     color: var(--on-dark);
   }
 
   .brand-mark {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     flex: none;
     display: block;
     object-fit: contain;
@@ -71,14 +65,18 @@ const { compact = false } = Astro.props;
 
   .brand-type strong {
     font-family: Outfit, 'Outfit Fallback', system-ui, sans-serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 0.065em;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .brand-sub {
-    font-size: 0.62rem;
-    letter-spacing: var(--tracking-label);
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    margin-top: 0.22rem;
+    white-space: nowrap;
     text-transform: uppercase;
     color: var(--on-dark-faint);
     font-weight: 500;
@@ -89,25 +87,16 @@ const { compact = false } = Astro.props;
   }
 
   .brand.is-compact .brand-mark {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 
   .brand.is-compact .brand-sub {
     color: var(--ink-soft);
   }
 
-  @media (max-width: 380px) {
-    .brand:not(.is-compact) .brand-sub {
-      display: none;
-    }
-  }
-
-  /* Large text on a phone, measured by the header row's width in rem (the row is the
-     `header-row` container set in Header.astro). At 200% the row is ~294px and the wordmark plus
-     "VANCOUVER, WA" plus the Menu button need ~350, so the wordmark was broken mid-word
-     ("Clearv/iew"). Keep the wordmark whole and a little smaller, and drop the place line; the
-     link's accessible name still contains "Vancouver, WA". */
+  /* At enlarged text sizes, keep the company name on one line and let the
+     service line yield before the Menu button. The accessible name stays complete. */
   @container header-row (max-width: 15rem) {
     .brand:not(.is-compact) {
       gap: min(0.7rem, 10px);
