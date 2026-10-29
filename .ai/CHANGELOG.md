@@ -1149,3 +1149,7 @@ production build passed. Updated the same PR branch; production is still pending
 ## 2026-10-29 — Preserve original hero reveal
 Restored the original five-second ClearView reveal MP4 after owner clarification. The refreshed satin logo remains in website branding; the hero retains its original reveal film and existing playback/fallback behavior. Asset URL revised to bypass the replaced clip's cache. Production verification follows deployment.
 
+
+## 2026-10-29 — Hero trust-strip spacing
+Added left padding inside the Both, Local, and Free columns so text clears the vertical dividers. First-column alignment and responsive two-column/single-column layouts are preserved.
+

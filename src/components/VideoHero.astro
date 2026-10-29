@@ -405,8 +405,12 @@ width={440}
   .trust-strip li {
     display: grid;
     gap: 0.15rem;
-    padding: var(--space-s) var(--space-s) 0 0;
+    padding: var(--space-s) var(--space-s) 0;
     border-right: 1px solid var(--dark-line);
+  }
+
+  .trust-strip li:first-child {
+    padding-left: 0;
   }
 
   .trust-strip li:last-child {
@@ -539,6 +543,10 @@ width={440}
 
     .trust-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .trust-strip li:nth-child(odd) {
+      padding-left: 0;
     }
 
     .trust-strip li:nth-child(2n) {
