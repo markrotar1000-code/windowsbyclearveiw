@@ -8,7 +8,8 @@ import { site } from '../data/site';
       <div><p class="rule-label">Customer reviews</p><h2 id="home-reviews-title">What our customers say</h2></div>
       <a class="review-summary" href={site.social.google} target="_blank" rel="noopener noreferrer"><GoogleIcon /><span data-home-rating>Read our reviews on Google</span><span aria-hidden="true">↗</span></a>
     </div>
-    <div class="home-review-list" data-home-review-list hidden></div>
+    <div class="home-review-list" data-home-review-list role="region" aria-label="Customer reviews" tabindex="0" hidden></div>
+    <p class="swipe-hint" data-swipe-hint hidden>Swipe to read more reviews <span aria-hidden="true">→</span></p>
     <p class="review-note" data-home-review-note hidden>A selection of reviews from Google. <a href="/reviews">See more customer reviews →</a></p>
     <template data-home-google-mark><GoogleIcon /></template>
   </div>
@@ -32,8 +33,15 @@ import { site } from '../data/site';
   .home-review-list :global(details) { margin-top: .5rem; font-size: .9rem; }
   .home-review-list :global(summary) { cursor: pointer; color: #51575d; padding: .5rem; }
   .review-note { margin: 2rem 0 0; font-size: .8rem; color: #62676c; }
+  .swipe-hint { display: none; }
+  .home-review-list:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   @media (max-width: 1000px) { .home-review-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 540px) { .home-review-list { grid-template-columns: minmax(0, 1fr); gap: 2rem; } .home-review-list :global(article) { border-top: 1px solid #e8eaed; padding-top: 1.5rem; } }
+  @media (max-width: 540px) {
+    .home-review-list { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 88%; gap: 1rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding-block: .25rem 1rem; }
+    .home-review-list :global(article) { scroll-snap-align: start; border: 1px solid #e8eaed; border-radius: 12px; padding: 1.5rem 1rem; }
+    .swipe-hint:not([hidden]) { display: block; margin: .5rem 0 0; color: #62676c; font-size: .8rem; }
+    .review-note { margin-top: 1rem; }
+  }
 </style>
 <script>
   import { getGoogleReviewFeed } from '../lib/google-review-feed';
@@ -79,6 +87,7 @@ import { site } from '../data/site';
       list.append(card);
     }
     list.hidden = false;
+    const hint = root.querySelector<HTMLElement>('[data-swipe-hint]'); if (hint) hint.hidden = feed.reviews.length < 2;
     const note = root.querySelector<HTMLElement>('[data-home-review-note]'); if (note) note.hidden = false;
   }
   loadHomeReviews();
