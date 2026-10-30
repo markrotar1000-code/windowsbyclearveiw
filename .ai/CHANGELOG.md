@@ -1163,3 +1163,7 @@ Validation: 88/89 canonical checks passed initially; image-delivery guard flagge
 ## 2026-10-30 — Mobile review carousel
 
 Owner requested sideways scrolling instead of stacked homepage reviews. At 540px and below, reviews now use a native horizontal scroll-snap carousel with the next card partially visible, a swipe hint, and keyboard-focusable region. Desktop/tablet grids remain. All 89 canonical checks and the 70-page build passed. Headless Edge verified horizontal scrolling at 320/390/540 and grids at 768/1440, without page overflow. Physical phones not tested; production verification follows deployment.
+
+## 2026-10-30 — Mobile reviews autoplay
+
+Owner requested automatic review scrolling and explicitly no buttons. Mobile reviews advance every six seconds while at least half the carousel is visible, loop to the first review, and stop after touch, wheel or keyboard focus for the page visit. No controls were added. Reduced-motion preference, desktop widths and hidden tabs suspend autoplay; navigation cleans up timers/listeners. All 89 canonical checks passed before removal of the initially proposed button; focused review checks and final 70-page build passed afterward. Browser checks passed for automatic advance, loop, no buttons, touch pause, focus pause and reduced motion. Production verification follows deployment.
