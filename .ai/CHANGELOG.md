@@ -1167,3 +1167,7 @@ Owner requested sideways scrolling instead of stacked homepage reviews. At 540px
 ## 2026-10-30 — Mobile reviews autoplay
 
 Owner requested automatic review scrolling and explicitly no buttons. Mobile reviews advance every six seconds while at least half the carousel is visible, loop to the first review, and stop after touch, wheel or keyboard focus for the page visit. No controls were added. Reduced-motion preference, desktop widths and hidden tabs suspend autoplay; navigation cleans up timers/listeners. All 89 canonical checks passed before removal of the initially proposed button; focused review checks and final 70-page build passed afterward. Browser checks passed for automatic advance, loop, no buttons, touch pause, focus pause and reduced motion. Production verification follows deployment.
+
+## 2026-10-30 — Resume reviews after swiping
+
+Owner requested autoplay restart after swiping. Mobile reviews resume four seconds after the final manual scroll (including momentum); a held pointer, keyboard focus, open review details, reduced motion, offscreen carousel and hidden tab suppress autoplay. Normal rotation remains six seconds, without buttons. All 89 canonical checks and 70-page build passed. Headless Edge confirmed held-touch pause, final-scroll delay and looping, keyboard pause, resume after blur, and reduced motion. Production verification follows deployment.

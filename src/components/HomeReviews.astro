@@ -53,33 +53,52 @@ import { site } from '../data/site';
     const mobile = matchMedia('(max-width: 540px)');
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
     const events = new AbortController();
-    let paused = false;
+    let pointerHeld = false;
+    let keyboardFocus = false;
+    let manualScroll = false;
     let visible = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    function schedule() {
+    function schedule(delay = 6000) {
       clearTimeout(timer);
-      if (paused || !visible || document.hidden || !mobile.matches || reducedMotion.matches) return;
+      if (pointerHeld || keyboardFocus || list.querySelector('details[open]') || !visible || document.hidden || !mobile.matches || reducedMotion.matches) return;
       timer = setTimeout(() => {
+        manualScroll = false;
         const cards = Array.from(list.children) as HTMLElement[];
         const origin = cards[0].offsetLeft;
         const next = cards.find(card => card.offsetLeft - origin > list.scrollLeft + 8);
         const atEnd = list.scrollLeft >= list.scrollWidth - list.clientWidth - 8;
         list.scrollTo({ left: atEnd || !next ? 0 : next.offsetLeft - origin, behavior: 'smooth' });
         schedule();
-      }, 6000);
+      }, delay);
     }
-    function setPaused(value: boolean) {
-      paused = value;
+    // Restart four seconds after the last swipe/momentum scroll, never
+    // while a finger is down, keyboard focus is inside, or a review is open.
+    list.addEventListener('pointerdown', () => {
+      pointerHeld = true;
+      manualScroll = true;
       schedule();
-    }
-    // Manual swiping, keyboard reading or opening a full review takes over
-    // for the rest of this page visit, without adding extra controls.
-    for (const type of ['pointerdown', 'focusin', 'wheel']) {
-      list.addEventListener(type, () => setPaused(true), { signal: events.signal, passive: true });
-    }
-    document.addEventListener('visibilitychange', schedule, { signal: events.signal });
-    mobile.addEventListener('change', schedule, { signal: events.signal });
-    reducedMotion.addEventListener('change', schedule, { signal: events.signal });
+    }, { signal: events.signal, passive: true });
+    const releasePointer = () => {
+      if (!pointerHeld) return;
+      pointerHeld = false;
+      schedule(4000);
+    };
+    document.addEventListener('pointerup', releasePointer, { signal: events.signal });
+    document.addEventListener('pointercancel', releasePointer, { signal: events.signal });
+    list.addEventListener('wheel', () => { manualScroll = true; schedule(4000); }, { signal: events.signal, passive: true });
+    list.addEventListener('scroll', () => { if (manualScroll) schedule(4000); }, { signal: events.signal, passive: true });
+    list.addEventListener('focusin', () => {
+      keyboardFocus = !!list.querySelector(':focus-visible') || list.matches(':focus-visible');
+      schedule();
+    }, { signal: events.signal });
+    list.addEventListener('keydown', () => { keyboardFocus = true; schedule(); }, { signal: events.signal });
+    list.addEventListener('focusout', (event) => {
+      if (!list.contains(event.relatedTarget as Node | null)) { keyboardFocus = false; schedule(4000); }
+    }, { signal: events.signal });
+    list.addEventListener('toggle', () => schedule(4000), { signal: events.signal, capture: true });
+    document.addEventListener('visibilitychange', () => { pointerHeld = false; schedule(); }, { signal: events.signal });
+    mobile.addEventListener('change', () => schedule(), { signal: events.signal });
+    reducedMotion.addEventListener('change', () => schedule(), { signal: events.signal });
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting && entry.intersectionRatio >= .5;
       schedule();
