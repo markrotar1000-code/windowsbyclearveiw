@@ -1171,3 +1171,6 @@ Owner requested automatic review scrolling and explicitly no buttons. Mobile rev
 ## 2026-10-30 — Resume reviews after swiping
 
 Owner requested autoplay restart after swiping. Mobile reviews resume four seconds after the final manual scroll (including momentum); a held pointer, keyboard focus, open review details, reduced motion, offscreen carousel and hidden tab suppress autoplay. Normal rotation remains six seconds, without buttons. All 89 canonical checks and 70-page build passed. Headless Edge confirmed held-touch pause, final-scroll delay and looping, keyboard pause, resume after blur, and reduced motion. Production verification follows deployment.
+
+Homepage review follow-up: guard rendering against duplicate initial/astro:page-load callbacks so late initialization cannot reset an active swipe. Focused review tests, build and browser test with a synthetic late page-load event passed.
+
