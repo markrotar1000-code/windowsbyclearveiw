@@ -2,7 +2,7 @@ export type GoogleReviewFeed = {
   status: string;
   rating?: number | null;
   count?: number | null;
-  reviews?: { rating: number; text: string; author: string; authorUrl: string; when: string }[];
+  reviews?: { rating: number; text: string; author: string; authorUrl: string; when: string; authorPhoto?: string; published?: string }[];
 };
 
 let pending: Promise<GoogleReviewFeed | null> | undefined;
