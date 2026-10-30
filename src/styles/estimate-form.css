@@ -15,3 +15,7 @@
 .fine-print{font-size:var(--step--2);color:var(--ink-faint);margin:0;line-height:1.55}
 .form-success{padding:var(--space-l);background:var(--paper-raised);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius-lg)}
 @media(max-width:600px){.estimate-form{padding:var(--space-m)}}
+.estimate-optional summary{cursor:pointer;font-size:var(--step--1);min-height:44px;padding:.7rem 0;color:var(--ink-soft)}
+.estimate-optional summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.estimate-optional-fields{display:grid;gap:var(--space-s);padding-block:.5rem}
+@media(max-width:600px){.estimate-form{padding:1rem;gap:.75rem}.estimate-form input{padding:.6rem 0}}

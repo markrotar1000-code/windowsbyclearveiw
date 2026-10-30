@@ -12,21 +12,12 @@ import { mailHref, site, telHref } from '../data/site';
 >
   <section class="page-hero">
     <div class="wrap">
-      <p class="kicker">Estimate</p>
-      <h1>Tell us about the house.</h1>
-      <p class="lede">
-        Start with your name, phone, city, and a rough idea of the job. You do not need exact measurements
-        before you contact us — we confirm the opening details at the house. <a href="/tools/window-replacement-cost-calculator">Want to list your openings first?</a>
-      </p>
-      <div class="start-points" role="group" aria-label="What to have ready">
-        <span><strong>1</strong> Your name &amp; phone</span>
-        <span><strong>2</strong> City</span>
-        <span><strong>3</strong> A rough count &amp; what you&rsquo;ve noticed</span>
-      </div>
+      <h1>Request your free estimate</h1>
+      <p class="lede">Leave your name, phone, and city. We'll call to talk about your project and arrange a free measure. No exact measurements needed.</p>
     </div>
   </section>
-  <section class="section">
-    <div class="wrap estimate-layout" data-reveal>
+  <section class="section estimate-section">
+    <div class="wrap estimate-layout">
       <EstimateForm />
 
       <aside class="estimate-aside">
@@ -64,36 +55,6 @@ import { mailHref, site, telHref } from '../data/site';
 <style>
   .page-hero {
     overflow: hidden;
-  }
-
-  .start-points {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-    margin-top: var(--space-m);
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-  }
-
-  .start-points span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: var(--space-xs) var(--space-m) var(--space-xs) 0;
-    margin-right: var(--space-m);
-    color: var(--ink-soft);
-    font-size: var(--step--1);
-  }
-
-  .start-points strong {
-    display: inline-grid;
-    place-items: center;
-    width: 1.55rem;
-    height: 1.55rem;
-    border: 1px solid var(--line-strong);
-    border-radius: 50%;
-    font-size: var(--step--2);
-    color: var(--accent-ink);
   }
 
   .estimate-layout {
@@ -144,20 +105,10 @@ import { mailHref, site, telHref } from '../data/site';
   }
 
   @media (max-width: 700px) {
-    .start-points {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .start-points span {
-      margin-right: 0;
-      padding-right: 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .start-points span:last-child {
-      border-bottom: 0;
-    }
+    .page-hero { padding-block: 1.5rem 1rem; }
+    .page-hero h1 { font-size: 2rem; margin-bottom: .65rem; }
+    .page-hero .lede { font-size: 1rem; line-height: 1.5; margin-bottom: 0; }
+    .estimate-section { padding-top: 1rem; }
   }
 
   @media (max-width: 900px) {
