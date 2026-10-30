@@ -1174,3 +1174,7 @@ Owner requested autoplay restart after swiping. Mobile reviews resume four secon
 
 Homepage review follow-up: guard rendering against duplicate initial/astro:page-load callbacks so late initialization cannot reset an active swipe. Focused review tests, build and browser test with a synthetic late page-load event passed.
 
+
+## 2026-10-30 — Smooth mobile review glides
+
+Owner requested smoother mobile transitions. Automatic advances now use a one-second cosine ease-in/out animation (1.4 seconds for the longer return to the start), temporarily disabling scroll snap to prevent it competing with the animation. Touch, focus, visibility, reduced motion and teardown cancel animation and restore native snap. Four-second manual-scroll resume and six-second reading interval are retained; no buttons. All 89 checks and the 70-page build passed. Headless Edge captured 59 distinct positions during a transition and verified arrival, restored snapping, touch interruption, four-second resume and reduced motion. Production verification pending deployment.
