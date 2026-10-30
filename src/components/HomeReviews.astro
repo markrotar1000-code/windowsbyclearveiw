@@ -45,6 +45,48 @@ import { site } from '../data/site';
 </style>
 <script>
   import { getGoogleReviewFeed } from '../lib/google-review-feed';
+  let stopAutoplay: (() => void) | undefined;
+  function startAutoplay(root: HTMLElement, list: HTMLElement) {
+    stopAutoplay?.();
+
+    if (list.children.length < 2) return;
+    const mobile = matchMedia('(max-width: 540px)');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const events = new AbortController();
+    let paused = false;
+    let visible = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    function schedule() {
+      clearTimeout(timer);
+      if (paused || !visible || document.hidden || !mobile.matches || reducedMotion.matches) return;
+      timer = setTimeout(() => {
+        const cards = Array.from(list.children) as HTMLElement[];
+        const origin = cards[0].offsetLeft;
+        const next = cards.find(card => card.offsetLeft - origin > list.scrollLeft + 8);
+        const atEnd = list.scrollLeft >= list.scrollWidth - list.clientWidth - 8;
+        list.scrollTo({ left: atEnd || !next ? 0 : next.offsetLeft - origin, behavior: 'smooth' });
+        schedule();
+      }, 6000);
+    }
+    function setPaused(value: boolean) {
+      paused = value;
+      schedule();
+    }
+    // Manual swiping, keyboard reading or opening a full review takes over
+    // for the rest of this page visit, without adding extra controls.
+    for (const type of ['pointerdown', 'focusin', 'wheel']) {
+      list.addEventListener(type, () => setPaused(true), { signal: events.signal, passive: true });
+    }
+    document.addEventListener('visibilitychange', schedule, { signal: events.signal });
+    mobile.addEventListener('change', schedule, { signal: events.signal });
+    reducedMotion.addEventListener('change', schedule, { signal: events.signal });
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && entry.intersectionRatio >= .5;
+      schedule();
+    }, { threshold: .5 });
+    observer.observe(list);
+    stopAutoplay = () => { clearTimeout(timer); observer.disconnect(); events.abort(); };
+  }
   async function loadHomeReviews() {
     const root = document.querySelector<HTMLElement>('[data-home-reviews]');
     if (!root) return;
@@ -89,7 +131,9 @@ import { site } from '../data/site';
     list.hidden = false;
     const hint = root.querySelector<HTMLElement>('[data-swipe-hint]'); if (hint) hint.hidden = feed.reviews.length < 2;
     const note = root.querySelector<HTMLElement>('[data-home-review-note]'); if (note) note.hidden = false;
+    startAutoplay(root, list);
   }
   loadHomeReviews();
   document.addEventListener('astro:page-load', loadHomeReviews);
+  document.addEventListener('astro:before-swap', () => stopAutoplay?.());
 </script>
