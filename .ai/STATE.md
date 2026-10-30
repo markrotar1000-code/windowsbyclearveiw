@@ -683,3 +683,7 @@ Owner requested automatic review scrolling and explicitly no buttons. Mobile rev
 ## 2026-10-30 — Resume reviews after swiping
 
 Owner requested autoplay restart after swiping. Mobile reviews resume four seconds after the final manual scroll (including momentum); a held pointer, keyboard focus, open review details, reduced motion, offscreen carousel and hidden tab suppress autoplay. Normal rotation remains six seconds, without buttons. All 89 canonical checks and 70-page build passed. Headless Edge confirmed held-touch pause, final-scroll delay and looping, keyboard pause, resume after blur, and reduced motion. Production verification follows deployment.
+
+## 2026-10-30 — Smooth mobile review glides
+
+Owner requested smoother mobile transitions. Automatic advances now use a one-second cosine ease-in/out animation (1.4 seconds for the longer return to the start), temporarily disabling scroll snap to prevent it competing with the animation. Touch, focus, visibility, reduced motion and teardown cancel animation and restore native snap. Four-second manual-scroll resume and six-second reading interval are retained; no buttons. All 89 checks and the 70-page build passed. Headless Edge captured 59 distinct positions during a transition and verified arrival, restored snapping, touch interruption, four-second resume and reduced motion. Production verification pending deployment.
