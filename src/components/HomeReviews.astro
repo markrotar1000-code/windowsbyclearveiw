@@ -117,6 +117,10 @@ import { site } from '../data/site';
     }
     const list = root.querySelector<HTMLElement>('[data-home-review-list]');
     if (!list || !feed.reviews?.length) return;
+    // Initial execution and Astro's page-load event can share the same feed
+    // request. Do not rebuild a carousel a visitor is already interacting with.
+    if (!root.isConnected || root.dataset.reviewsReady === 'true') return;
+    root.dataset.reviewsReady = 'true';
     list.replaceChildren();
     for (const review of feed.reviews) {
       const card = document.createElement('article');
