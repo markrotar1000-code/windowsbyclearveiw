@@ -671,3 +671,7 @@ Added left padding inside the Both, Local, and Free columns so text clears the v
 Added HomeReviews below the homepage hero, using the existing shared Google feed: actual aggregate rating/count, reviewer photos with initials fallback, names, dates, stars, unedited review text, and source links. Four columns on desktop, two on tablet, one on phones; long reviews expand with native details. Feed failure keeps an honest Google link. No fabricated reviews or rating schema.
 
 Validation: 88/89 canonical checks passed initially; image-delivery guard flagged DOM image width/height assignments as imported-photo reads. Changed to equivalent HTML attributes and its 20 groups passed. Build passed (70 pages). Headless Edge at 1440/768/390/320 showed four live-feed reviews with no horizontal overflow; unavailable-feed fallback passed. Physical phones not tested. Publication verification pending.
+
+## 2026-10-30 — Mobile review carousel
+
+Owner requested sideways scrolling instead of stacked homepage reviews. At 540px and below, reviews now use a native horizontal scroll-snap carousel with the next card partially visible, a swipe hint, and keyboard-focusable region. Desktop/tablet grids remain. All 89 canonical checks and the 70-page build passed. Headless Edge verified horizontal scrolling at 320/390/540 and grids at 768/1440, without page overflow. Physical phones not tested; production verification follows deployment.
