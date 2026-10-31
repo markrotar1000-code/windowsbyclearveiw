@@ -7,18 +7,32 @@ import GoogleIcon from './icons/GoogleIcon.astro';
 import NextdoorIcon from './icons/NextdoorIcon.astro';
 
 const here = (Astro.props.pathname ?? Astro.url.pathname).replace(/\/$/, '') || '/';
-const links = [
-  ['/replacement', 'Replacement'],
-  ['/new-construction', 'New construction'],
-  ['/sliding-glass-doors', 'Sliding glass doors'],
-  ['/siding', 'Siding'],
-  ['/window-features', 'Features'],
+type NavLink = [href: string, label: string];
+type NavItem = NavLink | { label: string; links: NavLink[] };
+// Desktop shows seven items: two are dropdowns. Phones and tablets (1400px and below) flatten the groups
+// back into the single Menu list, so every page stays one tap away at every width.
+const nav: NavItem[] = [
+  {
+    label: 'Services',
+    links: [
+      ['/replacement', 'Replacement'],
+      ['/new-construction', 'New construction'],
+      ['/sliding-glass-doors', 'Sliding glass doors'],
+      ['/siding', 'Siding'],
+      ['/window-features', 'Features'],
+    ],
+  },
   ['/process', 'Process'],
-  ['/tools', 'Tools'],
-  ['/guides', 'Guides'],
   ['/gallery', 'Gallery'],
   ['/reviews', 'Reviews'],
   ['/areas', 'Areas'],
+  {
+    label: 'Resources',
+    links: [
+      ['/guides', 'Guides'],
+      ['/tools', 'Tools'],
+    ],
+  },
   ['/about', 'About'],
 ];
 ---
@@ -27,9 +41,24 @@ const links = [
     <Brand />
 
     <nav class="nav" id="site-nav" aria-label="Primary">
-      {links.map(([href, label]) => (
-        <a href={href} aria-current={here === href ? 'page' : undefined}>{label}</a>
-      ))}
+      {nav.map((item, index) =>
+        Array.isArray(item) ? (
+          <a href={item[0]} aria-current={here === item[0] ? 'page' : undefined}>{item[1]}</a>
+        ) : (
+          <div class="nav-group" data-current={item.links.some(([href]) => href === here) ? 'true' : 'false'}>
+            <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls={`nav-menu-${index}`}>
+              {item.label}
+            </button>
+            <div class="nav-menu" id={`nav-menu-${index}`}>
+              <div class="nav-menu-list">
+                {item.links.map(([href, label]) => (
+                  <a href={href} aria-current={here === href ? 'page' : undefined}>{label}</a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ),
+      )}
       <a class="nav-estimate" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>Request an estimate</a>
     </nav>
 
@@ -103,6 +132,40 @@ const links = [
       if (event.target instanceof Node && nav.contains(event.target)) return;
       setOpen(false);
     });
+
+    bindGroups(nav);
+  }
+
+  // Desktop dropdowns. Until this runs, CSS opens a group on hover and keyboard focus, so the links
+  // work even without JavaScript. Once it runs (`nav[data-groups]`) it owns the state: hover and focus
+  // open a group, a click toggles it, Escape closes it, and aria-expanded stays truthful. At 1400px and below the groups are flattened into the Menu list and the
+  // group buttons are hidden, so none of this is reachable there.
+  function bindGroups(nav: HTMLElement) {
+    const groups = Array.from(nav.querySelectorAll<HTMLElement>('.nav-group'));
+    nav.dataset.groups = 'js';
+    const setGroup = (group: HTMLElement, open: boolean) => {
+      group.dataset.open = String(open);
+      group.querySelector('.nav-group-toggle')?.setAttribute('aria-expanded', String(open));
+    };
+    for (const group of groups) {
+      const button = group.querySelector<HTMLButtonElement>('.nav-group-toggle');
+      if (!button) continue;
+      group.addEventListener('mouseenter', () => setGroup(group, true));
+      group.addEventListener('mouseleave', () => setGroup(group, false));
+      group.addEventListener('focusin', () => setGroup(group, true));
+      group.addEventListener('focusout', (event) => {
+        if (!(event.relatedTarget instanceof Node) || !group.contains(event.relatedTarget)) setGroup(group, false);
+      });
+      button.addEventListener('click', () => setGroup(group, group.dataset.open !== 'true'));
+    }
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const open = groups.find((group) => group.dataset.open === 'true');
+      if (!open) return;
+      // Focus first (its focusin handler would reopen the group), then close.
+      open.querySelector<HTMLButtonElement>('.nav-group-toggle')?.focus();
+      setGroup(open, false);
+    });
   }
 
   function markCurrentPage() {
@@ -116,6 +179,9 @@ const links = [
       const target = link.getAttribute('href')?.replace(/\/$/, '') || '/';
       if (target === here) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
+    });
+    nav.querySelectorAll<HTMLElement>('.nav-group').forEach((group) => {
+      group.dataset.current = String(Boolean(group.querySelector('a[aria-current="page"]')));
     });
   }
 
@@ -229,18 +295,133 @@ const links = [
     flex: 1 1 auto;
     min-width: 0;
     justify-content: center;
-    /* The twelve-link menu needs a wider header row on desktop. */
     gap: 0.1rem .65rem;
     white-space: nowrap;
   }
 
-  /* Eleven links plus the estimate button do not fit 1240px. Below 1400px the nav has ~46px of
-     clearance either side; above it, only this header row is widened to 1340px (page content stays
-     1240px) and the links close up slightly, which restores ~30px of clearance at every width up to
-     1920px. Measured in a browser at 1401, 1440, 1536 and 1920. */
+  /* Groups only exist on desktop. At 1400px and below they dissolve (`display: contents`) so the
+     Menu panel is the same flat list it always was. */
+  .nav-group,
+  .nav-menu,
+  .nav-menu-list { display: contents; }
+  .nav-group-toggle { display: none; }
+
+  /* Desktop: seven items (two are dropdowns) instead of twelve flat links, so the row breathes and
+     the page content width (1240px) is enough; the old 1440px header override is gone. */
   @media (min-width: 1401px) {
-    .header-inner { width: min(1440px, calc(100% - var(--space-m) * 2)); }
-    .nav { gap: 0.1rem .6rem; }
+    .nav { gap: 0.1rem 1.5rem; }
+
+    .nav-group {
+      position: relative;
+      display: block;
+    }
+
+    .nav-group-toggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0;
+      border: 0;
+      background: transparent;
+      color: var(--on-dark-soft);
+      font: inherit;
+      font-size: var(--step--1);
+      font-weight: 500;
+      cursor: pointer;
+      transition: color var(--dur-fast) var(--ease);
+    }
+
+    .nav-group-toggle::before {
+      content: '';
+      order: 2;
+      width: 0.4rem;
+      height: 0.4rem;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: translateY(-2px) rotate(45deg);
+      transition: transform var(--dur-fast) var(--ease);
+    }
+
+    .nav-group-toggle::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: var(--accent-bright);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--dur) var(--ease-out);
+    }
+
+    .nav:not([data-groups]) .nav-group:hover .nav-group-toggle,
+    .nav:not([data-groups]) .nav-group:focus-within .nav-group-toggle,
+    .nav-group[data-open='true'] .nav-group-toggle,
+    .nav-group[data-current='true'] .nav-group-toggle { color: var(--on-dark); }
+
+    .nav:not([data-groups]) .nav-group:hover .nav-group-toggle::after,
+    .nav:not([data-groups]) .nav-group:focus-within .nav-group-toggle::after,
+    .nav-group[data-open='true'] .nav-group-toggle::after,
+    .nav-group[data-current='true'] .nav-group-toggle::after { transform: scaleX(1); }
+
+    .nav:not([data-groups]) .nav-group:hover .nav-group-toggle::before,
+    .nav:not([data-groups]) .nav-group:focus-within .nav-group-toggle::before,
+    .nav-group[data-open='true'] .nav-group-toggle::before { transform: translateY(1px) rotate(225deg); }
+
+    /* The wrapper carries the hover gap (padding-top), so the pointer can travel from the label
+       to the panel without the menu closing. */
+    .nav-menu {
+      position: absolute;
+      top: 100%;
+      left: -0.9rem;
+      z-index: 2;
+      display: block;
+      min-width: 15rem;
+      padding-top: 0.7rem;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition:
+        opacity var(--dur-fast) var(--ease),
+        transform var(--dur-fast) var(--ease),
+        visibility 0s linear var(--dur-fast);
+    }
+
+    .nav:not([data-groups]) .nav-group:hover .nav-menu,
+    .nav:not([data-groups]) .nav-group:focus-within .nav-menu,
+    .nav-group[data-open='true'] .nav-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition-delay: 0s;
+    }
+
+    .nav-menu-list {
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-2xs);
+      background: var(--black);
+      border: 1px solid var(--dark-line-strong);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .nav-menu-list a {
+      display: block;
+      padding: 0.55rem 0.8rem;
+      border-radius: var(--radius);
+    }
+
+    .nav-menu-list a::after { display: none; }
+    .nav-menu-list a:hover,
+    .nav-menu-list a:focus-visible { background: color-mix(in srgb, white 8%, transparent); }
+    .nav-menu-list a[aria-current='page'] { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+  }
+
+  @media (min-width: 1401px) and (prefers-reduced-motion: reduce) {
+    .nav-menu, .nav-group-toggle::before { transition: none; }
   }
 
   .nav a {
@@ -347,7 +528,6 @@ const links = [
   }
 
   @media (max-width: 1480px) {
-    .header-estimate { display: none; }
     .header-inner,
     .site-header[data-scrolled='true'] .header-inner { min-height: 64px; }
     .nav { gap: .1rem .7rem; }

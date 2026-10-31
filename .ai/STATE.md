@@ -1,3 +1,7 @@
+## 2026-10-31 - Desktop header: seven items, two dropdowns
+
+Desktop (1401px and up) primary nav is Services v, Process, Gallery, Reviews, Areas, Resources v, About, then Facebook, phone and "Get an estimate". Services = Replacement, New construction, Sliding glass doors, Siding, Features. Resources = Guides, Tools. A new page goes into a group, not the top level (layout guard 16 caps top-level items at seven). 1400px and below is unchanged: one flat Menu list. Source: `src/components/Header.astro`. Detail: .ai/CHANGELOG.md 2026-10-31.
+
 ## 2026-10-28 - Satin brand refresh
 
 Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
