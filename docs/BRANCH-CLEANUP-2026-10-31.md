@@ -1,6 +1,15 @@
 # Branch cleanup, 2026-10-31
 
-**Status: proposed. Nothing has been deleted yet; this list awaits the owner's approval.**
+**Status: approved by the owner, not yet run.** The assistant session cannot delete branches (its git access is limited to its own branch), so run this from a normal clone. It deletes a branch only if its tip is still the commit recorded in the table below, so anything pushed since is skipped:
+
+```bash
+git fetch --prune origin
+grep -E '^\| `' docs/BRANCH-CLEANUP-2026-10-31.md | sed -E 's/^\| `([^`]+)` \| `([0-9a-f]+)`.*/\1 \2/' | while read -r b sha; do
+  [ "$(git rev-parse --short=12 "origin/$b" 2>/dev/null)" = "$sha" ] && git push origin --delete "$b"
+done
+```
+
+Add `echo` before `git push` for a dry run. Branches deliberately kept (not in the table): `claude/construction-photo-resolution-uh5cta` and `fix/job-snapshot-reconciliation-nav` (commits after their PR merged), `worktree-agent-a5389bf45ba767831` (PR closed unmerged), `codex/clearview-brand-refresh`, `feature/google-reviews-feed` and `icm-alignment-2026-10-01` (no PR).
 
 Remote branches proposed for deletion because every one was fully merged through a pull request, with no commits newer than that merge. Git history cannot show this (the repo squash-merges, so merged branches still look hundreds of commits ahead of `main`); the pull request record is the source of truth.
 
