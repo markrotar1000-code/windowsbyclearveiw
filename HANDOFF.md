@@ -1,3 +1,7 @@
+## 2026-10-31 - Desktop header grouped into dropdowns
+
+Next agent: the desktop nav is now two dropdown groups plus five links (`nav` array at the top of `Header.astro`). Do not widen the header row or hide the estimate button to fit more links; add the page to a group. The dropdown wrappers are `display: contents` below 1401px on purpose, so the phone Menu and the no-JavaScript fallback in `BaseLayout.astro` still see a flat list of links. Guards: `test:layout-guards` 7, 13, 15 and 16. Not verified: a real touch device at desktop width (an iPad Pro in landscape is 1366px and gets the Menu button, so it is unaffected); worth a glance on the live site after deploy.
+
 ## 2026-10-28 - Satin brand refresh
 
 Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
