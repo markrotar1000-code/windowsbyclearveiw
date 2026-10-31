@@ -1,0 +1,186 @@
+---
+import GoogleIcon from './icons/GoogleIcon.astro';
+import { site } from '../data/site';
+---
+<section class="home-reviews section" aria-labelledby="home-reviews-title" data-home-reviews>
+  <div class="wrap">
+    <div class="review-heading">
+      <div><p class="rule-label">Customer reviews</p><h2 id="home-reviews-title">What our customers say</h2></div>
+      <a class="review-summary" href={site.social.google} target="_blank" rel="noopener noreferrer"><GoogleIcon /><span data-home-rating>Read our reviews on Google</span><span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="home-review-list" data-home-review-list role="region" aria-label="Customer reviews" tabindex="0" hidden></div>
+    <p class="swipe-hint" data-swipe-hint hidden>Swipe to read more reviews <span aria-hidden="true">→</span></p>
+    <p class="review-note" data-home-review-note hidden>A selection of reviews from Google. <a href="/reviews">See more customer reviews →</a></p>
+    <template data-home-google-mark><GoogleIcon /></template>
+  </div>
+</section>
+<style>
+  .home-reviews { background: #fff; color: #202124; border-bottom: 1px solid var(--line); }
+  .review-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+  h2 { margin: 0; }
+  .review-summary { display: inline-flex; align-items: center; gap: .65rem; color: #202124; font-size: .95rem; text-underline-offset: .25em; }
+  .review-summary :global(svg) { width: 25px; height: 25px; flex: none; }
+  .home-review-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem; margin-top: 2.5rem; }
+  .home-review-list[hidden], .review-note[hidden] { display: none; }
+  .home-review-list :global(article) { min-width: 0; text-align: center; }
+  .home-review-list :global(.portrait) { position: relative; display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; background: #e8f0fe; color: #185abc; font-weight: 600; }
+  .home-review-list :global(.portrait img) { position: absolute; inset: 0; width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+  .home-review-list :global(.portrait svg) { position: absolute; right: -4px; bottom: -2px; width: 26px; height: 26px; padding: 3px; background: #fff; border-radius: 50%; }
+  .home-review-list :global(.author) { display: block; font-weight: 650; color: #202124; overflow-wrap: anywhere; text-decoration: none; }
+  .home-review-list :global(.date) { display: block; margin-top: .2rem; font-size: .8rem; color: #62676c; }
+  .home-review-list :global(.stars) { margin: .65rem 0 .5rem; color: #b77900; font-size: 1.3rem; letter-spacing: .04em; }
+  .home-review-list :global(blockquote) { margin: 0; font-size: 1rem; line-height: 1.6; }
+  .home-review-list :global(details) { margin-top: .5rem; font-size: .9rem; }
+  .home-review-list :global(summary) { cursor: pointer; color: #51575d; padding: .5rem; }
+  .review-note { margin: 2rem 0 0; font-size: .8rem; color: #62676c; }
+  .swipe-hint { display: none; }
+  .home-review-list:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  @media (max-width: 1000px) { .home-review-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 540px) {
+    .home-review-list { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 88%; gap: 1rem; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding-block: .25rem 1rem; }
+    .home-review-list :global(article) { scroll-snap-align: start; border: 1px solid #e8eaed; border-radius: 12px; padding: 1.5rem 1rem; }
+    .swipe-hint:not([hidden]) { display: block; margin: .5rem 0 0; color: #62676c; font-size: .8rem; }
+    .review-note { margin-top: 1rem; }
+  }
+</style>
+<script>
+  import { getGoogleReviewFeed } from '../lib/google-review-feed';
+  let stopAutoplay: (() => void) | undefined;
+  function startAutoplay(root: HTMLElement, list: HTMLElement) {
+    stopAutoplay?.();
+
+    if (list.children.length < 2) return;
+    const mobile = matchMedia('(max-width: 540px)');
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    const events = new AbortController();
+    let pointerHeld = false;
+    let keyboardFocus = false;
+    let manualScroll = false;
+    let visible = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let frame: number | undefined;
+    function stopGlide() {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      frame = undefined;
+      list.style.removeProperty('scroll-snap-type');
+    }
+    function glideTo(destination: number) {
+      stopGlide();
+      const start = list.scrollLeft;
+      const target = Math.max(0, Math.min(destination, list.scrollWidth - list.clientWidth));
+      const duration = Math.abs(target - start) > list.clientWidth * 1.5 ? 1400 : 1000;
+      const started = performance.now();
+      // Native snapping would compete with the frame-by-frame animation.
+      // Restore it at the destination, or immediately on user interaction.
+      list.style.scrollSnapType = 'none';
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - started) / duration);
+        const eased = (1 - Math.cos(Math.PI * progress)) / 2;
+        list.scrollLeft = start + (target - start) * eased;
+        if (progress < 1) frame = requestAnimationFrame(step);
+        else { stopGlide(); schedule(); }
+      };
+      frame = requestAnimationFrame(step);
+    }
+    function schedule(delay = 6000) {
+      clearTimeout(timer);
+      stopGlide();
+      if (pointerHeld || keyboardFocus || list.querySelector('details[open]') || !visible || document.hidden || !mobile.matches || reducedMotion.matches) return;
+      timer = setTimeout(() => {
+        manualScroll = false;
+        const cards = Array.from(list.children) as HTMLElement[];
+        const origin = cards[0].offsetLeft;
+        const next = cards.find(card => card.offsetLeft - origin > list.scrollLeft + 8);
+        const atEnd = list.scrollLeft >= list.scrollWidth - list.clientWidth - 8;
+        glideTo(atEnd || !next ? 0 : next.offsetLeft - origin);
+      }, delay);
+    }
+    // Restart four seconds after the last swipe/momentum scroll, never
+    // while a finger is down, keyboard focus is inside, or a review is open.
+    list.addEventListener('pointerdown', () => {
+      pointerHeld = true;
+      manualScroll = true;
+      schedule();
+    }, { signal: events.signal, passive: true });
+    const releasePointer = () => {
+      if (!pointerHeld) return;
+      pointerHeld = false;
+      schedule(4000);
+    };
+    document.addEventListener('pointerup', releasePointer, { signal: events.signal });
+    document.addEventListener('pointercancel', releasePointer, { signal: events.signal });
+    list.addEventListener('wheel', () => { manualScroll = true; schedule(4000); }, { signal: events.signal, passive: true });
+    list.addEventListener('scroll', () => { if (manualScroll) schedule(4000); }, { signal: events.signal, passive: true });
+    list.addEventListener('focusin', () => {
+      keyboardFocus = !!list.querySelector(':focus-visible') || list.matches(':focus-visible');
+      schedule();
+    }, { signal: events.signal });
+    list.addEventListener('keydown', () => { keyboardFocus = true; schedule(); }, { signal: events.signal });
+    list.addEventListener('focusout', (event) => {
+      if (!list.contains(event.relatedTarget as Node | null)) { keyboardFocus = false; schedule(4000); }
+    }, { signal: events.signal });
+    list.addEventListener('toggle', () => schedule(4000), { signal: events.signal, capture: true });
+    document.addEventListener('visibilitychange', () => { pointerHeld = false; schedule(); }, { signal: events.signal });
+    mobile.addEventListener('change', () => schedule(), { signal: events.signal });
+    reducedMotion.addEventListener('change', () => schedule(), { signal: events.signal });
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && entry.intersectionRatio >= .5;
+      schedule();
+    }, { threshold: .5 });
+    observer.observe(list);
+    stopAutoplay = () => { clearTimeout(timer); stopGlide(); observer.disconnect(); events.abort(); };
+  }
+  async function loadHomeReviews() {
+    const root = document.querySelector<HTMLElement>('[data-home-reviews]');
+    if (!root) return;
+    const feed = await getGoogleReviewFeed();
+    if (!feed || feed.status !== 'ok') return;
+    const rating = root.querySelector('[data-home-rating]');
+    if (rating && typeof feed.rating === 'number' && feed.rating >= 1 && feed.rating <= 5 && Number.isInteger(feed.count) && feed.count! > 0) {
+      rating.textContent = `${feed.rating.toFixed(1)} out of 5 · ${feed.count} Google reviews`;
+    }
+    const list = root.querySelector<HTMLElement>('[data-home-review-list]');
+    if (!list || !feed.reviews?.length) return;
+    // Initial execution and Astro's page-load event can share the same feed
+    // request. Do not rebuild a carousel a visitor is already interacting with.
+    if (!root.isConnected || root.dataset.reviewsReady === 'true') return;
+    root.dataset.reviewsReady = 'true';
+    list.replaceChildren();
+    for (const review of feed.reviews) {
+      const card = document.createElement('article');
+      const portrait = document.createElement('div');
+      portrait.className = 'portrait';
+      portrait.setAttribute('aria-hidden', 'true');
+      portrait.textContent = review.author.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('');
+      if (review.authorPhoto && /^https:\/\/lh\d+\.googleusercontent\.com\//.test(review.authorPhoto)) {
+        const photo = document.createElement('img');
+        photo.src = review.authorPhoto; photo.alt = ''; photo.setAttribute('width', '64'); photo.setAttribute('height', '64'); photo.loading = 'lazy'; photo.referrerPolicy = 'no-referrer';
+        photo.addEventListener('error', () => photo.remove(), { once: true });
+        portrait.append(photo);
+      }
+      const mark = root.querySelector<HTMLTemplateElement>('[data-home-google-mark]');
+      if (mark) portrait.append(mark.content.cloneNode(true));
+      const author = document.createElement('a'); author.className = 'author'; author.textContent = review.author;
+      author.href = /^https:\/\/www\.google\.com\/maps\//.test(review.authorUrl) ? review.authorUrl : '/reviews';
+      author.target = '_blank'; author.rel = 'noopener noreferrer';
+      const date = document.createElement('span'); date.className = 'date'; date.textContent = review.published || review.when;
+      const stars = document.createElement('p'); stars.className = 'stars'; stars.setAttribute('role', 'img'); stars.setAttribute('aria-label', `${review.rating} out of 5 stars`);
+      const n = Math.max(0, Math.min(5, Math.round(review.rating))); stars.textContent = '★'.repeat(n) + '☆'.repeat(5 - n);
+      const quote = document.createElement('blockquote'); quote.textContent = review.text.length > 220 ? `${review.text.slice(0, 220)}…` : review.text;
+      card.append(portrait, author, date, stars, quote);
+      if (review.text.length > 220) {
+        const details = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Read full review';
+        const full = document.createElement('p'); full.textContent = review.text; details.append(summary, full); card.append(details);
+        details.addEventListener('toggle', () => { quote.hidden = details.open; });
+      }
+      list.append(card);
+    }
+    list.hidden = false;
+    const hint = root.querySelector<HTMLElement>('[data-swipe-hint]'); if (hint) hint.hidden = feed.reviews.length < 2;
+    const note = root.querySelector<HTMLElement>('[data-home-review-note]'); if (note) note.hidden = false;
+    startAutoplay(root, list);
+  }
+  loadHomeReviews();
+  document.addEventListener('astro:page-load', loadHomeReviews);
+  document.addEventListener('astro:before-swap', () => stopAutoplay?.());
+</script>

@@ -784,7 +784,7 @@ await test('manifest: installable fields, scope covers every start/shortcut URL,
   for (const s of manifest.shortcuts) { assert.ok(inScope(s.url), `${s.url} inside scope`); assert.ok(builtFile(s.url), `${s.url} exists in the build`); }
   const purposes = new Set(manifest.icons.map((i) => `${i.sizes}:${i.purpose}`));
   for (const need of ['192x192:any', '512x512:any', '512x512:maskable']) assert.ok(purposes.has(need), `icon ${need}`);
-  for (const icon of manifest.icons) assert.ok(existsSync(join(dist, icon.src)), `${icon.src} exists in the build`);
+  for (const icon of manifest.icons) assert.ok(existsSync(join(dist, new URL(icon.src, ORIGIN).pathname)), `${icon.src} exists in the build`);
   assert.ok(!/\.(?:com|net|org)\b/.test(JSON.stringify(manifest)), 'no absolute URLs: it must work on previews and production alike');
 });
 

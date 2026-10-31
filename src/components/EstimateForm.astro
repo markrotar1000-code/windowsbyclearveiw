@@ -5,12 +5,17 @@ import '../styles/estimate-form.css';
 <form class="estimate-form" method="post" action="/api/estimate" id="estimate-form" enctype="multipart/form-data">
   <div class="hp" aria-hidden="true"><label>Company<input name="company" type="text" tabindex="-1" autocomplete="off" /></label></div>
   <input type="hidden" name="visitor_id" data-visitor-id /><input type="hidden" name="visit_journey" data-visit-journey /><input type="hidden" name="service" data-service />
-  <fieldset class="field-group"><legend>Who is asking?</legend><label class="choice"><input type="radio" name="role" value="Homeowner" checked /><span>Homeowner — replacing what is there</span></label><label class="choice"><input type="radio" name="role" value="Builder / GC" /><span>Builder or GC — installing windows in a new home</span></label></fieldset>
   <label>Name<input name="name" type="text" required autocomplete="name" autocapitalize="words" maxlength="120" aria-describedby="field-error-name" /><span class="field-error" id="field-error-name" data-field-error="name" hidden></span></label>
   <label>Phone<input name="phone" type="tel" required autocomplete="tel" inputmode="tel" placeholder="(360) 555-0123" maxlength="40" pattern="(\+?1[\s.\-]?)?\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}" title="A 10-digit US phone number, e.g. (360) 555-0123" aria-describedby="field-error-phone" /><span class="field-error" id="field-error-phone" data-field-error="phone" hidden></span></label>
-  <label>Email <span class="field-hint">optional, for a written copy</span><input name="email" type="email" autocomplete="email" inputmode="email" maxlength="160" aria-describedby="field-error-email" /><span class="field-error" id="field-error-email" data-field-error="email" hidden></span></label>
   <label>City<input name="city" type="text" required autocomplete="address-level2" autocapitalize="words" maxlength="80" aria-describedby="field-error-city" /><span class="field-error" id="field-error-city" data-field-error="city" hidden></span></label>
+  <details class="estimate-optional" data-estimate-optional>
+    <summary>Add project details or email (optional)</summary>
+    <div class="estimate-optional-fields">
+  <label>Email <span class="field-hint">optional, for a written copy</span><input name="email" type="email" autocomplete="email" inputmode="email" maxlength="160" aria-describedby="field-error-email" /><span class="field-error" id="field-error-email" data-field-error="email" hidden></span></label>
   <label>Project notes <span class="field-hint">optional, but it saves a round of back-and-forth</span><span class="field-hint field-hint-prefilled" data-notes-prefilled-hint hidden>Project details carried over — edit as needed</span><textarea name="notes" rows="4" maxlength="2000" placeholder="Roughly how many windows, which rooms, and anything you have already noticed — fogged glass, drafts, a sill that feels soft."></textarea></label>
+  <fieldset class="field-group"><legend>Who is asking?</legend><label class="choice"><input type="radio" name="role" value="Homeowner" checked /><span>Homeowner — replacing what is there</span></label><label class="choice"><input type="radio" name="role" value="Builder / GC" /><span>Builder or GC — installing windows in a new home</span></label></fieldset>
+    </div>
+  </details>
   {site.turnstileSiteKey && <div class="turnstile-slot" data-turnstile data-sitekey={site.turnstileSiteKey}></div>}
   <button class="btn btn-primary" type="submit" data-submit>Send estimate request</button><p class="form-status" data-status role="alert"></p>
   <button class="btn btn-secondary" type="button" data-security-retry hidden>Retry security check</button>
@@ -75,6 +80,12 @@ function bindEstimate() {
     const role = form.querySelector('input[name="role"][value="Builder / GC"]');
     if (role instanceof HTMLInputElement) role.checked = true;
   }
+  const optional = form.querySelector<HTMLDetailsElement>('[data-estimate-optional]');
+  if (optional && ((notes instanceof HTMLTextAreaElement && notes.value) || params.get('role') === 'builder' || params.get('service') === 'siding')) optional.open = true;
+  // Reveal invalid optional fields before the browser attempts to focus them.
+  form.addEventListener('invalid', (event) => {
+    if (optional && event.target instanceof Node && optional.contains(event.target)) optional.open = true;
+  }, true);
   if (window.history.replaceState && ['home_type', 'openings', 'opening_type', 'concern', 'stage', 'scope', 'role', 'service'].some((key) => params.has(key))) {
     const campaign = retainedEstimateParams(params);
     const search = campaign.size ? `?${campaign.toString()}` : '';
@@ -138,7 +149,7 @@ function bindEstimate() {
       const error = form.querySelector(`[data-field-error="${name}"]`);
       const input = form.querySelector(`[name="${name}"]`);
       if (error instanceof HTMLElement) { error.textContent = message; error.hidden = false; }
-      if (input instanceof HTMLElement) { input.setAttribute('aria-invalid', 'true'); firstInvalid ||= input; }
+      if (input instanceof HTMLElement) { if (optional?.contains(input)) optional.open = true; input.setAttribute('aria-invalid', 'true'); firstInvalid ||= input; }
     }
     if (firstInvalid instanceof HTMLElement) firstInvalid.focus();
   }

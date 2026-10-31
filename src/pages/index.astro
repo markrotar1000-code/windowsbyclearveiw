@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import VideoHero from '../components/VideoHero.astro';
+import HomeReviews from '../components/HomeReviews.astro';
 import CtaBar from '../components/CtaBar.astro';
 import WorkCard from '../components/WorkCard.astro';
 import FacebookIcon from '../components/icons/FacebookIcon.astro';
@@ -74,6 +75,7 @@ const signs = [
   path="/"
 >
   <VideoHero />
+  <HomeReviews />
 
   <section class="section is-airy">
     <div class="wrap" data-reveal>

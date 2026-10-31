@@ -20,9 +20,8 @@ const insetPhoto = findWork('blue-pair-installday');
 // project root — where "public/" always lives — is process.cwd() in both
 // `astro dev` and `astro build`.
 //
-// Variant 1, re-encoded at 1280x720 / H.264 CRF 27 with faststart (643,683
-// bytes). The original sources remain unchanged. Phones and constrained
-// connections use the responsive photo; desktop plays this reveal once.
+// Preserve the original ClearView reveal film as the hero background.
+// Phones and constrained connections use the responsive photo; desktop plays once.
 const HERO_VIDEO = 'logo-reveal-1-optimized';
 const hasVideo = existsSync(join(process.cwd(), `public/video/${HERO_VIDEO}.mp4`));
 
@@ -48,7 +47,7 @@ const heroStatic = await getImage({
       <video
         class="hero-media"
         id="hero-video"
-        data-src={`/video/${HERO_VIDEO}.mp4`}
+        data-src={`/video/${HERO_VIDEO}.mp4?v=20261029-reveal`}
         muted
         playsinline
         preload="none"
@@ -69,7 +68,7 @@ const heroStatic = await getImage({
 
     <div class="wrap video-copy">
       <p class="kicker">
-        <img class="kicker-mark" src="/logo/icon-mark@64.webp" srcset="/logo/icon-mark@64.webp 64w, /logo/icon-mark@128.webp 128w, /logo/icon-mark@256.webp 256w" sizes="1.05rem" width="256" height="256" alt="" loading="eager" decoding="async" />
+        <img class="kicker-mark" src="/logo/icon-mark@64.webp?v=20261028" srcset="/logo/icon-mark@64.webp?v=20261028 64w, /logo/icon-mark@128.webp?v=20261028 128w, /logo/icon-mark@256.webp?v=20261028 256w" sizes="1.05rem" width="256" height="256" alt="" loading="eager" decoding="async" />
         Vancouver, WA &middot; Clark County
       </p>
       <h1>Great prices. Clean work. Clear windows.</h1>
@@ -102,7 +101,7 @@ const heroStatic = await getImage({
     <div class="wrap photo-hero-inner">
       <div class="photo-hero-copy">
         <p class="hero-eyebrow">
-          <img class="hero-eyebrow-mark" src="/logo/icon-mark@64.webp" srcset="/logo/icon-mark@64.webp 64w, /logo/icon-mark@128.webp 128w, /logo/icon-mark@256.webp 256w" sizes="1.05rem" width="256" height="256" alt="" loading="eager" decoding="async" />
+          <img class="hero-eyebrow-mark" src="/logo/icon-mark@64.webp?v=20261028" srcset="/logo/icon-mark@64.webp?v=20261028 64w, /logo/icon-mark@128.webp?v=20261028 128w, /logo/icon-mark@256.webp?v=20261028 256w" sizes="1.05rem" width="256" height="256" alt="" loading="eager" decoding="async" />
           Vancouver, WA &middot; Clark County
         </p>
         <h1>Great prices.<br />Clean work.<br /><em>Clear windows.</em></h1>
@@ -406,8 +405,12 @@ width={440}
   .trust-strip li {
     display: grid;
     gap: 0.15rem;
-    padding: var(--space-s) var(--space-s) 0 0;
+    padding: var(--space-s) var(--space-s) 0;
     border-right: 1px solid var(--dark-line);
+  }
+
+  .trust-strip li:first-child {
+    padding-left: 0;
   }
 
   .trust-strip li:last-child {
@@ -540,6 +543,10 @@ width={440}
 
     .trust-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .trust-strip li:nth-child(odd) {
+      padding-left: 0;
     }
 
     .trust-strip li:nth-child(2n) {

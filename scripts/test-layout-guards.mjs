@@ -243,4 +243,18 @@ assert.match(noscript[1], /\.site-header\s*\{\s*position:\s*static\s*!important/
 const planner = read('src/pages/tools/window-replacement-cost-calculator.astro');
 assert.match(planner, /<noscript>[\s\S]*?needs JavaScript[\s\S]*?href="\/estimate"[\s\S]*?telHref\(\)[\s\S]*?\.estimator\s*\{\s*display:\s*none\s*!important/, 'the planner must say it needs JavaScript, point to /estimate and the phone, and hide its dead controls');
 
-console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header, round 5: credential tags wrap, no bare 1fr tracks (${bareFr.length}), header keeps Menu at large text)`);
+// 16. The desktop header shows seven items (Services and Resources are dropdowns), not twelve flat links, which was
+//     cluttered and had squeezed the row (header widened to 1440px, "Get an estimate" hidden from 1401 to 1480px).
+//     Every page must stay reachable: the groups dissolve into the flat Menu list at 1400px and below, and on desktop
+//     the dropdowns open on hover and focus without JavaScript until the script takes over (`nav[data-groups]`).
+assert.match(hdr, /\.nav-group,\s*\.nav-menu,\s*\.nav-menu-list\s*\{\s*display:\s*contents/, 'the dropdown wrappers must be `display: contents` outside the desktop media query, or the phone Menu is not a flat list');
+assert.match(hdr, /\.nav-group-toggle\s*\{\s*display:\s*none/, 'the group buttons must be hidden outside the desktop media query (the phone Menu lists the links directly)');
+assert.match(hdr, /@media \(min-width:\s*1401px\)\s*\{[\s\S]*?\.nav:not\(\[data-groups\]\) \.nav-group:focus-within \.nav-menu/, 'a dropdown must open on hover and focus without JavaScript');
+assert.ok(!/\.header-estimate\s*\{\s*display:\s*none;?\s*\}\s*\.header-inner/.test(hdr), '"Get an estimate" must not be hidden from 1401px up');
+const navLinkCount = [...hdr.matchAll(/\['\/[a-z-]+',\s*'[^']+'\]/g)].length;
+assert.equal(navLinkCount, 12, `the header must still link all twelve pages (found ${navLinkCount}); grouping them must not drop one`);
+const topLevel = hdr.match(/const nav: NavItem\[\] = \[([\s\S]*?)\n\];/);
+assert.ok(topLevel, 'could not read the header nav list');
+assert.ok((topLevel[1].match(/^  (?:\{|\[)/gm) || []).length <= 7, 'the desktop header must keep at most seven top-level items; add new pages to a group');
+
+console.log(`PASS  layout guards (${splitRules.length} .split rules, ${rules.length} global rules read, ${sizesRead} public font sizes at or above ${TEXT_FLOOR_PX} px, photo-card tag may wrap, phone menu scrolls, ${fieldRules} text-field rules at 16 px on touch, jump links clear the header, round 5: credential tags wrap, no bare 1fr tracks (${bareFr.length}), header keeps Menu at large text, round 6: desktop nav grouped to seven items)`);

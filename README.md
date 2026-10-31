@@ -38,7 +38,7 @@ Items below need the owner's dashboards (Cloudflare, Resend, Google), so a check
 
 ## Local development
 
-Requires **Node 22.22.0 or newer**.
+Requires **Node 22.23.4 or newer**.
 
 ```bash
 npm install
@@ -71,7 +71,7 @@ npm run preview
 
 The public site is intentionally static and does **not** require the Astro Cloudflare adapter. Pages Functions under `functions/` provide the server-side APIs.
 
-The production build is pinned to Node `22.22.0` through `.node-version` and the package engine requirement.
+The production build is pinned to Node `22.23.4` through `.node-version` and the package engine requirement.
 
 ## Project layout
 

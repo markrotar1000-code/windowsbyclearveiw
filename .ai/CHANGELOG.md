@@ -1,3 +1,19 @@
+## 2026-10-31 - Astro 7.4.2 and Node 22.23.4
+
+Merged Dependabot's astro 7.4.1 to 7.4.2 bump (minor-and-patch group). Astro 7.4.2 raises its minimum Node to 22.23.4 (October 2026 Node security releases), so `.node-version` (Cloudflare Pages), the package `engines` field, both GitHub workflow pins (`build.yml`, `deploy-ops-cron.yml`) and the README were raised from 22.22.0 together. Same failure mode as the Astro 7.4.0 bump on 2026-10-20: a dependency bump without the Node pin breaks the hosted build. Verified on Node 22.23.4: clean `npm ci`, all 89 test:all steps, 70-page build.
+
+## 2026-10-31 - Desktop header decluttered (12 links to 7)
+
+Owner feedback: the desktop top nav looked cluttered. `Header.astro` now shows seven items at 1401px and wider: **Services** (Replacement, New construction, Sliding glass doors, Siding, Features) and **Resources** (Guides, Tools) are dropdowns; Process, Gallery, Reviews, Areas and About stay top level. All twelve pages remain linked. At 1400px and below the groups dissolve (`display: contents`) into the same flat Menu list as before, so the phone panel, its scroll cap and the `<noscript>` fallback are unchanged. Dropdowns open on hover and keyboard focus with no JavaScript; once the script runs (`nav[data-groups]`) it owns state (click toggles, Escape closes and refocuses the button, `aria-expanded` is kept true). The group holding the current page is underlined. With the row no longer crowded, the 1440px header-width override and the rule that hid "Get an estimate" from 1401 to 1480px were removed. New layout guard 16 pins the structure. Checked in a browser at 1920, 1440, 1401 and 390px, keyboard order, and with JavaScript off. All 89 test:all steps passed and the 70-page build passed.
+
+## 2026-10-28 - Satin brand refresh
+
+Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
+
+## 2026-10-27 - Activate Google calling workbook synchronization
+
+Add transactional call history, field validation, idempotent replay, version-conflict holds and existing DNC/property protections. A private five-minute Worker reads approved call rows and refreshes protected source mirrors. PDF extraction leaves rows for review. Dedicated workbook-only credentials and production activation are configured under operator approval. Two live scheduled runs verified a synthetic save and replay without duplicate history; the fixture was removed. All 94 real prospects remain unchanged. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed. Browser UI verification remains blocked by Cloudflare Access, separately from verified D1 and Sheets behavior.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.
@@ -1137,3 +1153,42 @@ gold stars and initials avatar, larger quote, Google source badge and separate
 author footer. Shared review-cards.css applies to both curated and live cards.
 Checked desktop and 375px layout without horizontal overflow; review tests and
 production build passed. Updated the same PR branch; production is still pending.
+
+## 2026-10-29 — Preserve original hero reveal
+Restored the original five-second ClearView reveal MP4 after owner clarification. The refreshed satin logo remains in website branding; the hero retains its original reveal film and existing playback/fallback behavior. Asset URL revised to bypass the replaced clip's cache. Production verification follows deployment.
+
+
+## 2026-10-29 — Hero trust-strip spacing
+Added left padding inside the Both, Local, and Free columns so text clears the vertical dividers. First-column alignment and responsive two-column/single-column layouts are preserved.
+
+
+## 2026-10-30 — Homepage Google review trust bar
+
+Added HomeReviews below the homepage hero, using the existing shared Google feed: actual aggregate rating/count, reviewer photos with initials fallback, names, dates, stars, unedited review text, and source links. Four columns on desktop, two on tablet, one on phones; long reviews expand with native details. Feed failure keeps an honest Google link. No fabricated reviews or rating schema.
+
+Validation: 88/89 canonical checks passed initially; image-delivery guard flagged DOM image width/height assignments as imported-photo reads. Changed to equivalent HTML attributes and its 20 groups passed. Build passed (70 pages). Headless Edge at 1440/768/390/320 showed four live-feed reviews with no horizontal overflow; unavailable-feed fallback passed. Physical phones not tested. Publication verification pending.
+
+## 2026-10-30 — Mobile review carousel
+
+Owner requested sideways scrolling instead of stacked homepage reviews. At 540px and below, reviews now use a native horizontal scroll-snap carousel with the next card partially visible, a swipe hint, and keyboard-focusable region. Desktop/tablet grids remain. All 89 canonical checks and the 70-page build passed. Headless Edge verified horizontal scrolling at 320/390/540 and grids at 768/1440, without page overflow. Physical phones not tested; production verification follows deployment.
+
+## 2026-10-30 — Mobile reviews autoplay
+
+Owner requested automatic review scrolling and explicitly no buttons. Mobile reviews advance every six seconds while at least half the carousel is visible, loop to the first review, and stop after touch, wheel or keyboard focus for the page visit. No controls were added. Reduced-motion preference, desktop widths and hidden tabs suspend autoplay; navigation cleans up timers/listeners. All 89 canonical checks passed before removal of the initially proposed button; focused review checks and final 70-page build passed afterward. Browser checks passed for automatic advance, loop, no buttons, touch pause, focus pause and reduced motion. Production verification follows deployment.
+
+## 2026-10-30 — Resume reviews after swiping
+
+Owner requested autoplay restart after swiping. Mobile reviews resume four seconds after the final manual scroll (including momentum); a held pointer, keyboard focus, open review details, reduced motion, offscreen carousel and hidden tab suppress autoplay. Normal rotation remains six seconds, without buttons. All 89 canonical checks and 70-page build passed. Headless Edge confirmed held-touch pause, final-scroll delay and looping, keyboard pause, resume after blur, and reduced motion. Production verification follows deployment.
+
+Homepage review follow-up: guard rendering against duplicate initial/astro:page-load callbacks so late initialization cannot reset an active swipe. Focused review tests, build and browser test with a synthetic late page-load event passed.
+
+
+## 2026-10-30 — Smooth mobile review glides
+
+Owner requested smoother mobile transitions. Automatic advances now use a one-second cosine ease-in/out animation (1.4 seconds for the longer return to the start), temporarily disabling scroll snap to prevent it competing with the animation. Touch, focus, visibility, reduced motion and teardown cancel animation and restore native snap. Four-second manual-scroll resume and six-second reading interval are retained; no buttons. All 89 checks and the 70-page build passed. Headless Edge captured 59 distinct positions during a transition and verified arrival, restored snapping, touch interruption, four-second resume and reduced motion. Production verification pending deployment.
+
+## 2026-10-30 — Simplified mobile estimate request
+
+Owner requested less mobile form friction and delivery verification. Estimate intro now states the free-estimate next step briefly; removed the preparation checklist and planning detour above the form. Name, phone and city come first; optional email, notes and customer role are in a disclosure that opens for builder/siding/planner prefills or invalid fields. Removed reveal animation from the form wrapper. At 390x844, Name moved from about 846px to 382px and submit from 1489px to 675px before security-widget loading. Fresh 320px and 1440px layouts checked, including compact security widget selection. Validation and prefills checked in Chrome. Final build passed; initially blocked build-dependent checks were rerun successfully after markup/encoding repairs (all 89 canonical steps accounted for).
+
+Delivery audit: production notification uses owner@windowsbyclearveiw.com and D1 QUOTES_DB binding 5bd299fc-0ca2-4d75-94f5-95c3943e9d79. Resend UI confirms the October 22 synthetic notification was delivered at 12:47 PM; not proof of current inbox arrival. Today's automated test CV-20261030-01 was rejected by Turnstile (300030); no successful current submission claimed, security not weakened. Requested owner phone test TEST ONLY CV-20261030-02 to complete current end-to-end verification. Publication verification pending.

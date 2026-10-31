@@ -1,3 +1,23 @@
+## 2026-10-31 - Astro 7.4.2 and the Node pin
+
+If a Dependabot Astro bump raises `engines.node`, raise `.node-version`, `package.json` engines, `build.yml`, `deploy-ops-cron.yml` and README in the same PR, or Cloudflare Pages and CI fail. `pricing-health.yml` uses `node-version: 22` (floating) and needs no change.
+
+## 2026-10-31 - Desktop header grouped into dropdowns
+
+Next agent: the desktop nav is now two dropdown groups plus five links (`nav` array at the top of `Header.astro`). Do not widen the header row or hide the estimate button to fit more links; add the page to a group. The dropdown wrappers are `display: contents` below 1401px on purpose, so the phone Menu and the no-JavaScript fallback in `BaseLayout.astro` still see a flat list of links. Guards: `test:layout-guards` 7, 13, 15 and 16. Not verified: a real touch device at desktop width (an iPad Pro in landscape is 1366px and gets the Menu button, so it is unaffected); worth a glance on the live site after deploy.
+
+## 2026-10-28 - Satin brand refresh
+
+Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.
+
+## 2026-10-27 - Calling workbook is live
+
+Activation complete under the user's explicit approval. Worker clearview-calling-sync uses its dedicated Google secret, real production D1/workbook bindings, and a five-minute schedule. workers.dev and preview URLs remain disabled. The service identity has no project IAM roles and access only to the workbook, including protected source-tab editing. Its local downloaded key was removed. Production version: 0772da74-a7e0-4db5-a4ec-7fdbce4e93d2. Detailed private evidence: originating task outputs/calling-desk/activation-status.md.
+
+Two live scheduled runs verified synthetic call status/notes/follow-up and mirror refresh, then identical replay without duplicate history or version increment. The test fixture was removed; all 94 real prospects remain unchanged. The existing Command Center reads the verified D1 and displays changes after Load / refresh prospects. Browser UI verification was blocked by Cloudflare Access denying the signed-in account. Phone verification is not performed by this feature. Review Error rows and clear Sync status to retry; do not sort/edit rows during submission. The shared workbook shows a live sync timestamp. Local suite: 89 checks passed; focused adapter, GitHub and Pages checks passed.
+
+IMPORTANT: Checked-in Worker defaults remain disabled. Future production deploys MUST supply the explicit workbook ID and enabled overrides described in .ai/references/calling-sheet-sync.md. Source PR 323 is separate from the already-deployed standalone Worker.
+
 ## 2026-10-25 - Vancouver 98662 prospect batch
 
 Validation: all 88 canonical local checks and a separate 70-page production build passed after the location-label change.
@@ -948,3 +968,11 @@ Jobs status filtering moved into the existing API before pagination; `activeTota
 ## 2026-10-03 — Schedule and quote discovery (PR #182 continuation)
 
 The jobs list API now supports a validated 1–31 day from/to interval (inclusive start/exclusive end), used by Schedule to query only its week before pagination and read every matching page. Calendar anchors come from Pacific business dates and use UTC calendar arithmetic. Quotes accept status/search before pagination; the quote-item subquery uses identical filters and stable ordering, so freshness checks remain correct. Quote search resets pagination, debounces and cancels pending requests. Jobs loads all finalized-quote pages into the creation dropdown. No migrations/bindings required. Tests execute both loaders and real SQLite filters/freshness. Browser/iPhone verification remains pending; changes stay in PR #182.
+
+## 2026-10-29 — Preserve original hero reveal
+Restored the original five-second ClearView reveal MP4 after owner clarification. The refreshed satin logo remains in website branding; the hero retains its original reveal film and existing playback/fallback behavior. Asset URL revised to bypass the replaced clip's cache. Production verification follows deployment.
+
+
+## 2026-10-29 — Hero trust-strip spacing
+Added left padding inside the Both, Local, and Free columns so text clears the vertical dividers. First-column alignment and responsive two-column/single-column layouts are preserved.
+
