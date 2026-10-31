@@ -1,3 +1,7 @@
+## 2026-10-31 - Node pin is 22.23.4
+
+Astro 7.4.2 needs Node >=22.23.4. `.node-version`, package `engines`, `build.yml`, `deploy-ops-cron.yml` and the README all say 22.23.4; change them together when Astro raises the minimum again. Detail: .ai/CHANGELOG.md 2026-10-31.
+
 ## 2026-10-31 - Desktop header: seven items, two dropdowns
 
 Desktop (1401px and up) primary nav is Services v, Process, Gallery, Reviews, Areas, Resources v, About, then Facebook, phone and "Get an estimate". Services = Replacement, New construction, Sliding glass doors, Siding, Features. Resources = Guides, Tools. A new page goes into a group, not the top level (layout guard 16 caps top-level items at seven). 1400px and below is unchanged: one flat Menu list. Source: `src/components/Header.astro`. Detail: .ai/CHANGELOG.md 2026-10-31.

@@ -1,3 +1,7 @@
+## 2026-10-31 - Astro 7.4.2 and the Node pin
+
+If a Dependabot Astro bump raises `engines.node`, raise `.node-version`, `package.json` engines, `build.yml`, `deploy-ops-cron.yml` and README in the same PR, or Cloudflare Pages and CI fail. `pricing-health.yml` uses `node-version: 22` (floating) and needs no change.
+
 ## 2026-10-31 - Desktop header grouped into dropdowns
 
 Next agent: the desktop nav is now two dropdown groups plus five links (`nav` array at the top of `Header.astro`). Do not widen the header row or hide the estimate button to fit more links; add the page to a group. The dropdown wrappers are `display: contents` below 1401px on purpose, so the phone Menu and the no-JavaScript fallback in `BaseLayout.astro` still see a flat list of links. Guards: `test:layout-guards` 7, 13, 15 and 16. Not verified: a real touch device at desktop width (an iPad Pro in landscape is 1366px and gets the Menu button, so it is unaffected); worth a glance on the live site after deploy.
