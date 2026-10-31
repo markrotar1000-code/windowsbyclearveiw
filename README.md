@@ -8,8 +8,8 @@ Marketing site and internal quoting platform for **Clearview Windows**, operated
 - **Server-side:** Cloudflare Pages Functions + D1 (R2 for job-photo and backup storage)
 - **Internal app (Command Center):** `/internal/*`, phone-first and installable
 - **Customer assistant:** `/ask`
-- **Companion Worker:** `workers/ops-cron/` (nightly D1 backup, weekday follow-up push)
-- **Repository:** `ksksrbiz-arch/windowsbyclearveiw`
+- **Companion Workers:** `workers/ops-cron/` (nightly D1 backup, weekday follow-up push) and `workers/calling-sync/` (five-minute Google calling-workbook sync; disabled by default)
+- **Repository:** `markrotar1000-code/windowsbyclearveiw` on GitHub (`ksksrbiz-arch/windowsbyclearveiw` redirects to it)
 - **AI/agent context:** `CLAUDE.md` → `.ai/` (see [AI context (ICM)](#ai-context-icm))
 
 > The repository/domain spelling contains the historical `clearveiw` typo. The customer-facing brand and production domain use **ClearView/Clearview** correctly. Existing operational email addresses should not be changed without an actual mailbox/domain migration.
@@ -29,6 +29,7 @@ Items below need the owner's dashboards (Cloudflare, Resend, Google), so a check
 - [ ] **Turnstile secret** — the widget and its public site key ship; set `TURNSTILE_SECRET_KEY` (Pages secret) to start refusing requests without a valid token (`internal/README.md`, "Spam and abuse protection").
 - [ ] **Cloudflare Access** — optional sign-in for `/internal`, built and off until configured. The `*.pages.dev` hostname is not behind Access unless it is added there or disabled; only the app login protects it.
 - [ ] **Companion Worker** — deploy `workers/ops-cron/` for the nightly backup and the weekday push (`.github/workflows/deploy-ops-cron.yml`, `internal/README.md`).
+- [ ] **Calling-workbook Worker** — `workers/calling-sync/` ships with `CALLING_SYNC_ENABLED = "false"` and an empty `CALLING_SHEET_ID`. A production deploy must supply the workbook ID and the enabled override, plus the `CALLING_GOOGLE_SERVICE_ACCOUNT_JSON` secret (`.ai/references/calling-sheet-sync.md`).
 - [ ] **Workers AI `AI` binding** — required for `/ask` photo analysis and guide-search embeddings; the rest of `/ask` continues to work without it.
 - [ ] **Job-photo R2 storage** — `JOB_PHOTOS` binding; until it exists the photo endpoint answers "not connected yet" and photos stay on the phone.
 - [ ] **Reviews** — `/reviews` shows owner-supplied review cards only. The Google reviews feed is built and tested (`npm run test:google-reviews`); set `GOOGLE_PLACES_API_KEY` and `GOOGLE_PLACE_ID` to turn it on.
@@ -93,6 +94,7 @@ The production build is pinned to Node `22.23.4` through `.node-version` and the
 | Work photography | `src/assets/work/` + `src/data/work.ts` |
 | Public static assets | `public/` |
 | Companion Worker (backup + follow-up push) | `workers/ops-cron/` |
+| Companion Worker (Google calling-workbook sync) | `workers/calling-sync/` |
 | Shared pricing validation | `shared/pricing-schema.mjs` |
 | Internal tool docs and D1 schema | `internal/` |
 | Design/QA/audit notes | `docs/` |
@@ -357,7 +359,7 @@ npm run test:all   # runs every CI test step in CI order (scripts/run-all-tests.
 npm run build
 ```
 
-`test:all` has 62 steps and mirrors `.github/workflows/build.yml`: ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
+`test:all` reads its step list from `.github/workflows/build.yml`, so it cannot drift from CI. It covers ICM structure and routing, build-plan state, production hardening, marketing/SEO/accessibility, Ask security/pricing/handoff/logs, internal Command Center and quoting flows, layout and text guards, duplicated-fact guards, image delivery, offline/PWA, abuse guard, and the ops-cron Worker. Run one step on its own with `npm run test:<name>`; the scripts are listed in `package.json`.
 
 Notable guards:
 
@@ -377,6 +379,15 @@ Browser tools that are not in CI (they need Playwright): `scripts/audit-command-
 ### CI
 
 GitHub Actions runs **Build** (the test suite then the production build, then the built-site checks), **Site smoke**, **Pricing health** and the **ops-cron deploy**. Local runs remain the first gate; the Cloudflare Pages preview is the independent build signal.
+
+## Branches and pull requests
+
+- `main` is the production branch; Cloudflare Pages deploys it. Work happens on a short-lived branch and lands through a pull request.
+- Pull requests are **squash-merged**, so a merged branch never shows up as merged in `git branch --merged`, and it looks hundreds of commits "ahead" of `main`. To tell whether a branch is finished, look at its pull request, not at git ancestry.
+- Delete the branch when its pull request merges. Turning on GitHub's "Automatically delete head branches" repository setting does this for you (it was off when the 2026-10-31 cleanup found 123 finished branches). A deleted branch is restored from its pull request page.
+- Branch prefixes in use: `claude/` and `codex/` (AI-assisted work), `feat/`, `fix/`, `dependabot/` (npm updates weekly, GitHub Actions monthly; `.github/dependabot.yml`).
+- Raising a dependency's Node minimum (Astro has done it twice) must raise `.node-version`, `package.json` `engines`, `build.yml`, `deploy-ops-cron.yml` and this README together, or the hosted build and CI fail.
+- `docs/BRANCH-CLEANUP-2026-10-31.md` records the last bulk cleanup, with each deleted branch's last commit so it can be restored.
 
 ## Deployment notes
 

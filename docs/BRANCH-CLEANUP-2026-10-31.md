@@ -1,10 +1,12 @@
 # Branch cleanup, 2026-10-31
 
-Remote branches deleted because every one was fully merged through a pull request, with no commits newer than that merge. Git history cannot show this (the repo squash-merges, so merged branches still look hundreds of commits ahead of `main`); the pull request record is the source of truth.
+**Status: proposed. Nothing has been deleted yet; this list awaits the owner's approval.**
 
-To restore any branch: `git push origin <sha>:refs/heads/<branch>`. A branch can also be restored from its pull request page ("Restore branch").
+Remote branches proposed for deletion because every one was fully merged through a pull request, with no commits newer than that merge. Git history cannot show this (the repo squash-merges, so merged branches still look hundreds of commits ahead of `main`); the pull request record is the source of truth.
 
-123 branches deleted.
+If deleted, restore any branch with: `git push origin <sha>:refs/heads/<branch>`. A branch can also be restored from its pull request page ("Restore branch").
+
+123 branches proposed.
 
 | Branch | Last commit | PR |
 |---|---|---|
