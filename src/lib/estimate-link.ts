@@ -1,5 +1,6 @@
-/** Keep siding inquiries tagged whichever estimate button a visitor chooses. */
+/** Keep product/service context whichever estimate button a visitor chooses. */
 export function estimateLink(pathname: string): string {
+  if (pathname.replace(/\/$/, '') === '/columbia-windows') return '/estimate?scope=Columbia%20Windows';
   return pathname.replace(/\/$/, '') === '/siding'
     ? '/estimate?service=siding&scope=House%20siding'
     : '/estimate';

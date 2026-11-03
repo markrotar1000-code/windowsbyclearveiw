@@ -35,3 +35,7 @@ All paths below are relative to https://columbia-windows.com/wp-content/uploads/
 ## Validation
 
 Full canonical suite: 87/89 passed initially; corrected the new navigation count/single-column grid guard and shortened the meta description. Both failed checks now pass, along with a fresh 71-page build, image-delivery and ICM structure rechecks. All 89 canonical checks are accounted for as passing across the initial run and focused rechecks. Browser checks cover 320/390/768/1440 widths, expanded specs, image loading, navigation, series-specific estimate context, and 200% text. No physical-device or full screen-reader test.
+
+## Mobile refinement, November 3
+
+Product headings and renderings share a compact mobile row; descriptive series shortcuts and unique disclosure names improve scanning. Shared estimate CTAs retain Columbia scope, including after client navigation. Responsive image hints match 72px phone product slots. At 390px, the closed three-card stack decreased from 3092px to 2816px. Verified sticky CTA prefill, header/footer URLs, route-transition refresh, and 320px with 200% text. No product facts changed.
