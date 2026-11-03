@@ -13,7 +13,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       <a class="btn btn-ghost" data-edit-link hidden href="#">Edit quote</a>
       <button class="btn btn-ghost qv-danger" type="button" data-delete-btn hidden>Delete draft</button>
       <button class="btn btn-ghost" type="button" data-create-job hidden>Create job</button>
-      <button class="btn btn-primary" type="button" data-print-btn>Print</button>
+      <button class="btn btn-primary" type="button" data-print-btn>Print / Save PDF</button>
     </div>
   </div>
   <p class="qv-error" data-delete-error hidden role="alert"></p>
@@ -49,7 +49,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   <article class="contract" data-contract hidden>
     <header class="contract-head">
       <h1 class="visually-hidden">Quote</h1>
-      <div>
+      <div class="contract-identity">
+        <img class="contract-logo" src="/logo/lockup-on-white.png?v=20261028" alt="ClearView Windows and Trim" width="240" loading="eager" />
         <p class="contract-brand">{site.legalName}</p>
         <p class="contract-brand-sub">
           {site.phoneDisplay} &middot; <a href={mailHref()}>{site.email}</a>
@@ -57,6 +58,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         </p>
       </div>
       <div class="contract-meta">
+        <p class="contract-document-title">QUOTE</p>
         <p><strong data-quote-id></strong></p>
         <p data-quote-date></p>
         <p>Type of work: <strong data-quote-type></strong></p>
@@ -83,7 +85,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     <section class="contract-section">
       <h2>Scope of work</h2>
       <table class="contract-items">
-        <thead><tr><th>Line</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+        <thead><tr><th scope="col">Description of work</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Amount</th></tr></thead>
         <tbody data-contract-items></tbody>
       </table>
       <div class="contract-totals">
@@ -167,6 +169,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 </InternalLayout>
 
 <script>
+  import { printQuote } from '../../../lib/quote-print';
   import { formatCents } from '../../../lib/money';
   import { workTypeLabel } from '../../../lib/work-type';
   import { esc, fetchJson, InternalFetchError, isSessionExpired } from '../../../lib/internal-fetch';
@@ -845,7 +848,13 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     }
 
     const printBtn = document.querySelector('[data-print-btn]');
-    printBtn?.addEventListener('click', () => window.print());
+    printBtn?.addEventListener('click', async () => {
+      if (!(root instanceof HTMLElement) || root.hidden) return;
+      if (printBtn instanceof HTMLButtonElement) printBtn.disabled = true;
+      try { await printQuote(root); }
+      catch { window.alert('The quote could not be prepared for printing. Please try again.'); }
+      finally { if (printBtn instanceof HTMLButtonElement) printBtn.disabled = false; }
+    });
 
     load();
   }
@@ -920,7 +929,11 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     padding: var(--space-l);
   }
 
+  .contract-logo { display: block; width: 210px; max-width: 100%; height: auto; margin-bottom: 12px; }
+  .contract-identity { min-width: 0; }
+  .contract-document-title { font-size: 1.5rem; font-weight: 700; letter-spacing: .12em; color: #17616a; margin: 0 0 12px; }
   .contract-head {
+    gap: 24px;
     display: flex;
     justify-content: space-between;
     align-items: start;
@@ -930,7 +943,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
   .contract-brand {
     margin: 0;
-    font-size: var(--step-2);
+    font-size: var(--step-0);
     font-weight: 600;
   }
 
@@ -1235,6 +1248,37 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
   }
 
   @media print {
+    @page { size: letter; margin: 0.5in; }
+    :global(body.internal) { background: white !important; color: #182b32; padding: 0 !important; }
+    :global(body.internal > :not(.internal-main)) { display: none !important; }
+    :global(.internal-main > :not(.contract)) { display: none !important; }
+    :global(.internal-main) { margin: 0 !important; padding: 0 !important; max-width: none !important; }
+    .contract { font: 10pt/1.4 Arial, sans-serif; color: #182b32; border-radius: 0; box-shadow: none; }
+    .contract-head { flex-direction: row !important; gap: 20px; break-inside: avoid; }
+    .contract-logo { width: 180px; }
+    .contract-brand { font-size: 11pt; }
+    .contract-brand-sub, .contract-meta { font-size: 9pt; }
+    .contract-meta { text-align: right; }
+    .contract-section { margin-top: 18px; }
+    .contract-section h2 { font-size: 12pt; break-after: avoid; }
+    .contract-section h3 { font-size: 10pt; }
+    .contract-dl { grid-template-columns: 1fr 1fr; gap: 10px 24px; }
+    .contract-dl dt, .sig-caption { font-size: 8pt; }
+    .contract-items { font-size: 9pt; }
+    .contract-items thead { display: table-header-group; }
+    :global(.contract-items tr) { break-inside: avoid; }
+    :global(.contract-items td:first-child) { overflow-wrap: anywhere; }
+    .contract-items th:not(:first-child), :global(.contract-items td:not(:first-child)) { text-align: right; }
+    .contract-totals { break-inside: avoid; }
+    .contract-totals > div { font-size: 10pt; }
+    .contract-terms { break-before: page; }
+    .contract-terms p { font-size: 9pt; line-height: 1.4; margin-bottom: 7px; }
+    .contract-signature { margin-top: 16px; }
+    .sig-line-block { margin-bottom: 10px; }
+    .sig-line { height: 24px; }
+    .contract-footer { font-size: 8pt; margin-top: 16px; }
+    .contract:has([data-sig-digital-pending]:not([hidden])) [data-sig-pen] { display: block !important; }
+
     .contract {
       border: 0;
       padding: 0;
