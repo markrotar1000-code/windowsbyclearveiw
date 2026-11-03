@@ -1,3 +1,4 @@
+import { bytesToBase64, base64ToBytes } from './document-bytes.mjs';
 // One durable attempt per user action; provider retries use the same idempotency key.
 export async function ensureDeliverySchema(db) {
   await db.prepare(`CREATE TABLE IF NOT EXISTS document_deliveries (id TEXT PRIMARY KEY, document_kind TEXT NOT NULL, document_id TEXT NOT NULL, document_version TEXT NOT NULL, recipient TEXT NOT NULL, created_at TEXT NOT NULL, actor TEXT NOT NULL DEFAULT 'mark', provider_id TEXT)`).run();
@@ -9,8 +10,8 @@ export async function ensureDeliverySchema(db) {
 }
 export async function deliveryHistory(db, kind, id) {
   await ensureDeliverySchema(db);
-  const { results } = await db.prepare(`SELECT d.*, (SELECT event_type FROM document_delivery_events e WHERE e.delivery_id=d.id ORDER BY CASE WHEN e.event_type='complained' THEN 60 WHEN e.event_type='bounced' THEN 50 WHEN e.event_type='failed' AND e.webhook_id IS NOT NULL THEN 40 WHEN e.event_type='delivered' THEN 30 WHEN e.event_type='delayed' THEN 20 WHEN e.event_type='accepted' THEN 10 ELSE 0 END DESC, e.at DESC, e.id DESC LIMIT 1) AS status FROM document_deliveries d WHERE document_kind=? AND document_id=? ORDER BY created_at DESC LIMIT 50`).bind(kind,id).all();
-  return (results || []).map(({sealed_payload,...row})=>row);
+  const { results } = await db.prepare(`SELECT d.id,d.document_kind,d.document_id,d.document_version,d.recipient,d.created_at,d.actor,d.provider_id, (SELECT event_type FROM document_delivery_events e WHERE e.delivery_id=d.id ORDER BY CASE WHEN e.event_type='complained' THEN 60 WHEN e.event_type='bounced' THEN 50 WHEN e.event_type='failed' AND e.webhook_id IS NOT NULL THEN 40 WHEN e.event_type='delivered' THEN 30 WHEN e.event_type='delayed' THEN 20 WHEN e.event_type='accepted' THEN 10 ELSE 0 END DESC, e.at DESC, e.id DESC LIMIT 1) AS status FROM document_deliveries d WHERE document_kind=? AND document_id=? ORDER BY created_at DESC LIMIT 50`).bind(kind,id).all();
+  return results || [];
 }
 export async function appendDeliveryEvent(db, id, type, detail = '', webhookId = null) {
   await db.prepare(`INSERT OR IGNORE INTO document_delivery_events(delivery_id,event_type,at,detail,webhook_id) VALUES(?,?,?,?,?)`).bind(id,type,new Date().toISOString(),String(detail).slice(0,500),webhookId).run();
@@ -30,8 +31,8 @@ export async function recordProviderEvent(db,{webhookId,providerId,type,at}) {
   await reconcileProviderEvents(db,providerId);
 }
 async function payloadKey(env){const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(env.INTERNAL_SESSION_SECRET||env.RESEND_API_KEY));return crypto.subtle.importKey('raw',hash,'AES-GCM',false,['encrypt','decrypt']);}
-async function sealPayload(env,payload){const iv=crypto.getRandomValues(new Uint8Array(12));const bytes=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await payloadKey(env),new TextEncoder().encode(JSON.stringify(payload))));let s='';for(const n of [...iv,...bytes])s+=String.fromCharCode(n);return btoa(s);}
-async function unsealPayload(env,sealed){const bytes=Uint8Array.from(atob(sealed),c=>c.charCodeAt(0));return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.slice(0,12)},await payloadKey(env),bytes.slice(12)));}
+async function sealPayload(env,payload){const iv=crypto.getRandomValues(new Uint8Array(12));const bytes=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await payloadKey(env),new TextEncoder().encode(JSON.stringify(payload))));const sealed=new Uint8Array(iv.length+bytes.length);sealed.set(iv);sealed.set(bytes,iv.length);return bytesToBase64(sealed);}
+async function unsealPayload(env,sealed){const bytes=base64ToBytes(sealed);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.subarray(0,12)},await payloadKey(env),bytes.subarray(12)));}
 export async function sendDocumentEmail(env, { requestId, documentKind, documentId, documentVersion, to, payload }) {
   if (!env.RESEND_API_KEY) return { error:'Email delivery is not configured yet (RESEND_API_KEY).', status:503 };
   const db=env.QUOTES_DB;
@@ -43,8 +44,18 @@ export async function sendDocumentEmail(env, { requestId, documentKind, document
   const row=await db.prepare('SELECT * FROM document_deliveries WHERE id=?').bind(id).first();
   if(row.document_kind!==documentKind || row.document_id!==documentId || row.document_version!==version || row.recipient!==to) return {error:'This delivery request belongs to another document or recipient. Start a new send.',status:409};
   if(row.provider_id) {await reconcileProviderEvents(db,row.provider_id);return {ok:true,to,providerId:row.provider_id,deliveryId:id,replayed:true};}
-  const sealed=await sealPayload(env,payload);
-  await db.prepare('UPDATE document_deliveries SET sealed_payload=COALESCE(sealed_payload,?) WHERE id=?').bind(sealed,id).run();
+  if(!row.sealed_payload){
+    try{
+      const sealed=await sealPayload(env,payload);
+      // Leave room for metadata below D1's 2MB row limit. Do not send an
+      // unpersisted message: a retry must be able to recover its exact bytes.
+      if(sealed.length>1990000){await appendDeliveryEvent(db,id,'failed','Document exceeds safe delivery storage size.');return {error:'This PDF is too large to email safely. Download it and share the file instead.',status:413,deliveryId:id};}
+      await db.prepare('UPDATE document_deliveries SET sealed_payload=COALESCE(sealed_payload,?) WHERE id=?').bind(sealed,id).run();
+    }catch{
+      try{await appendDeliveryEvent(db,id,'failed','Document preparation or storage unavailable; no provider request was made.');}catch{}
+      return {error:'Could not prepare this email for reliable delivery. Retry this send.',status:503,deliveryId:id};
+    }
+  }
   const stored=await db.prepare('SELECT sealed_payload FROM document_deliveries WHERE id=?').bind(id).first();
   let body;try{body=await unsealPayload(env,stored.sealed_payload);}catch{return {error:'This delivery attempt cannot be recovered after a configuration change. Start a new send.',status:409};}
   await appendDeliveryEvent(db,id,'queued');
