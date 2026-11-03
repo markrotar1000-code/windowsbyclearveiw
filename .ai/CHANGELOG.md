@@ -1,3 +1,8 @@
+## 2026-11-03 - Payment due upon completion and contract review
+
+Owner-directed payment timing now says payment is due in full upon completion of the agreed work and approved written change orders, with credit for payments received. Terms version2026-11-03.2 archives both previously published versions verbatim; signed documents remain immutable. Invoices keep their signed agreement's terms and are not made due merely by signing. Cancellation instructions now include the owner-authorized business address verified in L&I and the owner email. Current registration text corrects zero to the letter O in CLEARVW746O1.
+
+The legal issue review is in .ai/references/contract-legal-review-2026-11-03.md. It identifies missing contractor disclosure receipts, full cancellation forms for covered sales, durable signed-copy delivery and applicable construction-defect notices. Proposed clause improvements are explicitly drafts for counsel review. This release is not a representation of legal approval.
 ## 2026-11-03 - Manufacturer warranty responsibility and historical contract terms
 
 Owner-directed policy: customers contact the manufacturer and handle manufacturer warranty claims directly. Clearview does not handle or assist with those claims. The owner also explicitly removed the one-year workmanship warranty from new contracts. No other contract terms changed; this is not a waiver of statutory rights. Current terms version is 2026-11-03; complete 2026-08-28 wording is archived independently.

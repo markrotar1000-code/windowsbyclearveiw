@@ -114,7 +114,7 @@ by our negligence, or for fraud.
 ## Contractor registration
 
 Clearview Windows & Trim LLC is a Washington contractor, registered with the
-Department of Labor & Industries under registration number CLEARVW74601.
+Department of Labor & Industries under registration number CLEARVW746O1.
 Verify it yourself using the Washington State L&I contractor lookup. You
 should do that with every contractor you let near your walls, including us.
 

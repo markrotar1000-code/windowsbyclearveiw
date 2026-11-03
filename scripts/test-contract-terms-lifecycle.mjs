@@ -32,11 +32,16 @@ try{
   assert.equal((await call(share.onRequestPost,'POST',{quoteId:id})).status,201);
   const currentEmail=await call(delivery.onRequestPost,'POST',{quoteId:id,kind:'customer'});assert.equal(currentEmail.status,200);assert.equal(sent,1);
 }finally{globalThis.fetch=originalFetch;}
-for(const version of ['2026-08-28',TERMS_VERSION]){
+for(const version of ['2026-08-28','2026-11-03',TERMS_VERSION]){
   const record=await call(quotes.onRequestPost);const recordId=record.body.id;
   db.raw.prepare("UPDATE quotes SET terms_version=?,status='finalized',signature_name='QA fixture',signed_at='2026-11-03T20:00:00Z' WHERE id=?").run(version,recordId);
   const frozen=await freezeSignedQuote(env,recordId);const snapshot=JSON.parse(frozen.snapshot_json);
   assert.deepEqual(snapshot.terms,getContractTerms(version));
+  if(version===TERMS_VERSION)assert.match(snapshot.terms.paymentTerms,/Payment is due in full upon completion/,'only current agreements require payment upon completion');
+  else {
+    assert.equal(snapshot.terms.paymentTerms,'Payment is due as agreed in writing between Clearview Windows & Trim LLC and the customer. No deposit is collected as part of this document; any deposit or payment schedule will be stated separately before work begins.','archived payment terms remain verbatim');
+    assert.doesNotMatch(snapshot.terms.paymentTerms,/due in full upon completion/);
+  }
   assert.equal(snapshot.terms.warranty.includes('will assist in facilitating'),version==='2026-08-28','legacy promise is preserved only in the archived agreement');
   if(version==='2026-08-28')assert.match(snapshot.terms.warranty,/Workmanship is warranted for 1 year/,'archived agreements retain the original workmanship promise');
   else assert.doesNotMatch(snapshot.terms.warranty,/workmanship|\b1 year\b|\bone.year\b/i,'current agreements add no voluntary workmanship warranty');
