@@ -13,6 +13,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       <a class="btn btn-ghost" data-edit-link hidden href="#">Edit quote</a>
       <button class="btn btn-ghost qv-danger" type="button" data-delete-btn hidden>Delete draft</button>
       <button class="btn btn-ghost" type="button" data-create-job hidden>Start production</button>
+      <button class="btn btn-ghost" type="button" data-create-revision="revision">Create revised quote</button>
+      <button class="btn btn-ghost" type="button" data-create-revision="change-order">New change order</button>
       <button class="btn btn-primary" type="button" data-print-btn>Print / Save PDF</button>
     </div>
   </div>
@@ -57,6 +59,17 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     </details>
     <p data-delivery-status role="status" aria-live="polite"></p>
   </section>
+  <details class="qv-measurements no-print" data-operational-corrections>
+    <summary>Correct private measurements or supplier specifications</summary>
+    <p>Update internal production details with a reason. The signed customer price and scope stay preserved.</p>
+    <form><div data-operational-items></div><label>Reason for correction<input name="note" required maxlength="500" /></label><button class="btn btn-primary" type="submit">Save private correction</button></form>
+    <p data-operational-status role="status"></p><div data-operational-history></div>
+  </details>
+  <details class="qv-measurements no-print" data-supplier-responses>
+    <summary>Record supplier responses</summary>
+    <form class="qv-delivery-grid"><label>Supplier<input name="supplier" required maxlength="200" /></label><label>Supplier quote reference<input name="reference" maxlength="120" /></label><label>Quoted total ($, optional)<input name="amount" type="number" min="0" step=".01" /></label><label>Lead time<input name="leadTime" maxlength="200" /></label><label>Valid through<input name="validUntil" type="date" /></label><label>Exceptions / notes<textarea name="notes" maxlength="2000"></textarea></label><button class="btn btn-primary" type="submit">Record supplier response</button></form>
+    <p data-supplier-response-status role="status"></p><div data-supplier-response-history></div>
+  </details>
   <details class="qv-measurements no-print" data-private-measurements hidden>
     <summary>Private measurements &amp; production details</summary>
     <p>These stay inside the Command Center and carry into the job.</p>
@@ -78,6 +91,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       </div>
       <div class="contract-meta">
         <p class="contract-document-title">QUOTE</p>
+        <p data-source-reference hidden></p>
         <p><strong data-quote-id></strong></p>
         <p data-quote-date></p>
         <p>Type of work: <strong data-quote-type></strong></p>
@@ -189,6 +203,9 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
 <script>
   import { customerLineText, readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
+  import { bindQuoteOperations } from '../../../lib/quote-operations';
+  import { bindSupplierResponses } from '../../../lib/quote-supplier-responses';
+  import { readProductSpecs } from '../../../../functions/internal/_lib/supplier-specs.mjs';
   import { bindQuoteDelivery } from '../../../lib/quote-delivery';
   import { printQuote } from '../../../lib/quote-print';
   import { formatCents } from '../../../lib/money';
@@ -449,6 +466,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
             method: 'PUT',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
+              expectedRevision: Number(root.dataset.quoteRevision || quote.revision),
               customer: {
                 name: quote.customer_name,
                 phone: quote.customer_phone,
@@ -463,6 +481,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
                 label: item.label,
                 description: item.description || '',
                 measurements: readMeasurements(item),
+                productSpecs: readProductSpecs(item),
                 quantity: item.quantity,
                 unitPriceCents: cents(inputs[index]),
               })),
@@ -523,12 +542,18 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       }
     }
 
+    document.addEventListener('cv:quote-updated', () => { void load(); });
     function render(quote: any, items: any[]) {
       if (loading instanceof HTMLElement) loading.hidden = true;
       if (toolbar instanceof HTMLElement) toolbar.hidden = false;
       root.hidden = false;
 
+      root.dataset.quoteRevision = String(quote.revision || 1);
+      root.dataset.quoteStatus = quote.status;
       bindQuoteDelivery(quote);
+      bindQuoteOperations(quote);
+      bindSupplierResponses(quote.id);
+      document.querySelectorAll<HTMLButtonElement>('[data-create-revision]').forEach(button => { button.hidden = quote.status !== 'finalized'; });
       renderPricePanel(quote, items);
       const measurementPanel = document.querySelector('[data-private-measurements]') as HTMLElement;
       const measurementList = document.querySelector('[data-private-measurement-list]');
@@ -581,6 +606,9 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       loadShareLink(quote.id);
 
       set('[data-quote-id]', quote.id);
+      const sourceReference = root.querySelector('[data-source-reference]') as HTMLElement;
+      if (sourceReference) { sourceReference.hidden = !quote.revision_of; sourceReference.textContent = quote.revision_of ? `${quote.revision_kind === 'change-order' ? 'Change order for' : 'Revision of'} ${quote.revision_of}` : ''; }
+      set('.contract-document-title', quote.revision_kind === 'change-order' ? 'CHANGE ORDER' : quote.revision_of ? 'REVISED QUOTE' : 'QUOTE');
       set('[data-quote-type]', workTypeLabel(quote.work_type));
       set('[data-quote-date]', new Date(quote.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
       set('[data-c-name]', quote.customer_name || '—');
@@ -724,7 +752,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
           const response = await fetch(`/internal/api/quotes/${encodeURIComponent(quote.id)}`, {
             method: 'PATCH',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ confirmPen: true, signatureName: name }),
+            body: JSON.stringify({ expectedRevision: Number(root.dataset.quoteRevision || quote.revision), confirmPen: true, signatureName: name }),
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(result.error || 'Could not confirm the signature.');
@@ -838,7 +866,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
             method: 'PATCH',
             headers: { 'content-type': 'application/json' },
             // Strokes, not markup: the server turns them into the stored SVG (same as the customer's link).
-            body: JSON.stringify({ signatureStrokes: strokes.filter((stroke) => stroke.length > 0), signatureName: name }),
+            body: JSON.stringify({ expectedRevision: Number(root.dataset.quoteRevision || quote.revision), signatureStrokes: strokes.filter((stroke) => stroke.length > 0), signatureName: name }),
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok) throw new Error(result.error || 'Could not save the signature.');
@@ -887,6 +915,10 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     const printBtn = document.querySelector('[data-print-btn]');
     printBtn?.addEventListener('click', async () => {
       if (!(root instanceof HTMLElement) || root.hidden) return;
+      if (root.dataset.quoteStatus === 'finalized') {
+        window.open(`/internal/api/quote-delivery?quoteId=${encodeURIComponent(id!)}&kind=customer&inline=1`, '_blank', 'noopener');
+        return;
+      }
       if (printBtn instanceof HTMLButtonElement) printBtn.disabled = true;
       try { await printQuote(root); }
       catch { window.alert('The quote could not be prepared for printing. Please try again.'); }

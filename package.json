@@ -101,7 +101,7 @@
     "test:quote-price-edit": "node --disable-warning=ExperimentalWarning scripts/test-quote-price-edit.mjs",
     "test:quote-view-hardening": "node --disable-warning=ExperimentalWarning scripts/test-quote-view-hardening.mjs",
     "test:quote-signing": "node --disable-warning=ExperimentalWarning scripts/test-quote-signing.mjs",
-    "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs && node --disable-warning=ExperimentalWarning scripts/test-production-measurements.mjs && node --disable-warning=ExperimentalWarning scripts/test-quote-delivery.mjs",
+    "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs && node --disable-warning=ExperimentalWarning scripts/test-production-measurements.mjs && node --disable-warning=ExperimentalWarning scripts/test-quote-delivery.mjs && node --disable-warning=ExperimentalWarning scripts/test-production-audit-fixes.mjs && node --disable-warning=ExperimentalWarning scripts/test-invoice-accounting.mjs && node --disable-warning=ExperimentalWarning scripts/test-delivery-integrity.mjs && node --disable-warning=ExperimentalWarning scripts/test-supplier-specifications.mjs",
     "find:google-place-id": "node scripts/find-google-place-id.mjs",
     "test:window-studio": "node scripts/test-window-studio.mjs",
     "test:google-tools": "node --disable-warning=ExperimentalWarning scripts/test-google-tools.mjs",
@@ -112,6 +112,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
+    "@pdf-lib/fontkit": "^1.1.1",
     "astro": "^7.4.2",
     "pdf-lib": "^1.17.1",
     "three": "^0.186.1"

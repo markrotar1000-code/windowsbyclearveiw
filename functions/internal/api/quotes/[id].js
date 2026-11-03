@@ -1,3 +1,5 @@
+import { ensureQuoteRevisionSchema, guardedQuoteBatch, revisionConflict } from '../../_lib/quote-concurrency.mjs';
+import { freezeSignedQuote } from '../../_lib/quote-documents.mjs';
 import { ensureMeasurementsSchema } from '../../_lib/quote-measurements.mjs';
 import { json, clean, parseQuoteBody } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
@@ -10,6 +12,7 @@ export async function onRequestGet(context) {
   const { env, params } = context;
   const id = String(params.id || '');
   await ensureInvoiceSchema(env.QUOTES_DB);
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
   await ensureMeasurementsSchema(env.QUOTES_DB);
 
@@ -34,6 +37,7 @@ export async function onRequestPut(context) {
   if (!guard.ok) return guard.response;
   const body = guard.body;
   const id = String(params.id || '');
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
   await ensureMeasurementsSchema(env.QUOTES_DB);
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
@@ -58,21 +62,21 @@ export async function onRequestPut(context) {
     'SELECT COUNT(*) AS n FROM quote_sign_links WHERE quote_id = ? AND revoked_at IS NULL AND signed_at IS NULL',
   ).bind(id).first();
 
-  await env.QUOTES_DB.batch([
+  try { await guardedQuoteBatch(env.QUOTES_DB, quote, [
     env.QUOTES_DB.prepare(
       `UPDATE quote_sign_links SET revoked_at = ? WHERE quote_id = ? AND revoked_at IS NULL AND signed_at IS NULL`,
     ).bind(now, id),
     env.QUOTES_DB.prepare(
       `UPDATE quotes SET updated_at = ?, customer_name = ?, customer_phone = ?, customer_email = ?, customer_address = ?,
         customer_city = ?, customer_role = ?, notes = ?, subtotal_cents = ?, discount_cents = ?,
-        discount_reason = ?, total_cents = ?, signature_method = ? WHERE id = ?`,
+        discount_reason = ?, total_cents = ?, signature_method = ?, revision = revision + 1 WHERE id = ?`,
     ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, id),
     env.QUOTES_DB.prepare('DELETE FROM quote_items WHERE quote_id = ?').bind(id),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
-      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json)
-       VALUES (?,?,?,?,?,?,?,?)`,
-    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements))),
-  ]);
+      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements), JSON.stringify(item.productSpecs || {}))),
+  ], body.expectedRevision ?? quote.revision); } catch (error) { if (/QUOTE_REVISION_CONFLICT/.test(String(error?.message || error))) return revisionConflict(); throw error; }
 
   await ensureInvoiceForQuote(env.QUOTES_DB, id);
   return json({ id, totalCents, signLinkRevoked: Number(activeLinks?.n || 0) > 0 });
@@ -83,20 +87,21 @@ export async function onRequestDelete(context) {
   const guard = await guardWrite(context, { json: false });
   if (!guard.ok) return guard.response;
   const id = String(params.id || '');
-  const quote = await env.QUOTES_DB.prepare('SELECT status FROM quotes WHERE id = ?').bind(id).first();
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
+  const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'Only a draft can be deleted — a finalized quote is a record, not a scratch file.' }, 409);
   // A deleted draft leaves nothing behind: its customer signing links (which would otherwise stay
   // live for 30 days pointing at nothing) and its automatic follow-up reminders go with it.
   await ensureSigningSchema(env.QUOTES_DB);
   await ensureFollowUpSchema(env.QUOTES_DB);
-  await env.QUOTES_DB.batch([
+  try { await guardedQuoteBatch(env.QUOTES_DB, quote, [
     env.QUOTES_DB.prepare('DELETE FROM quote_sign_links WHERE quote_id = ?').bind(id),
     env.QUOTES_DB.prepare('DELETE FROM follow_up_tasks WHERE quote_id = ?').bind(id),
     env.QUOTES_DB.prepare('DELETE FROM quote_items WHERE quote_id = ?').bind(id),
     env.QUOTES_DB.prepare('DELETE FROM invoices WHERE quote_id = ?').bind(id),
     env.QUOTES_DB.prepare('DELETE FROM quotes WHERE id = ?').bind(id),
-  ]);
+  ]); } catch (error) { if (/QUOTE_REVISION_CONFLICT/.test(String(error?.message || error))) return revisionConflict(); throw error; }
   return json({ ok: true });
 }
 
@@ -107,9 +112,11 @@ export async function onRequestPatch(context) {
   if (!guard.ok) return guard.response;
   const body = guard.body;
   const id = String(params.id || '');
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is not awaiting a signature.' }, 409);
+  if (body.expectedRevision !== undefined && Number(body.expectedRevision) !== Number(quote.revision)) return revisionConflict();
 
   const now = new Date().toISOString();
 
@@ -119,9 +126,11 @@ export async function onRequestPatch(context) {
     if (!signatureName) return json({ error: 'Enter the name of the person who signed.' }, 400);
     // Conditional on still being a draft so two taps/devices can never both "win" the signature.
     const signed = await env.QUOTES_DB.prepare(
-      `UPDATE quotes SET signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ? WHERE id = ? AND status = 'draft'`,
-    ).bind(signatureName, now, now, id).run();
+      `UPDATE quotes SET signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ?, revision = revision + 1 WHERE id = ? AND status = 'draft' AND revision = ?`,
+    ).bind(signatureName, now, now, id, quote.revision).run();
     if (signed?.meta?.changes === 0) return json({ error: 'This quote is not awaiting a signature.' }, 409);
+    const frozen = freezeSignedQuote(env, id).catch(error => console.error('signed-quote-snapshot-deferred', error?.message || 'PDF unavailable'));
+    if (context.waitUntil) context.waitUntil(frozen); else await frozen;
     await ensureInvoiceForQuote(env.QUOTES_DB, id, { finalize: true });
     return json({ ok: true, signedAt: now });
   }
@@ -137,9 +146,11 @@ export async function onRequestPatch(context) {
   const signatureSvg = rendered.svg;
 
   const signed = await env.QUOTES_DB.prepare(
-    `UPDATE quotes SET signature_svg = ?, signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ? WHERE id = ? AND status = 'draft'`,
-  ).bind(signatureSvg, signatureName, now, now, id).run();
+    `UPDATE quotes SET signature_svg = ?, signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ?, revision = revision + 1 WHERE id = ? AND status = 'draft' AND revision = ?`,
+  ).bind(signatureSvg, signatureName, now, now, id, quote.revision).run();
   if (signed?.meta?.changes === 0) return json({ error: 'This quote is not awaiting a signature.' }, 409);
+  const frozen = freezeSignedQuote(env, id).catch(error => console.error('signed-quote-snapshot-deferred', error?.message || 'PDF unavailable'));
+  if (context.waitUntil) context.waitUntil(frozen); else await frozen;
   await ensureInvoiceForQuote(env.QUOTES_DB, id, { finalize: true });
   return json({ ok: true, signedAt: now });
 }

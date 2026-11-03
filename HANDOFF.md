@@ -1,3 +1,13 @@
+## 2026-11-03 - Full quote/invoice audit remediation (batch agents)
+
+Quote/invoice audit items are implemented across accounting, production, document delivery and recovery. Invoice balances/receipts derive payments and credits; original totals remain immutable. Optional due date/instructions, internal overdue reminders, audited credit/void, replacement invoice reconciliation hold, server invoice/payment search/paging are available. A replacement is never a second automatic receivable. No deposit, tax, due-date or payment-instruction defaults were invented.
+
+Production generation preserves actual quantity through an explicit100-opening limit; mismatches block rather than truncate. Concurrent starts return the same job. Revision-guarded quote writes/signatures and audited post-sign private measurement/spec corrections preserve signed commercial records and version active-job snapshots. Separate unsigned revisions and explicit delta change orders reference their original.
+
+Customer sending combines PDF/signing link; signed documents freeze PDF, exact terms/template, signature evidence and SHA256. Delivery histories encrypt token-bearing payloads, support provider-idempotent retries and distinguish accepted from delivered. Invoice PDF/email/share uses branded Unicode fonts. Supplier structured options/per-opening overrides, saved contacts, source-hashed response histories and completeness callouts are internal. Full device drafts recover customer fields, prices, measurements and specs, and reject stale revision restore.
+
+Validation: canonical89 steps passed; real SQLite audit regressions,390/1440 quote/recovery/correction/invoice browser flows passed; Wrangler Pages Functions bundle compiled with pdf-lib/fontkit. Final release checks recorded in HANDOFF. No real recipients contacted or customer data changed during tests. Live verified delivery/bounce tracking needs RESEND_WEBHOOK_SECRET in the actual ClearView Resend account; the connected Resend plugin currently exposes other domains, so no wrong-account webhook was created.
+
 ## 2026-10-31 - Astro 7.4.2 and the Node pin
 
 If a Dependabot Astro bump raises `engines.node`, raise `.node-version`, `package.json` engines, `build.yml`, `deploy-ops-cron.yml` and README in the same PR, or Cloudflare Pages and CI fail. `pricing-health.yml` uses `node-version: 22` (floating) and needs no change.

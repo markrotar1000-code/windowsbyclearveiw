@@ -45,7 +45,7 @@ const pass = (m) => console.log(`PASS: ${m}`);
   const items = [{ label: 'Slider', quantity: 2, description: '' }, { label: 'Trim', quantity: 1, description: '' }];
   const plan = generatePlan({ customer_name: 'Dana', notes: '' }, items);
   plan.openings.pop();
-  assert.ok(lintPlan(plan, items).warnings.some((w) => /Quote quantity \(2\) and opening schedule \(1\)/.test(w)));
+  assert.ok(lintPlan(plan, items).blockers.some((w) => /Quote quantity \(2\) and opening schedule \(1\)/.test(w)));
   const { openings, extras } = splitQuoteLines(items);
   assert.equal(openings.length, 1); assert.equal(extras.length, 1);
   pass('the quote-quantity check still catches a real mismatch');

@@ -75,7 +75,8 @@ const log = async (job) => (await db.prepare('SELECT previous_cents, new_cents, 
 // 5. The invoice still follows the payment, and the table cannot be edited through the API.
 {
   const src = read('functions/internal/api/payments.js');
-  assert.match(src, /env\.QUOTES_DB\.batch\(statements\)/, 'the update and its history row are written together');
+  assert.match(src, /guardedInvoiceFinanceBatch\(env\.QUOTES_DB,[^;]*statements\)/, 'the update and its history row use the guarded finance transaction');
+  assert.match(read('functions/internal/_lib/invoice-finance-guard.mjs'), /db\.batch\(\[[^]*\.\.\.statements/, 'the guard, update and history statements share one D1 transaction');
   assert.ok(!/UPDATE job_payment_log|DELETE FROM job_payment_log/.test(src), 'history is append-only: nothing updates or deletes it');
   const page = read('src/pages/internal/payments.astro');
   assert.match(page, /taken off \(correction\)/); assert.match(page, /History \(\$\{h\.length\}\)/);

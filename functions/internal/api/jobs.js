@@ -1,12 +1,14 @@
+import { ensureInvoiceSchema } from '../_lib/invoices.mjs';
+import { ensureQuoteRevisionSchema, guardedQuoteBatch, revisionConflict } from '../_lib/quote-concurrency.mjs';
 import { generatePlan } from './build-plan.js';
 import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
-import { lintPlan, sameSource, sourceSnapshot } from '../../_lib/build-plan-rules.mjs';
+import { lintPlan, sameSource, sourceSnapshot, productionQuantityError } from '../../_lib/build-plan-rules.mjs';
 import { isGeneralJob, validateGeneralJobUpdate, validateNewGeneralJob } from '../_lib/general-jobs.mjs';
 import { ensureJobsSchema } from '../_lib/jobs-schema.mjs';
 import { ensureQuoteWorkTypeColumn, isSidingRow } from '../_lib/work-types.mjs';
 
 function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'private, no-store'}});}
-async function ensureSchema(db){await ensureJobsSchema(db);await ensureQuoteWorkTypeColumn(db);await db.batch([
+async function ensureSchema(db){await ensureQuoteRevisionSchema(db);await ensureJobsSchema(db);await ensureQuoteWorkTypeColumn(db);await db.batch([
   db.prepare(`CREATE TABLE IF NOT EXISTS job_build_plan_events (id INTEGER PRIMARY KEY AUTOINCREMENT,job_id TEXT NOT NULL,quote_id TEXT,plan_version INTEGER,knowledge_version TEXT,event_type TEXT NOT NULL,created_at TEXT NOT NULL,created_by TEXT NOT NULL DEFAULT 'mark',notes TEXT)`),
   db.prepare(`CREATE INDEX IF NOT EXISTS idx_job_build_plan_events_job ON job_build_plan_events(job_id,created_at DESC)`),
   db.prepare(`CREATE TABLE IF NOT EXISTS job_closeouts (id INTEGER PRIMARY KEY AUTOINCREMENT,job_id TEXT NOT NULL UNIQUE,walkthrough_confirmed INTEGER NOT NULL DEFAULT 0,warranty_handoff_confirmed INTEGER NOT NULL DEFAULT 0,balance_confirmed INTEGER NOT NULL DEFAULT 0,signoff_name TEXT NOT NULL DEFAULT '',signoff_notes TEXT NOT NULL DEFAULT '',finalized_at TEXT,updated_at TEXT NOT NULL,updated_by TEXT NOT NULL DEFAULT 'mark')`),
@@ -22,6 +24,8 @@ async function validatedProductionPlan(db,quoteId) {
   if(!quote)return {error:'Quote not found.',status:404};
   if(quote.status!=='finalized')return {error:'Only finalized quotes can provide a production snapshot.',status:409};
   const {results:items}=await db.prepare('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY sort_order ASC,id ASC').bind(quoteId).all();
+  const quantityError=productionQuantityError(items);
+  if(quantityError)return {error:quantityError,code:'PRODUCTION_OPENING_LIMIT',status:/Split it/.test(quantityError)?413:409,blockers:[quantityError]};
   let savedPlanRow=null;
   try { savedPlanRow=await db.prepare('SELECT * FROM quote_build_plans WHERE quote_id = ?').bind(quoteId).first(); }
   catch(error) { if(!/no such table/i.test(String(error?.message||error)))throw error; }
@@ -65,7 +69,7 @@ export async function onRequestGet(context){const{env}=context;await ensureSchem
   const total=Number(totalRow?.total||0);
   return json({jobs:rows.results||[],page,pageSize:limit,total,totalPages:Math.ceil(total/limit),activeTotal:Number(activeRow?.total||0)});
 }
-export async function onRequestPost(context){const{env}=context;const guard=await guardWrite(context);if(!guard.ok)return guard.response;const body=guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);await ensureSchema(env.QUOTES_DB);if(body===null||typeof body!=='object')return json({error:'Body must be a JSON object.'},400);
+async function createJob(context,capture){const{env}=context;const guard=await guardWrite(context);if(!guard.ok)return guard.response;const body=guard.body; if(capture&&body&&typeof body==='object')capture.quoteId=body.quoteId; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);await ensureSchema(env.QUOTES_DB);if(body===null||typeof body!=='object')return json({error:'Body must be a JSON object.'},400);
   if(body&&body.workType==='general'){
     const checked=validateNewGeneralJob(body);if(checked.errors)return json({error:checked.errors[0],errors:checked.errors},400);
     const v=checked.value;
@@ -76,10 +80,23 @@ export async function onRequestPost(context){const{env}=context;const guard=awai
     await env.QUOTES_DB.prepare(`INSERT INTO jobs (id,created_at,updated_at,quote_id,status,scheduled_date,scheduled_window,customer_name,customer_phone,customer_email,customer_address,customer_city,notes,created_by,work_type,work_description,agreed_cents,contract_date) VALUES (?,?,?,NULL,?,?,?,?,?,?,?,?,?,'mark','general',?,?,?)`).bind(id,now,now,v.status,v.scheduled_date,v.scheduled_window,v.customer_name,v.customer_phone??null,v.customer_email??null,v.customer_address??null,v.customer_city??null,v.notes,v.work_description,v.agreed_cents,v.contract_date).run();
     return json({id,created:true,workType:'general'},201);
   }
-  const quoteId=typeof body.quoteId==='string'?body.quoteId.trim():'';if(!quoteId)return json({error:'A finalized quote is required.'},400);const quote=await env.QUOTES_DB.prepare(`SELECT * FROM quotes WHERE id = ?`).bind(quoteId).first();if(!quote)return json({error:'Quote not found.'},404);if(quote.status!=='finalized')return json({error:'Only finalized quotes can become jobs.'},409);const existing=await env.QUOTES_DB.prepare(`SELECT id FROM jobs WHERE quote_id = ?`).bind(quoteId).first();if(existing)return json({id:existing.id,existing:true},200);
+  const quoteId=typeof body.quoteId==='string'?body.quoteId.trim():'';if(!quoteId)return json({error:'A finalized quote is required.'},400);const quote=await env.QUOTES_DB.prepare(`SELECT * FROM quotes WHERE id = ?`).bind(quoteId).first();if(!quote)return json({error:'Quote not found.'},404);if(quote.status!=='finalized')return json({error:'Only finalized quotes can become jobs.'},409);const existing=await env.QUOTES_DB.prepare(`SELECT id FROM jobs WHERE quote_id = ?`).bind(quoteId).first();if(existing)return json({id:existing.id,existing:true},200);if(quote.revision_kind==='revision'&&quote.revision_of){await ensureInvoiceSchema(env.QUOTES_DB);const replacement=await env.QUOTES_DB.prepare('SELECT review_hold FROM invoices WHERE quote_id = ?').bind(quoteId).first();if(replacement?.review_hold)return json({error:replacement.review_hold,code:'INVOICE_RECONCILIATION_REQUIRED'},409);}
   // A siding quote has no Build Plan (it describes window openings), so its job carries no plan snapshot, no window checklist and no opening closeout. The signed quote is the record of scope and price.
   if(isSidingRow(quote)){const now=new Date().toISOString(),id=makeId();await env.QUOTES_DB.prepare(`INSERT INTO jobs (id,created_at,updated_at,quote_id,status,customer_name,customer_phone,customer_email,customer_address,customer_city,notes,created_by,work_type,work_description) VALUES (?,?,?,?,'ready',?,?,?,?,?,?,'mark','siding','House siding')`).bind(id,now,now,quoteId,quote.customer_name,quote.customer_phone||null,quote.customer_email||null,quote.customer_address||null,quote.customer_city||null,quote.notes||null).run();return json({id,created:true,workType:'siding'},201);}
-  const validated=await validatedProductionPlan(env.QUOTES_DB,quoteId);if(validated.error)return json(validated,validated.status||409);const{plan,planVersion,knowledgeVersion,savedPlanRow}=validated;const now=new Date().toISOString(),id=makeId();plan.finalizedSnapshot=true;plan.finalizedAt=now;plan.approvedAt=savedPlanRow.approved_at||plan.approvedAt||null;plan.approvedBy=savedPlanRow.approved_by||plan.approvedBy||null;await env.QUOTES_DB.prepare(`INSERT INTO jobs (id,created_at,updated_at,quote_id,status,customer_name,customer_phone,customer_email,customer_address,customer_city,notes,build_plan_json,build_plan_version,build_plan_knowledge_version,build_plan_attached_at,build_plan_attached_by,created_by) VALUES (?,?,?,?,'ready',?,?,?,?,?,?,?,?,?,?,?,'mark')`).bind(id,now,now,quoteId,quote.customer_name,quote.customer_phone||null,quote.customer_email||null,quote.customer_address||null,quote.customer_city||null,quote.notes||null,JSON.stringify(plan).slice(0,150000),planVersion,knowledgeVersion,now,'mark').run();await env.QUOTES_DB.prepare(`INSERT INTO job_build_plan_events (job_id,quote_id,plan_version,knowledge_version,event_type,created_at,created_by,notes) VALUES (?,?,?,?,?,?,?,?)`).bind(id,quoteId,planVersion,knowledgeVersion,'created',now,'mark','Production details carried from finalized quote when Mark started the job.').run();return json({id,created:true,buildPlanVersion:planVersion,buildPlanKnowledgeVersion:knowledgeVersion},201);}
+  const validated=await validatedProductionPlan(env.QUOTES_DB,quoteId);if(validated.error)return json(validated,validated.status||409);const{plan,planVersion,knowledgeVersion,savedPlanRow}=validated;const now=new Date().toISOString(),id=makeId();plan.finalizedSnapshot=true;plan.finalizedAt=now;plan.approvedAt=savedPlanRow.approved_at||plan.approvedAt||null;plan.approvedBy=savedPlanRow.approved_by||plan.approvedBy||null;await guardedQuoteBatch(env.QUOTES_DB,validated.quote,[env.QUOTES_DB.prepare(`INSERT INTO jobs (id,created_at,updated_at,quote_id,status,customer_name,customer_phone,customer_email,customer_address,customer_city,notes,build_plan_json,build_plan_version,build_plan_knowledge_version,build_plan_attached_at,build_plan_attached_by,created_by) VALUES (?,?,?,?,'ready',?,?,?,?,?,?,?,?,?,?,?,'mark')`).bind(id,now,now,quoteId,quote.customer_name,quote.customer_phone||null,quote.customer_email||null,quote.customer_address||null,quote.customer_city||null,quote.notes||null,JSON.stringify(plan).slice(0,150000),planVersion,knowledgeVersion,now,'mark'),env.QUOTES_DB.prepare(`INSERT INTO job_build_plan_events (job_id,quote_id,plan_version,knowledge_version,event_type,created_at,created_by,notes) VALUES (?,?,?,?,?,?,?,?)`).bind(id,quoteId,planVersion,knowledgeVersion,'created',now,'mark','Production details carried from finalized quote when Mark started the job.')]);return json({id,created:true,buildPlanVersion:planVersion,buildPlanKnowledgeVersion:knowledgeVersion},201);}
+// A retry that races another request returns the winner instead of an opaque 500.
+export async function onRequestPost(context) {
+  const capture = {};
+  try { return await createJob(context,capture); }
+  catch (error) {
+    if (/QUOTE_REVISION_CONFLICT/.test(String(error?.message || error))) return revisionConflict();
+    if (/UNIQUE constraint failed: jobs\.quote_id/i.test(String(error?.message || error))) {
+      const existing = await context.env.QUOTES_DB.prepare('SELECT id FROM jobs WHERE quote_id = ?').bind(String(capture.quoteId || '')).first();
+      if (existing) return json({ id: existing.id, existing: true }, 200);
+    }
+    throw error;
+  }
+}
 export async function onRequestPatch(context){const{env}=context;const guard=await guardWrite(context);if(!guard.ok)return guard.response;const body=guard.body; if (body === null || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Body must be a JSON object.' }, 400);await ensureSchema(env.QUOTES_DB);const id=new URL(context.request.url).searchParams.get('id');if(!id)return json({error:'Job id is required.'},400);const job=await env.QUOTES_DB.prepare(`SELECT * FROM jobs WHERE id = ?`).bind(id).first();if(!job)return json({error:'Job not found.'},404);
   const general=isGeneralJob(job);let generalUpdate=null;
   if(general){const c=validateGeneralJobUpdate(body);if(c.errors)return json({error:c.errors[0],errors:c.errors},400);generalUpdate=c.value;

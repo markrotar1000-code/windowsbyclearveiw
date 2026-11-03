@@ -107,8 +107,8 @@ async function approvedQuote(env, body) {
   const gen = await call(buildPlan.onRequestGet, env, { path: `/p?quoteId=${created.body.id}` });
   const saved = await call(buildPlan.onRequestPost, env, { method: 'POST', body: { quoteId: created.body.id, plan: gen.body.plan } });
   assert.equal(saved.status, 413, 'a 150-opening plan is refused');
-  assert.match(saved.body.error, /roughly 100 openings/i, 'the message gives the limit');
-  assert.match(saved.body.error, /more than one quote/i, 'and says what to do about it');
+  assert.match(saved.body.error, /100 openings/i, 'the message gives the limit');
+  assert.match(saved.body.error, /split/i, 'and says what to do about it');
   pass('a Build Plan that is too large to save says the limit and to split the work into more than one quote');
 }
 

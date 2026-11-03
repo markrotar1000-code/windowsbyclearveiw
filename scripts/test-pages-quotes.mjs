@@ -31,7 +31,8 @@ for (const [name, text] of Object.entries(source)) {
   assert(/\bfetchJson\(/.test(text), `${name} loads through fetchJson`);
   // A direct fetch is allowed in one place only: the Build Plan save, which reads blockers/warnings out of a 409 body.
   const direct = (text.match(/(?<![\w.])fetch\(/g) || []).length;
-  const expected = name === 'quotes/build-plan' ? 1 : 0;
+  const expected = name === 'quotes/build-plan' || name === 'invoices/view' ? 1 : 0;
+  if(name==='invoices/view')assert(/application\/pdf/.test(text)&&/response\.redirected/.test(text)&&/SESSION_EXPIRED_MESSAGE/.test(text),'invoice binary PDF fetch validates type and expired authentication');
   assert(direct === expected, `${name} makes ${expected} direct fetch call(s) (found ${direct})`);
 }
 const plan = source['quotes/build-plan'];

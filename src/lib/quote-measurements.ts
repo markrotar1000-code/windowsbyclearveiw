@@ -1,3 +1,4 @@
+import { productSpecEditor } from './quote-product-specs';
 import { readMeasurements, legacyMeasurements, validateMeasurements, customerLineText } from '../../functions/internal/_lib/quote-measurements.mjs';
 import { isOpeningLine } from '../../functions/_lib/build-plan-rules.mjs';
 
@@ -20,7 +21,7 @@ export function measurementEditor(item: any) {
   box.append(rows);
   function render() {
     rows.replaceChildren();
-    const count = Math.min(50, item.quantity);
+    const count = Math.min(100, item.quantity);
     for (let i = 0; i < count; i++) {
       const row = item.measurements[i] || { width: '', height: '', location: '', kind: 'unconfirmed' };
       item.measurements[i] = row;
@@ -49,6 +50,10 @@ export function measurementEditor(item: any) {
         const option = new Option(text, value); select.append(option);
       }
       select.value = row.kind; select.addEventListener('change', () => { row.kind = select.value; save(); }); label.append(select); fields.append(label);
+      const overrides = document.createElement('details');
+      const captionOverride = document.createElement('summary'); captionOverride.textContent = 'Product options for this opening'; overrides.append(captionOverride);
+      overrides.addEventListener('toggle', () => { if (overrides.open && overrides.children.length === 1) { const editor = productSpecEditor(row); editor.open = true; overrides.append(editor); } });
+      fields.append(overrides);
       rows.append(fields);
     }
   }

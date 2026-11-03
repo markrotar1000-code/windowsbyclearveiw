@@ -209,6 +209,9 @@ const catalog = {
 </InternalLayout>
 
 <script>
+  import { bindDraftRecovery } from '../../../lib/quote-draft-recovery';
+  import { productSpecEditor } from '../../../lib/quote-product-specs';
+  import { readProductSpecs } from '../../../../functions/internal/_lib/supplier-specs.mjs';
   import { preparePrivateMeasurements, measurementEditor } from '../../../lib/quote-measurements';
   import { readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
   import { isOpeningLine } from '../../../../functions/_lib/build-plan-rules.mjs';
@@ -232,7 +235,7 @@ const catalog = {
     siding: { id: string; label: string }[];
   };
   type WorkType = 'windows' | 'siding';
-  type LineItem = { measurements?: any[]; label: string; description: string; quantity: number; unitPrice: number };
+  type LineItem = { productSpecs?: Record<string,string>; measurements?: any[]; label: string; description: string; quantity: number; unitPrice: number };
 
   // Unsent rough notes survive a reload or a phone lock for 12 hours, on this device only.
   const NOTES_KEY = 'cv-quote-rough-notes';
@@ -250,6 +253,9 @@ const catalog = {
 
     const searchParams = new URLSearchParams(location.search);
     const editId = searchParams.get('edit');
+    const revisionOf = searchParams.get('revisionOf');
+    const revisionKind = searchParams.get('revisionKind') === 'change-order' ? 'change-order' : 'revision';
+    let expectedRevision: number | undefined;
     const duplicateId = editId ? null : searchParams.get('duplicate');
     const leadId = !editId && !duplicateId ? searchParams.get('leadId') : null;
 
@@ -413,7 +419,7 @@ const catalog = {
         });
         labelCell.append(labelInput);
         const measurements = workType === 'windows' && isOpeningLine(item.label) ? measurementEditor(item) : null;
-        if (measurements) labelCell.append(measurements.box);
+        if (measurements) labelCell.append(measurements.box, productSpecEditor(item));
 
         const qtyCell = document.createElement('td');
         qtyCell.className = 'qb-cell-qty';
@@ -1153,6 +1159,7 @@ const catalog = {
           if (ledeEl) ledeEl.textContent = `Copied from ${quote.id} — check the customer details before you save.`;
         }
 
+        expectedRevision = quote.revision;
         workType = quote.work_type === 'siding' ? 'siding' : 'windows';
         applyWorkType();
         setField('name', quote.customer_name);
@@ -1170,6 +1177,7 @@ const catalog = {
             label: item.label,
             description: item.description || '',
             measurements: readMeasurements(item),
+            productSpecs: readProductSpecs(item),
             quantity: item.quantity,
             unitPrice: item.unit_price_cents / 100,
           });
@@ -1229,6 +1237,34 @@ const catalog = {
       }
     }
 
+    const recovery = bindDraftRecovery(form, editId ? `edit:${editId}` : duplicateId ? `duplicate:${duplicateId}` : leadId ? `lead:${leadId}` : revisionOf ? `change-order:${revisionOf}` : 'new', () => ({
+      fields: Array.from(new FormData(form).entries()), items, workType, baseRevision: expectedRevision,
+    }), draft => {
+      if (editId && draft.baseRevision !== expectedRevision) throw new Error('This quote has changed since the recovered draft. Open the saved quote and reconcile your notes before saving.');
+      if (!Array.isArray(draft.items) || draft.items.length > 200 || !Array.isArray(draft.fields)) throw new Error('Invalid saved draft');
+      for (const [name, value] of draft.fields) {
+        if (typeof name !== 'string' || typeof value !== 'string') continue;
+        const fields = Array.from(form.elements).filter(el => (el as HTMLInputElement).name === name);
+        for (const field of fields) {
+          if (field instanceof HTMLInputElement && field.type === 'radio') field.checked = field.value === value;
+          else if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) field.value = value;
+        }
+      }
+      workType = draft.workType === 'siding' ? 'siding' : 'windows'; applyWorkType();
+      items.splice(0, items.length, ...draft.items); render();
+    });
+    async function loadChangeOrderSource() {
+      if (!revisionOf || editId) return;
+      if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
+      try {
+        const data = await fetch(`/internal/api/quotes/${encodeURIComponent(revisionOf)}`).then(async response => { if (!response.ok) throw new Error('Could not load the original quote.'); return response.json(); });
+        const quote = data.quote; workType = quote.work_type === 'siding' ? 'siding' : 'windows'; applyWorkType();
+        for (const [field, key] of [['name','customer_name'],['phone','customer_phone'],['email','customer_email'],['address','customer_address'],['city','customer_city']]) { const input = form.elements.namedItem(field); if (input instanceof HTMLInputElement) input.value = quote[key] || ''; }
+        if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = false;
+      } catch (error) { if (status instanceof HTMLElement) { status.hidden = false; status.textContent = error instanceof Error ? error.message : 'Could not load source quote.'; } }
+    }
+    void loadChangeOrderSource();
+    if (revisionOf && !editId) { const lede = document.querySelector('[data-lede]'); if (lede) lede.textContent = 'Change order: enter only the additional or changed work and its price. The original signed quote is preserved.'; }
     if (editId) loadForEdit(editId, 'edit');
     else if (duplicateId) loadForEdit(duplicateId, 'duplicate');
     else if (leadId) loadFromLead(leadId);
@@ -1262,6 +1298,7 @@ const catalog = {
       const data = new FormData(form);
       const discountReasonEl = form.querySelector('[data-discount-reason]');
       const payload = {
+        ...(editId ? { expectedRevision } : revisionOf ? { revisionOf, revisionKind } : {}),
         customer: {
           name: data.get('name'),
           phone: data.get('phone'),
@@ -1276,6 +1313,7 @@ const catalog = {
           label: item.label,
           description: item.description,
           measurements: item.measurements || [],
+          productSpecs: item.productSpecs || {},
           quantity: item.quantity,
           unitPriceCents: Math.round(item.unitPrice * 100),
         })),
@@ -1304,6 +1342,7 @@ const catalog = {
         if (!response.ok) throw new Error(result.error || 'Could not save the quote.');
         const id = editId || result.id;
         store.del(NOTES_KEY);
+        recovery.clear();
         for (const [feature, used] of [['quote_saved_with_draft', kept.draft()], ['measurements_imported', kept.measure()]] as const) {
           if (used) void fetch('/internal/api/feature-usage', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ feature }), keepalive: true }).catch(() => {});
         }
@@ -1324,6 +1363,8 @@ const catalog = {
 </script>
 
 <style>
+  .qb-draft-recovery { border: 1px solid var(--line); padding: .8rem; border-radius: 8px; margin-bottom: 1rem; }
+  .qb-draft-recovery p { margin-top: 0; font-size: .85rem; }
   :global(.qb-measurements) { margin-top: .6rem; font-size: .85rem; white-space: normal; }
   :global(.qb-measurements summary) { cursor: pointer; color: var(--accent-ink); font-weight: 650; }
   :global(.qb-measurements p) { font-size: .8rem; line-height: 1.4; color: var(--ink-soft); }

@@ -1,3 +1,4 @@
+import { readProductSpecs } from '../internal/_lib/supplier-specs.mjs';
 import { readMeasurements } from '../internal/_lib/quote-measurements.mjs';
 export const BUILD_PLAN_KNOWLEDGE_VERSION = '2026-09-08.2';
 
@@ -62,8 +63,17 @@ const OPENING_WORDS = /\b(windows?|sliders?|sliding|double[- ]?hung|single[- ]?h
 const EXTRA_WORDS = /\b(trim|mou?lding|casing|rot|rotted|repairs?|haul(ing)?|disposal|dump|permits?|siding|paint(ing)?|caulk(ing)?|stucco|drywall|framing|labor|delivery|fees?|allowance|clean[- ]?up|demo(lition)?|mobili[sz]ation|travel|deposit)\b/i;
 export function isOpeningLine(label){const text=String(label||'');return OPENING_WORDS.test(text)||!EXTRA_WORDS.test(text);}
 export function splitQuoteLines(items=[]){const openings=[],extras=[];for(const item of items)(isOpeningLine(item?.label)?openings:extras).push(item);return{openings,extras};}
+export const MAX_PRODUCTION_OPENINGS = 100;
+export function productionQuantityError(items = []) {
+  const rows = splitQuoteLines(items).openings;
+  const quantities = rows.map(item => Number(item.quantity));
+  if (quantities.some(q => !Number.isSafeInteger(q) || q < 1)) return 'Window and door opening quantities must be whole numbers of 1 or more.';
+  const total = quantities.reduce((n, q) => n + q, 0);
+  return total > MAX_PRODUCTION_OPENINGS ? `This quote has ${total} openings. Split it into jobs of ${MAX_PRODUCTION_OPENINGS} openings or fewer.` : null;
+}
 export function lintPlan(plan,items=[]) {
   const warnings=[],blockers=[],openings=Array.isArray(plan?.openings)?plan.openings:[],buy=Array.isArray(plan?.buy)?plan.buy:[],verify=Array.isArray(plan?.verify)?plan.verify:[],install=Array.isArray(plan?.install)?plan.install:[],buyText=normalize(buy.join(' ')),verifyText=normalize(verify.join(' ')),installText=normalize(install.join(' '));
+  const quantityError=productionQuantityError(items);if(quantityError)blockers.push(quantityError);
   if(!openings.length&&items.length)blockers.push('No opening schedule exists for a quote that contains line items.');
   if(openings.length&&openings.some(o=>!o.product||normalize(o.product).includes('quoted opening')))warnings.push('One or more openings still use a generic product label; match each opening to the ordered unit.');
   if(openings.some(o=>!o.dimensions||normalize(o.dimensions).includes('verify')))warnings.push('One or more opening dimensions are still VERIFY items.');
@@ -74,11 +84,11 @@ export function lintPlan(plan,items=[]) {
   if(!/flash|sill|water/.test(verifyText+installText))blockers.push('The plan does not contain an explicit water-management verification step.');
   if(!/weep|drain/.test(verifyText+installText))warnings.push('Confirm that designed drainage/weep paths remain clear after installation.');
   if(!/operation|operate|lock|latch/.test(installText+normalize((plan?.qc||[]).join(' '))))warnings.push('Final operation/lock/latch verification is missing.');
-  const quotedItems=splitQuoteLines(items).openings;if(quotedItems.length&&openings.length){const quotedQty=quotedItems.reduce((n,i)=>n+Math.min(50,Math.max(1,Number(i.quantity)||1)),0);if(quotedQty!==openings.length)warnings.push(`Quote quantity (${quotedQty}) and opening schedule (${openings.length}) do not match; reconcile before ordering.`);}
+  const quotedItems=splitQuoteLines(items).openings;if(quotedItems.length&&openings.length){const quotedQty=quotedItems.reduce((n,i)=>n+(Number(i.quantity)||0),0);if(quotedQty!==openings.length)blockers.push(`Quote quantity (${quotedQty}) and opening schedule (${openings.length}) do not match; reconcile before ordering.`);}
   return{blockers,warnings,knowledgeVersion:BUILD_PLAN_KNOWLEDGE_VERSION};
 }
 // A price is not a build fact: Mark can change what a line costs at any time before the quote is signed
 // without invalidating an approved Build Plan. Only what is installed (label, quantity, description) counts.
-export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||''),...(readMeasurements(item).length?{measurements:readMeasurements(item)}:{})}));}
+export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||''),...(readMeasurements(item).length?{measurements:readMeasurements(item)}:{}),...(Object.keys(readProductSpecs(item)).length?{productSpecs:readProductSpecs(item)}:{})}));}
 const withoutPrice=(rows)=>(rows||[]).map(({lineTotalCents,...rest})=>rest); // snapshots saved before 2026-10-16 carried the line total
 export function sameSource(a,b){return JSON.stringify(withoutPrice(a))===JSON.stringify(withoutPrice(b));}

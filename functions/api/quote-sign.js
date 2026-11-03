@@ -1,3 +1,5 @@
+import { freezeSignedQuote } from '../internal/_lib/quote-documents.mjs';
+import { ensureQuoteRevisionSchema } from '../internal/_lib/quote-concurrency.mjs';
 // Public customer signing endpoint for the /sign#<token> page.
 //
 // GET  /api/quote-sign  (x-sign-token header)            -> customer-safe quote view
@@ -38,6 +40,7 @@ export async function onRequestGet(context) {
   const db = env.QUOTES_DB;
   if (!db) return json({ error: 'Signing is temporarily unavailable.' }, 503);
   await ensureSigningSchema(db);
+  await ensureQuoteRevisionSchema(db);
   // Header, not query string: the token never appears in a URL or access log.
   const resolved = await resolveLink(db, request.headers.get('x-sign-token'));
   if (resolved.error) return json({ error: resolved.error }, resolved.status);
@@ -55,6 +58,7 @@ export async function onRequestPost(context) {
   const db = env.QUOTES_DB;
   if (!db) return json({ error: 'Signing is temporarily unavailable.' }, 503);
   await ensureSigningSchema(db);
+  await ensureQuoteRevisionSchema(db);
   let body;
   try { body = await request.json(); } catch { return json({ error: 'Invalid request.' }, 400); }
   const resolved = await resolveLink(db, body?.t);
@@ -92,10 +96,10 @@ export async function onRequestPost(context) {
          AND EXISTS (SELECT 1 FROM quotes WHERE id = ? AND status = 'draft')`,
     ).bind(now, userAgent, tokenHash, quoteId, now, quoteId),
     db.prepare(
-      `UPDATE quotes SET signature_method = 'digital', signature_svg = ?, signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ?
-       WHERE id = ? AND status = 'draft'
+      `UPDATE quotes SET signature_method = 'digital', signature_svg = ?, signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ?, revision = revision + 1
+       WHERE id = ? AND status = 'draft' AND revision = ?
          AND EXISTS (SELECT 1 FROM quote_sign_links WHERE token_hash = ? AND quote_id = ? AND signed_at = ?)`,
-    ).bind(signature.svg, name, now, now, quoteId, tokenHash, quoteId, now),
+    ).bind(signature.svg, name, now, now, quoteId, Number(loaded.quote.revision||1), tokenHash, quoteId, now),
     db.prepare(
       `UPDATE quote_sign_links SET signed_at = NULL, signer_user_agent = NULL
        WHERE token_hash = ? AND signed_at = ?
@@ -107,6 +111,8 @@ export async function onRequestPost(context) {
     if (still.error) return json({ error: still.error }, still.status);
     return json({ error: 'This quote has already been signed.' }, 409);
   }
+
+  try { await freezeSignedQuote(env, quoteId); } catch (error) { console.error('quote-snapshot-deferred', quoteId, error?.message || error); }
 
   // The signature is saved. An invoice hiccup must not tell the customer it failed:
   // Mark's quote and invoice pages re-run ensureInvoiceForQuote(finalize) on open.
