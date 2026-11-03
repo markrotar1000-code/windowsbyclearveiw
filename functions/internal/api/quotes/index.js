@@ -116,22 +116,32 @@ export async function onRequestPost(context) {
   }
   const status = 'draft';
   const now = new Date().toISOString();
-  const id = newQuoteId();
-
-  await env.QUOTES_DB.batch([
-    env.QUOTES_DB.prepare(
-      `INSERT INTO quotes (
-        id, created_at, updated_at, status,
-        customer_name, customer_phone, customer_email, customer_address, customer_city, customer_role, notes,
-        subtotal_cents, discount_cents, discount_reason, total_cents,
-        terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type, revision_of, revision_kind
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType, revisionOf, revisionKind),
-    ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
-      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements), JSON.stringify(item.productSpecs || {}))),
-  ]);
+  let id;
+  // Keep the familiar short quote number, but retry its finite random namespace.
+  // D1 batch is transactional: a collision rolls back both header and items.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    id = newQuoteId();
+    try {
+      await env.QUOTES_DB.batch([
+        env.QUOTES_DB.prepare(
+          `INSERT INTO quotes (
+            id, created_at, updated_at, status,
+            customer_name, customer_phone, customer_email, customer_address, customer_city, customer_role, notes,
+            subtotal_cents, discount_cents, discount_reason, total_cents,
+            terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type, revision_of, revision_kind
+          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType, revisionOf, revisionKind),
+        ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
+          `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
+           VALUES (?,?,?,?,?,?,?,?,?)`,
+        ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements), JSON.stringify(item.productSpecs || {}))),
+      ]);
+      break;
+    } catch (error) {
+      const message = `${error?.message || ''} ${error?.cause?.message || ''}`;
+      if (attempt === 4 || !/UNIQUE constraint failed: quotes\.id(?:\s|$)/.test(message)) throw error;
+    }
+  }
 
   const record = await ensureInvoiceForQuote(env.QUOTES_DB, id);
   return json({ id, status, workType, totalCents, ...(revisionOf ? { sourceQuoteId: revisionOf, kind: revisionKind, revision: 1 } : {}), leadId: lead.leadId, invoiceId: record?.invoice?.id || `INV-${id.replace(/^Q-/, '')}` }, 201);

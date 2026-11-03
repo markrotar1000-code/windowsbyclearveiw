@@ -1,3 +1,12 @@
+## 2026-11-03 - Branded estimate notifications and receipt recovery
+
+Resend estimate-request and estimate-received templates now have versioned HTML/plain-text source in emails/, the current PNG logo, phone-friendly contact actions and clear next steps. Raw variables are retained for subject/text; separate escaped HTML variables prevent form content from becoming markup. Email remains optional, and the form explicitly explains that it enables confirmation. Requests without an email address notify Mark only.
+
+A rare quote-number collision found during the release suite is handled with up to five transactional insertion attempts, preserving the existing short ID format. Only quotes.id uniqueness errors retry; deterministic tests cover rollback, foreign keys and unrelated errors.
+
+Receipt attempts persist status, provider ID and exact retry payload. Failed sends release only their own cooldown reservation; a later form retry reuses the provider idempotency key/payload. Ambiguous attempts older than23h require review instead of unsafe replay after provider expiry. There is no automatic historical resend. Customer replies go to the configured notification inbox. Template variables are registered before API deployment; new HTML is published after the API supplies them. Legacy mail domain stays unchanged.
+
+Verification: estimate endpoint and recent-fixes regressions pass, including rejected/ambiguous sends, concurrency, payload stability, absent email and hostile HTML. Synthetic previews cover320/390/800px and long values; native mail-client rendering and a real customer email are not tested. Full release checks and hosted publication are recorded in the task release report.
 ## 2026-11-03 - Columbia mobile refinements
 
 Compact product headers pair each rendering with its series name on phones. Series shortcuts now explain the choice, and spec disclosures have unique accessible names. Responsive image sizes match the narrower phone renderings. All shared estimate links on `/columbia-windows` now carry Columbia scope (header, footer, and sticky mobile bar), including client-side navigation; individual series links retain their more specific scope. At 390px, closed-card stack measured 2816px versus 3092px before (about 9% shorter). Product facts and imagery unchanged. Validation and deployment recorded in the task report; physical-device testing not performed.
