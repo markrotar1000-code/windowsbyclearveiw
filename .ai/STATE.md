@@ -1,3 +1,7 @@
+## 2026-11-03 - Review badge enlarged-text overflow
+
+Live Columbia validation at 320px and 200% text found a 12px overflow after Google review stars loaded. The badge text column now shrinks and wraps within its flex row, keeping the arrow inside the page. This fixes both footer and CTA badges. Use a loaded review feed when checking narrow/enlarged-text layouts; the empty fallback did not reproduce the issue.
+
 ## 2026-11-03 - Columbia mobile refinements
 
 Compact product headers pair each rendering with its series name on phones. Series shortcuts now explain the choice, and spec disclosures have unique accessible names. Responsive image sizes match the narrower phone renderings. All shared estimate links on `/columbia-windows` now carry Columbia scope (header, footer, and sticky mobile bar), including client-side navigation; individual series links retain their more specific scope. At 390px, closed-card stack measured 2816px versus 3092px before (about 9% shorter). Product facts and imagery unchanged. Validation and deployment recorded in the task report; physical-device testing not performed.
