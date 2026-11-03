@@ -57,7 +57,7 @@ export const site = {
    * together with TURNSTILE_SECRET_KEY in the Pages dashboard; see internal/README.md.
    */
   turnstileSiteKey: '0x4AAAAAAFNHME2_-jEn_icn',
-  lniNumber: 'CLEARVW74601',
+  lniNumber: 'CLEARVW746O1',
   /**
    * Commercial general liability insurance, from the ACORD 25 certificate on
    * file (Certificate #992928302, issued 2026-09-16). Drives InsuranceTag

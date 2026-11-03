@@ -38,6 +38,7 @@ const hash = createHash('sha256').update(ts.slice(start).trim()).digest('hex').s
 const PINNED = {
   '2026-08-28': '30a3205ce88d0222',
   '2026-11-03': '7ce965d18cbbd727',
+  '2026-11-03.2': '2a41f727531598c6',
 };
 assert.ok(PINNED[siteVersion], `TERMS_VERSION "${siteVersion}" has no pinned wording hash. Add it: '${siteVersion}': '${hash}'.`);
 assert.equal(
@@ -51,6 +52,8 @@ assert.equal(
   '7c8bd710e4ffd660c684f361349dde23ec892a8b44b1a06550d98fa31c2e2d9e',
   'Archived terms must exactly preserve every historical clause, independently of current terms',
 );
+
+assert.equal(createHash('sha256').update(JSON.stringify(getContractTerms('2026-11-03'))).digest('hex'), '6e08de3e14340204edc6389c12a47fff4cd677604ab00fda0b55c24c7222f7f6', 'The previously published November terms remain unchanged');
 
 // 2. The phone number. Every phone number written into functions/ and workers/ (the Ask fallback answer, the
 // invoice email, the assistant's business facts) must be the one in src/data/site.ts, or a change there leaves a

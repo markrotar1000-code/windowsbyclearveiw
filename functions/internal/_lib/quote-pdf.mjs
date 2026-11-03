@@ -26,7 +26,7 @@ export async function quotePdf(quote, items, { supplier = false, logoBytes, font
   }
   if (logoBytes) { try { const logo = await pdf.embedPng(logoBytes); const scaled = logo.scaleToFit(160, 70); page.drawImage(logo, { x: 44, y: y - scaled.height, width: scaled.width, height: scaled.height }); y -= scaled.height + 14; } catch {} }
   line('CLEARVIEW WINDOWS & TRIM LLC', { heavy: true, size: 13 });
-  line('(564) 208-0801 | owner@windowsbyclearveiw.com | WA L&I CLEARVW74601', { size: 9 });
+  line('(564) 208-0801 | owner@windowsbyclearveiw.com | WA L&I CLEARVW746O1', { size: 9 });
   const documentLabel = supplier ? 'SUPPLIER SPECIFICATION / PRICING REQUEST' : quote.revision_kind === 'change-order' ? 'CHANGE ORDER' : quote.revision_kind === 'revision' ? 'REVISED QUOTE' : 'CUSTOMER QUOTE';
   line(documentLabel, { heavy: true, size: 17, gap: 12 });
   line(`Reference: ${quote.id} | ${String(quote.created_at || '').slice(0, 10)}`, { heavy: true });
