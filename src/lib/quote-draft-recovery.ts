@@ -1,3 +1,4 @@
+import { loadFailureMessage } from './load-failed';
 export function bindDraftRecovery(form: HTMLFormElement, identity: string, read: () => any, restore: (draft: any) => void) {
   const key = `cv-full-quote-draft:${identity}`;
   const box = document.createElement('section'); box.className = 'qb-draft-recovery'; box.setAttribute('aria-label', 'Quote draft recovery');
@@ -30,7 +31,7 @@ export function bindDraftRecovery(form: HTMLFormElement, identity: string, read:
   document.addEventListener('visibilitychange', hidden);
   recover.addEventListener('click', () => {
     if (!pending || form.querySelector('button[type="submit"]:disabled')) return;
-    try { restore(pending); pending = null; label(); save(); } catch (error) { message.textContent = error instanceof Error ? error.message : 'The saved draft could not be restored. Discard it to continue.'; }
+    try { restore(pending); pending = null; label(); save(); } catch (error) { message.textContent = loadFailureMessage(error, 'The saved draft could not be restored. Discard it to continue.'); }
   });
   discard.addEventListener('click', () => { localStorage.removeItem(key); pending = null; label(); });
   return { clear() { paused = true; clearTimeout(timer); localStorage.removeItem(key); document.removeEventListener('visibilitychange', hidden); }, flush: save };
