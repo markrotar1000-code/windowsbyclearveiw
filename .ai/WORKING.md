@@ -1,3 +1,7 @@
+## 2026-11-03 - Columbia public copy scope
+
+Reviewed: new Columbia page and homepage feature; added navigation/footer links; window-features supplier introduction and metadata. Remaining existing copy not reviewed in this task. Supplier graphics reused with owner-confirmed permission and explicit instruction to publish; no new generated diagram. Sources and boundaries: docs/COLUMBIA-WINDOWS.md.
+
 ## 2026-10-28 - Satin brand refresh
 
 Owner-directed ClearView Windows and Trim logo refresh: softer satin artwork, light wordmark, full service name, header/footer, decorative marks, favicon/install icons, schema logo and homepage reveal updated. Asset URLs versioned to refresh caches. 88 of 89 canonical checks passed initially; the PWA icon-file guard was corrected to resolve URL pathnames, then all PWA checks passed. Separate 70-page build passed. Headless Edge checks at 320/390/768/1440 passed without overflow. Production verification pending deployment. Facebook assets are prepared separately; no Facebook account images changed.

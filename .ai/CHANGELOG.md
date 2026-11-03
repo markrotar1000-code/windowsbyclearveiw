@@ -1,3 +1,7 @@
+## 2026-11-03 - Columbia Windows product section
+
+Owner-authorized Columbia supplier section: `/columbia-windows`, homepage feature, Services/footer links, and window-features cross-link. Uses attributed, self-hosted supplier product renderings, gallery photos, and glass/frame cutaways, with series-specific specs and estimate scope handoff. Permission and asset/source provenance: `docs/COLUMBIA-WINDOWS.md`. No pricing/warranty or rating claims beyond verified options. Browser coverage: 320/390/768/1440, disclosures, image loading, estimate handoff, navigation, and 200% text. Physical-device testing not performed. All 89 canonical checks accounted for across the full run and focused fixes/rechecks; final 71-page build passed. Production verification pending merge.
+
 ## 2026-11-03 - Quote and supplier PDF delivery
 
 Saved quote screen provides customer email through Resend with a PDF attachment, PDF download, native file sharing for text, and explicit supplier recipient plus PDF preview/send. Native sharing cannot preselect a recipient; separate sms: opens the supplied number without an attachment. UI says when a browser requires manual attachment. Server-generated PDF customer copy excludes exact measurements; supplier RFQ includes measured sizes/type and flags missing specifications, excluding customer contact/prices/internal notes. No real messages sent during automated checks. Resend acceptance is distinguished from delivery confirmation. Missing RESEND_API_KEY returns an actionable error.
