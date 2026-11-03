@@ -1,3 +1,4 @@
+import { ensureQuoteRevisionSchema } from '../../_lib/quote-concurrency.mjs';
 import { ensureMeasurementsSchema } from '../../_lib/quote-measurements.mjs';
 import { TERMS_VERSION, json, parseQuoteBody } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
@@ -32,6 +33,7 @@ export async function onRequestGet(context) {
   const workType = url.searchParams.get('workType');
   if (workType && !WORK_TYPES.includes(workType)) return json({ error: 'Choose Windows or Siding.' }, 400);
   const search = (url.searchParams.get('search') || '').trim().slice(0, 120);
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
   await ensureMeasurementsSchema(env.QUOTES_DB);
   const conditions = [], bindings = [];
@@ -97,6 +99,7 @@ export async function onRequestPost(context) {
   if (parsed.error) return json({ error: parsed.error }, 400);
   const { name, phone, email, address, city, role, notes, discountReason, cleanItems, subtotalCents, discountCents, totalCents, workType } = parsed;
   const signatureMethod = body.signatureMethod === 'digital' ? 'digital' : 'pen';
+  await ensureQuoteRevisionSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
   await ensureMeasurementsSchema(env.QUOTES_DB);
   const lead = parseLeadId(body.leadId);
@@ -104,6 +107,12 @@ export async function onRequestPost(context) {
   await ensureQuoteLeadColumn(env.QUOTES_DB);
   if (lead.leadId && !(await leadExists(env.QUOTES_DB, lead.leadId))) {
     return json({ error: 'The inquiry this quote was started from no longer exists.' }, 400);
+  }
+  let revisionOf = null, revisionKind = null;
+  if (body.revisionOf) {
+    const source = await env.QUOTES_DB.prepare('SELECT id, status, work_type FROM quotes WHERE id = ?').bind(String(body.revisionOf)).first();
+    if (!source || source.status !== 'finalized' || workTypeOf(source) !== workType || !['revision', 'change-order'].includes(body.revisionKind)) return json({ error: 'Choose a signed source quote of the same work type.' }, 400);
+    revisionOf = source.id; revisionKind = body.revisionKind;
   }
   const status = 'draft';
   const now = new Date().toISOString();
@@ -115,17 +124,17 @@ export async function onRequestPost(context) {
         id, created_at, updated_at, status,
         customer_name, customer_phone, customer_email, customer_address, customer_city, customer_role, notes,
         subtotal_cents, discount_cents, discount_reason, total_cents,
-        terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType),
+        terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type, revision_of, revision_kind
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType, revisionOf, revisionKind),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
-      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json)
-       VALUES (?,?,?,?,?,?,?,?)`,
-    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements))),
+      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
+    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements), JSON.stringify(item.productSpecs || {}))),
   ]);
 
   const record = await ensureInvoiceForQuote(env.QUOTES_DB, id);
-  return json({ id, status, workType, totalCents, leadId: lead.leadId, invoiceId: record?.invoice?.id || `INV-${id.replace(/^Q-/, '')}` }, 201);
+  return json({ id, status, workType, totalCents, ...(revisionOf ? { sourceQuoteId: revisionOf, kind: revisionKind, revision: 1 } : {}), leadId: lead.leadId, invoiceId: record?.invoice?.id || `INV-${id.replace(/^Q-/, '')}` }, 201);
 }
 
 export async function onRequest(context) {

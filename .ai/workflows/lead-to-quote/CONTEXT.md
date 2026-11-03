@@ -1,7 +1,7 @@
 # Workflow: Website inquiry → quote
 
 Take a new lead from the estimate form (or Ask call-back) to a quote Mark can send and a customer can sign.
-Upstream of `build-plan`: this workflow ends where the Build Plan begins.
+The quote goes directly to customer signature, then Start production carries private details into the job.
 
 ## Load / exclude
 
@@ -26,15 +26,14 @@ Validation, rate limits and the customer receipt are deterministic and already e
    Mark confirms it; the system never auto-links.
 4. **Quote.** Items, quantities and prices come from Mark and the pricing model, never from AI.
 5. **Follow-up.** Unsigned draft quotes get day 2/7/14 reminder tasks; they never contact the customer.
-6. **Build Plan, then finalize.** Hand off to `.ai/workflows/build-plan/`. A window quote cannot be finalized without an
-   approved, current Build Plan.
-7. **Sign.** A customer signing link (`/sign#<token>`) passes the same Build Plan and terms gates.
+6. **Finalize.** Mark or the customer signs the current quote. Separate Build Plan approval is optional.
+7. **Start production.** Mark explicitly creates a job from the signed scope and private operational measurements. Internal corrections are versioned and do not rewrite the signed commercial document.
 
 **Siding branch (2026-10-04).** A request from `/siding` is filed as a siding lead (`leads.service = 'siding'`).
 *Start siding quote* creates a quote with `work_type = 'siding'`, fixed at creation. The Build Plan describes window
-openings and does not apply: step 6 is skipped and the signature alone (Mark's device or the customer link) approves
+openings and does not apply; the signature alone (Mark's device or the customer link) approves
 the quote. Its invoice and job inherit the type; the job has no plan snapshot, window checklist or opening closeout.
-Window quotes are unchanged. Code: `functions/internal/_lib/work-types.mjs`.
+Both window and siding quotes can be signed directly; window jobs additionally carry an opening schedule. Code: `functions/internal/_lib/work-types.mjs`.
 
 ## Output
 
@@ -42,8 +41,7 @@ A finalized, signed quote linked to its lead, ready to become a Job (see `job-cl
 
 ## Stop conditions
 
-Lead data is missing a fact needed for pricing; two leads match one quote; the quote changed after plan approval
-(re-approve first); any attempt to state a price, credential or commitment that Mark has not entered.
+Lead data is missing a fact needed for pricing; two leads match one quote; concurrent quote changes that require reloading before another save; any attempt to state a price, credential or commitment that Mark has not entered.
 
 ## Completion
 

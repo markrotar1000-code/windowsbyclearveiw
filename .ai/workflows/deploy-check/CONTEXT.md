@@ -18,8 +18,7 @@ in the repo `wrangler.toml`.
 
 ## Process
 
-1. Run `npm run test:all`, then `npm run build`, locally. GitHub Actions does not currently run (billing issue,
-   2026-10-01), so do not treat a missing or red Actions run as a result; the local run is the gate.
+1. Run `npm run test:all`, then `npm run build`, locally. GitHub Actions Build and Cloudflare Pages must also pass for the current commit; local checks are the first gate.
 2. Check the Cloudflare Pages preview/production build for the commit.
 3. Anything that needs a binding or secret that is not set must degrade safely (Turnstile, Access, R2, AI Gateway
    are all built "off until configured"). Do not claim they are on until the owner has set them.

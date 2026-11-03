@@ -24,6 +24,6 @@ const noWater = lintPlan({ ...base, verify: ['Manufacturer-specific installation
 assert.ok(noWater.blockers.some(x => /water-management/i.test(x)));
 
 const wrongQty = lintPlan(base, [{ label:'Cascade double-hung', quantity:2 }]);
-assert.ok(wrongQty.warnings.some(x => /quantity/i.test(x)));
+assert.ok(wrongQty.blockers.some(x => /quantity/i.test(x)));
 
 console.log('Build Plan rules: PASS');

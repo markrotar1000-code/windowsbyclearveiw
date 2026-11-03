@@ -17,14 +17,21 @@ export function bindQuoteDelivery(quote: any) {
   previous?.abort();
   const controller = new AbortController();
   (root as any).__deliveryAbort = controller;
+  const attempts = new Map<string,string>();
   const listen = (node: Element, event: string, callback: any) => node.addEventListener(event, callback, { signal: controller.signal });
   root.querySelectorAll<HTMLButtonElement>('[data-send-kind]').forEach(button => listen(button, 'click', async () => {
     const kind = button.dataset.sendKind;
     const input = kind === 'supplier' ? supplier : email;
     if (!input.value || !input.reportValidity()) { input.focus(); return; }
+    const attemptKey = `${kind}:${input.value}`;
+    const storageKey=`cv-delivery:${quote.id}:${quote.revision||quote.updated_at}:${attemptKey}`;
+    if (!attempts.has(attemptKey)) { let remembered='';try{remembered=sessionStorage.getItem(storageKey)||'';}catch{} const next=remembered||crypto.randomUUID();attempts.set(attemptKey,next);try{sessionStorage.setItem(storageKey,next);}catch{} }
     button.disabled = true; status.textContent = 'Sending PDF…';
     try {
-      const result = await fetchJson('/internal/api/quote-delivery', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quoteId: quote.id, kind, to: input.value }) });
+      const result = await fetchJson('/internal/api/quote-delivery', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ quoteId: quote.id, kind, to: input.value, requestId: attempts.get(attemptKey) }) });
+      attempts.delete(attemptKey);
+      try{sessionStorage.removeItem(storageKey);}catch{}
+      await refreshHistory();
       status.textContent = `Email accepted for delivery to ${result.to}.`;
     } catch (error) { status.textContent = loadFailureMessage(error); }
     finally { button.disabled = false; }
@@ -64,5 +71,24 @@ export function bindQuoteDelivery(quote: any) {
     location.href = `sms:${number}${separator}body=${encodeURIComponent(`Hi, here is your ClearView quote ${quote.id}.`)}`;
     status.textContent = 'Text app opened for this number. Use Text / share PDF to attach the document through your phone’s sharing menu.';
   });
+  const signed = quote.status === 'finalized';
+  const customerSend=root.querySelector('[data-send-kind="customer"]');
+  if(customerSend)customerSend.textContent=signed?'Email signed copy':'Email quote + signing link';
+  let history=root.querySelector('[data-delivery-history]') as HTMLElement;
+  if(!history){history=document.createElement('details');history.dataset.deliveryHistory='';root.append(history);}
+  async function refreshHistory(){
+    try{const data=await fetchJson(`/internal/api/quote-delivery?quoteId=${encodeURIComponent(quote.id)}&history=1`);if(controller.signal.aborted)return;history.replaceChildren();const title=document.createElement('summary');title.textContent='Delivery history';history.append(title);const list=document.createElement('ul');for(const item of [...(data.history||[]),...(data.supplierHistory||[])].sort((a,b)=>b.created_at.localeCompare(a.created_at))){const li=document.createElement('li');li.textContent=`${item.document_kind} · ${item.recipient} · ${item.status||'queued'} · ${new Date(item.created_at).toLocaleString()}`;list.append(li);}if(!list.children.length){const li=document.createElement('li');li.textContent='No delivery attempts recorded yet.';list.append(li);}history.append(list);}catch{}}
+  void refreshHistory();
+  const supplierLabel=supplier.closest('label');
+  if(supplierLabel){
+    let select=root.querySelector('[data-saved-supplier]') as HTMLSelectElement;
+    if(!select){select=document.createElement('select');select.dataset.savedSupplier='';select.setAttribute('aria-label','Saved supplier');supplierLabel.before(select);}
+    const updateContacts=async()=>{try{const data=await fetchJson('/internal/api/quote-delivery?contacts=1');if(controller.signal.aborted)return;select.replaceChildren(new Option('Choose saved supplier',''));for(const item of data.contacts||[])select.append(new Option(`${item.name} (${item.email})`,item.email));}catch{}};
+    listen(select,'change',()=>{if(select.value)supplier.value=select.value;});
+    let save=root.querySelector('[data-save-supplier]') as HTMLButtonElement;
+    if(!save){save=document.createElement('button');save.type='button';save.className='btn btn-ghost';save.dataset.saveSupplier='';save.textContent='Save supplier contact';supplierLabel.after(save);}
+    listen(save,'click',async()=>{if(!supplier.value||!supplier.reportValidity())return;try{await fetchJson('/internal/api/quote-delivery',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'save-supplier',email:supplier.value,name:supplier.value})});status.textContent='Supplier contact saved.';await updateContacts();}catch(error){status.textContent=loadFailureMessage(error);}});
+    void updateContacts();
+  }
   prepare.click();
 }

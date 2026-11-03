@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs';import http from 'node:http';import path from 'node:path';
+const {chromium}=createRequire(import.meta.url)('playwright');
+const server=http.createServer((req,res)=>{let f=path.resolve('dist','.'+new URL(req.url,'http://x').pathname);if(!path.extname(f))f+='.html';fs.readFile(f,(e,d)=>{res.writeHead(e?404:200,{'content-type':f.endsWith('.html')?'text/html':f.endsWith('.js')?'text/javascript':f.endsWith('.css')?'text/css':'application/octet-stream'});res.end(e?'':d);});}).listen(0);
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH});
+try{for(const width of [390,1440]){const p=await browser.newPage({viewport:{width,height:900}}),errors=[];p.on('pageerror',e=>errors.push(e.message));
+const invoice={id:'INV-TEST',invoice_number:'INV-TEST',quote_id:'Q-TEST',created_at:'2026-11-03T12:00:00Z',updated_at:'2026-11-03T12:00:00Z',status:'sent',customer_name:'Fixture Customer',customer_email:'fixture@example.com',customer_city:'Vancouver',subtotal_cents:100000,total_cents:100000,amount_paid_cents:40000,credited_cents:10000,balance_cents:50000,due_date:'2026-10-01',overdue:true};
+await p.route('**/internal/api/**',r=>r.fulfill({json:r.request().url().includes('/invoices/INV-TEST')?{invoice,items:[{label:'Slider',quantity:1,unit_price_cents:100000,line_total_cents:100000}],adjustments:[],deliveries:[]}:{invoices:[invoice],page:1,total:1,totalPages:1,reminders:[]}}));
+await p.goto(`http://localhost:${server.address().port}/internal/invoices/view?id=INV-TEST`);await p.locator('[data-sheet]:not([hidden])').waitFor();assert.equal(await p.locator('[data-total]').textContent(),'$500');assert.equal(await p.locator('[data-payments]').textContent(),'$400');assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await p.locator('.invoice-settings summary').click();assert.equal(await p.locator('[data-due-date]').inputValue(),'2026-10-01');assert.deepEqual(errors,[]);await p.close();console.log(`PASS: ${width}px invoice balances, optional settings, no overflow or page errors`);}}
+finally{await browser.close();server.close();}
