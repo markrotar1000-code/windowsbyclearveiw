@@ -3,6 +3,10 @@
 Load this before writing or reviewing customer-facing copy, guides, city pages, or graphics.
 Owner direction, 2026-09-30. Business facts here come from the owner; do not extend them by guessing.
 
+## Manufacturer warranty claims
+
+Owner direction, 2026-11-03: customers contact the manufacturer and handle manufacturer warranty claims directly. Clearview does not handle or assist with those claims. Do not promise claim facilitation in public copy or new contracts. The owner also removed the one-year workmanship warranty from new contracts. Historical signed terms remain preserved; do not advertise a Clearview workmanship warranty.
+
 ## Who the site is talking to
 
 - Clearview replaces windows for a **wide variety of reasons**. Copy should reflect that range, not one story.

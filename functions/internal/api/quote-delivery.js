@@ -1,5 +1,5 @@
 import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
-import { json } from '../_lib/quotes.mjs';
+import { json, TERMS_VERSION } from '../_lib/quotes.mjs';
 import { quotePdf } from '../_lib/quote-pdf.mjs';
 import { loadPdfAssets } from '../_lib/pdf-fonts.mjs';
 import { customerDocumentBytes, bytesToBase64, freezeSignedQuote } from '../_lib/quote-documents.mjs';
@@ -50,6 +50,7 @@ export async function onRequestPost(context){
   if(!body||!['customer','supplier'].includes(body.kind)||typeof body.quoteId!=='string')return json({error:'Choose a quote and document type.'},400);
   const record=await load(env,body.quoteId);if(!record)return json({error:'Quote not found.'},404);
   const supplier=body.kind==='supplier',to=String(body.to||(!supplier?record.quote.customer_email:'')||'').trim();
+  if(!supplier&&record.quote.status==='draft'&&record.quote.terms_version!==TERMS_VERSION)return json({error:'Edit and save this draft to update its contract terms, then send a fresh signing link.',code:'TERMS_CHANGED',resetDelivery:true},409);
   if(to.length>254||!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(to))return json({error:'Enter one valid recipient email address.'},400);
   if(!env.RESEND_API_KEY)return json({error:'Email delivery is not configured yet (RESEND_API_KEY).'},503);
   const requestId=body.requestId||crypto.randomUUID();

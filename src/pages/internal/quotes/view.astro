@@ -2,7 +2,6 @@
 import InternalLayout from '../../../layouts/InternalLayout.astro';
 import FlowBar from '../../../components/internal/FlowBar.astro';
 import { site, telHref, mailHref } from '../../../data/site';
-import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 ---
 <InternalLayout title="Quote">
   <FlowBar by="quote" />
@@ -18,6 +17,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       <button class="btn btn-primary" type="button" data-print-btn>Print / Save PDF</button>
     </div>
   </div>
+  <p class="qv-error no-print" data-terms-notice hidden role="status"></p>
   <p class="qv-error" data-delete-error hidden role="alert"></p>
   <p class="qv-error" data-job-error hidden role="alert"></p>
   <section class="qv-share no-print" data-share-panel hidden aria-label="Customer signing link">
@@ -130,16 +130,16 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
     <section class="contract-section contract-terms">
       <h2>Terms</h2>
-      <p>{contractTerms.paymentTerms}</p>
-      <p>{contractTerms.changeOrders}</p>
-      <p>{contractTerms.warranty}</p>
-      <p>{contractTerms.delays}</p>
-      <p>{contractTerms.governingLaw}</p>
+      <p data-term="paymentTerms"></p>
+      <p data-term="changeOrders"></p>
+      <p data-term="warranty"></p>
+      <p data-term="delays"></p>
+      <p data-term="governingLaw"></p>
 
-      <h3>{contractTerms.rightToCancel.heading}</h3>
-      {contractTerms.rightToCancel.body.map((para) => <p>{para}</p>)}
+      <h3 data-term="cancelHeading"></h3>
+      <p data-term="cancel0"></p><p data-term="cancel1"></p><p data-term="cancel2"></p>
 
-      <p class="contract-ack">{contractTerms.acknowledgement}</p>
+      <p class="contract-ack" data-term="acknowledgement"></p>
     </section>
 
     <section class="contract-section contract-signature">
@@ -202,6 +202,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 </InternalLayout>
 
 <script>
+  import { getContractTerms, TERMS_VERSION } from "../../../data/contractTerms";
+  import { renderContractTerms } from "../../../lib/render-contract-terms.mjs";
   import { customerLineText, readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
   import { bindQuoteOperations } from '../../../lib/quote-operations';
   import { bindSupplierResponses } from '../../../lib/quote-supplier-responses';
@@ -555,7 +557,19 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     function render(quote: any, items: any[]) {
       if (loading instanceof HTMLElement) loading.hidden = true;
       if (toolbar instanceof HTMLElement) toolbar.hidden = false;
-      root.hidden = false;
+      const terms = getContractTerms(quote.terms_version ?? null);
+      const termsNotice = document.querySelector<HTMLElement>('[data-terms-notice]');
+      const outdatedDraft = quote.status === 'draft' && quote.terms_version !== TERMS_VERSION;
+      if (termsNotice) { termsNotice.hidden = !outdatedDraft && Boolean(terms); termsNotice.textContent = terms ? 'Terms updated. Edit and save this draft before sending for signature.' : 'The saved terms for this quote are unavailable. Contact support before printing or signing.'; }
+      const earlyEditLink = document.querySelector<HTMLAnchorElement>('[data-edit-link]');
+      if (earlyEditLink) { earlyEditLink.hidden = quote.status !== 'draft'; earlyEditLink.href = `/internal/quotes/new?edit=${encodeURIComponent(quote.id)}`; }
+      root.hidden = !terms;
+      if (!terms) {
+        document.querySelectorAll<HTMLElement>('[data-share-panel],[data-delivery]').forEach(el => { el.hidden = true; });
+        const print = document.querySelector<HTMLButtonElement>('[data-print-btn]'); if (print) print.disabled = true;
+        return;
+      }
+      renderContractTerms(root, terms);
 
       root.dataset.quoteRevision = String(quote.revision || 1);
       root.dataset.quoteStatus = quote.status;
@@ -648,6 +662,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       }
 
       renderSignatureState(quote);
+      if (outdatedDraft) root.querySelectorAll<HTMLElement>('[data-sig-pen],[data-sig-pen-confirm],[data-sig-digital-pending]').forEach(el => { el.hidden = true; });
     }
 
     function setupCreateJob(quote: any) {

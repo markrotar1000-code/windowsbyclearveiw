@@ -90,3 +90,5 @@ try{
 }finally{globalThis.fetch=original;}
 
 await import('./test-delivery-signing-links.mjs');
+
+await import('./test-contract-terms-lifecycle.mjs');

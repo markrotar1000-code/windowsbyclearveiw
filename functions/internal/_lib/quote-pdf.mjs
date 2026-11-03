@@ -1,3 +1,4 @@
+import { createPdfTextWrapper } from './pdf-text-wrap.mjs';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { customerLineText, readMeasurements } from './quote-measurements.mjs';
 import { contractTerms } from './pdf-terms.mjs';
@@ -14,19 +15,12 @@ export async function quotePdf(quote, items, { supplier = false, logoBytes, font
   let page, y;
   function next() { page = pdf.addPage([612, 792]); y = 748; }
   next();
+  const wrapText = createPdfTextWrapper();
   function line(value, { size = 10, heavy = false, gap = 6 } = {}) {
     const font = heavy ? bold : regular;
     for (const paragraph of text(value).split('\n')) {
-      let row = '';
-      const words = paragraph.split(/\s+/);
-      for (const word of words) {
-        if (font.widthOfTextAtSize((row ? row + ' ' : '') + word, size) > 524 && row) { draw(row); row = ''; }
-        // Bound even an unbroken pasted identifier to the text column.
-        let part = word;
-        while (font.widthOfTextAtSize(part, size) > 524) { let n = part.length; while (font.widthOfTextAtSize(part.slice(0, n), size) > 524) n--; if (row) { draw(row); row = ''; } draw(part.slice(0, n)); part = part.slice(n); }
-        row += (row && part ? ' ' : '') + part;
-      }
-      draw(row); y -= gap;
+      for (const row of wrapText(paragraph, font, size, 524)) draw(row);
+      y -= gap;
     }
     function draw(row) { if (y < 55) next(); page.drawText(row, { x: 44, y, size, font, color: rgb(.08, .16, .19) }); y -= size + 4; }
   }

@@ -9,13 +9,14 @@
 //   * If the wording changes without a new version, a customer signs different terms than their quote
 //     records, which is the one thing TERMS_VERSION exists to prevent.
 //
-// So the wording is pinned: this test hashes everything from `WARRANTY_YEARS` down and compares it with the
+// So the wording is pinned: this test hashes everything from `contractTerms` down and compares it with the
 // hash recorded here for the current version. Changing the wording fails until you bump TERMS_VERSION in
 // BOTH files and add the new version and hash to PINNED. Leave the old entry in place (history).
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { getContractTerms } from '../functions/internal/_lib/pdf-terms.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (path) => readFileSync(`${root}${path}`, 'utf8').replace(/\r\n/g, '\n');
@@ -30,18 +31,25 @@ const functionsVersion = versionOf(read('functions/internal/_lib/quotes.mjs'), '
 const siteVersion = versionOf(ts, 'src/data/contractTerms.ts');
 assert.equal(functionsVersion, siteVersion, `TERMS_VERSION differs: site "${siteVersion}", functions "${functionsVersion}". Customers could not sign.`);
 
-const start = ts.indexOf('export const WARRANTY_YEARS');
-assert.ok(start > 0, 'contractTerms.ts must still export WARRANTY_YEARS (the pinned wording starts there)');
+const start = ts.indexOf('export const contractTerms =');
+assert.ok(start > 0, 'contractTerms.ts must export contractTerms (the pinned wording starts there)');
 const hash = createHash('sha256').update(ts.slice(start).trim()).digest('hex').slice(0, 16);
 
 const PINNED = {
   '2026-08-28': '30a3205ce88d0222',
+  '2026-11-03': '7ce965d18cbbd727',
 };
 assert.ok(PINNED[siteVersion], `TERMS_VERSION "${siteVersion}" has no pinned wording hash. Add it: '${siteVersion}': '${hash}'.`);
 assert.equal(
   hash,
   PINNED[siteVersion],
   `The contract wording changed (hash ${hash}) but TERMS_VERSION is still "${siteVersion}". Bump TERMS_VERSION in src/data/contractTerms.ts AND functions/internal/_lib/quotes.mjs, then add the new version and hash to PINNED.`,
+);
+
+assert.equal(
+  createHash('sha256').update(JSON.stringify(getContractTerms('2026-08-28'))).digest('hex'),
+  '7c8bd710e4ffd660c684f361349dde23ec892a8b44b1a06550d98fa31c2e2d9e',
+  'Archived terms must exactly preserve every historical clause, independently of current terms',
 );
 
 // 2. The phone number. Every phone number written into functions/ and workers/ (the Ask fallback answer, the

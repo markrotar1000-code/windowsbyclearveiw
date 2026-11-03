@@ -7,7 +7,7 @@ import { parseWorkType } from './work-types.mjs';
 // sets this precedent, duplicating its FROM address rather than reaching into
 // src/data/site.ts — because the Functions bundler's handling of a cross-boundary
 // TypeScript import was untested and not worth risking on something this central.
-export const TERMS_VERSION = '2026-08-28';
+export const TERMS_VERSION = '2026-11-03';
 
 export function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
