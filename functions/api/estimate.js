@@ -18,7 +18,7 @@ const RECEIPT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 // The lead is saved before the email goes out, so a delivery failure tells the visitor to try again
 // although Mark already has the lead. An identical resend inside this window is that retry.
 const DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
-const FROM = 'Clearview Windows <estimates@windowsbyclearveiw.com>';
+const FROM = 'ClearView Windows & Trim <estimates@windowsbyclearveiw.com>';
 const TO = 'owner@windowsbyclearveiw.com';
 
 const TEMPLATES = {
@@ -88,6 +88,12 @@ function escapeHtmlAttr(value) {
     .replace(/'/g, '&#39;');
 }
 
+// Hosted HTML uses explicit escaped variables with raw triple substitution.
+// Keep original fields alongside them for subjects/plain text and legacy templates.
+function withHtmlVariables(variables, names) {
+  return { ...variables, ...Object.fromEntries(names.map((name) => [`${name}_HTML`, escapeHtmlAttr(variables[name])])) };
+}
+
 function mailtoAddress(email) {
   return encodeURIComponent(String(email || '')).replace(/%40/g, '@');
 }
@@ -102,7 +108,7 @@ function emailButtonHtml(name, email) {
                     <td style="padding-bottom:12px;">
                       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                         <tr>
-                          <td bgcolor="#0f2a54" style="background-color:#0f2a54;border-radius:8px;text-align:center;">
+                          <td bgcolor="#192a2b" style="background-color:#192a2b;border-radius:8px;text-align:center;">
                             <a href="mailto:${safeEmail}" style="display:block;padding-top:16px;padding-bottom:16px;padding-left:20px;padding-right:20px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;line-height:20px;color:#ffffff;text-decoration:none;">&#9993; Email ${safeName}</a>
                           </td>
                         </tr>
@@ -262,19 +268,23 @@ function receivedAt() {
   });
 }
 
-async function sendTemplate(key, payload) {
+async function sendTemplate(key, payload, idempotencyKey) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
+    signal: AbortSignal.timeout(15000),
     headers: {
       Authorization: `Bearer ${key}`,
       'content-type': 'application/json',
+      ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
     },
     body: JSON.stringify(payload),
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     console.error('resend-failed', response.status, body?.name || body?.message || '');
-    throw new Error('Could not deliver the request.');
+    const error = new Error('Could not deliver the request.');
+    error.providerStatus = response.status;
+    throw error;
   }
   return body;
 }
@@ -293,7 +303,56 @@ async function claimReceiptEmail(db, email, now = Date.now()) {
     WHERE estimate_receipt_limits.last_sent_at <= excluded.last_sent_at - ?
     RETURNING email_hash
   `).bind(emailHash, now, RECEIPT_COOLDOWN_MS).first();
-  return Boolean(claimed);
+  return claimed ? { emailHash, claimedAt: now } : null;
+}
+
+// Persist receipt attempts separately from the abuse-prevention reservation. A
+// failed send must not look like a successful confirmation for the next 24 hours.
+// The original payload and key are reused after an ambiguous network failure.
+async function deliverReceipt(db, key, payload, claim) {
+  const { emailHash, claimedAt } = claim;
+  let attempt;
+  try {
+    await db.prepare(`CREATE TABLE IF NOT EXISTS estimate_receipt_attempts (
+      email_hash TEXT PRIMARY KEY, attempt_id TEXT NOT NULL, started_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL, status TEXT NOT NULL, payload_json TEXT NOT NULL,
+      provider_id TEXT, provider_status INTEGER
+    )`).run();
+    const previous = await db.prepare('SELECT * FROM estimate_receipt_attempts WHERE email_hash = ?').bind(emailHash).first();
+    const retry = previous && previous.status !== 'accepted';
+    // Resend idempotency expires after 24h. Never replay an ambiguous attempt
+    // outside that window: it could duplicate an already accepted receipt.
+    if (retry && previous.status !== 'rejected' && claimedAt - previous.started_at >= 23 * 60 * 60 * 1000) {
+      await db.prepare("UPDATE estimate_receipt_attempts SET status = 'needs_review', updated_at = ? WHERE email_hash = ?")
+        .bind(claimedAt, emailHash).run();
+      console.error('receipt-needs-review');
+      return;
+    }
+    attempt = retry && claimedAt - previous.started_at < 23 * 60 * 60 * 1000
+      ? previous
+      : { attempt_id: crypto.randomUUID(), started_at: claimedAt, payload_json: JSON.stringify(payload) };
+    await db.prepare(`INSERT INTO estimate_receipt_attempts
+      (email_hash, attempt_id, started_at, updated_at, status, payload_json)
+      VALUES (?, ?, ?, ?, 'sending', ?)
+      ON CONFLICT(email_hash) DO UPDATE SET attempt_id = excluded.attempt_id,
+      started_at = excluded.started_at, updated_at = excluded.updated_at,
+      status = 'sending', payload_json = excluded.payload_json, provider_id = NULL, provider_status = NULL`)
+      .bind(emailHash, attempt.attempt_id, attempt.started_at, claimedAt, attempt.payload_json).run();
+    const result = await sendTemplate(key, JSON.parse(attempt.payload_json), `estimate-receipt-${attempt.attempt_id}`);
+    await db.prepare("UPDATE estimate_receipt_attempts SET status = 'accepted', provider_id = ?, updated_at = ? WHERE email_hash = ? AND attempt_id = ?")
+      .bind(result.id || null, Date.now(), emailHash, attempt.attempt_id).run();
+  } catch (error) {
+    // Retain ambiguous attempts and their exact payload for provider-safe retries.
+    // Timeout/conflict responses remain ambiguous; other provider 4xx reject the send.
+    const rejected = error?.providerStatus >= 400 && error.providerStatus < 500 && ![408, 409].includes(error.providerStatus);
+    try {
+      if (attempt) await db.prepare('UPDATE estimate_receipt_attempts SET status = ?, provider_status = ?, updated_at = ? WHERE email_hash = ? AND attempt_id = ?')
+        .bind(rejected ? 'rejected' : 'uncertain', error?.providerStatus || null, Date.now(), emailHash, attempt.attempt_id).run();
+      // Compare-and-delete cannot release a newer reservation.
+      await db.prepare('DELETE FROM estimate_receipt_limits WHERE email_hash = ? AND last_sent_at = ?').bind(emailHash, claimedAt).run();
+    } catch { console.error('receipt-status-save-failed'); }
+    console.error('receipt-failed', error?.providerStatus || 'transport-or-storage');
+  }
 }
 
 export async function onRequestPost(context) {
@@ -424,7 +483,7 @@ export async function onRequestPost(context) {
       ],
       template: {
         id: TEMPLATES.lead.id,
-        variables: {
+        variables: withHtmlVariables({
           CUSTOMER_NAME: lead.name,
           CUSTOMER_PHONE: lead.phone,
           CUSTOMER_PHONE_HREF: telUri(lead.phone),
@@ -435,7 +494,7 @@ export async function onRequestPost(context) {
             .filter(Boolean)
             .join('\n\n'),
           RECEIVED_AT: receivedAt(),
-        },
+        }, ['CUSTOMER_NAME', 'CITY', 'CUSTOMER_PHONE', 'CUSTOMER_EMAIL', 'NOTES', 'RECEIVED_AT']),
       },
     });
   } catch {
@@ -455,19 +514,18 @@ export async function onRequestPost(context) {
     }
     if (shouldSendReceipt) {
       context.waitUntil(
-        sendTemplate(key, {
+        deliverReceipt(context.env.QUOTES_DB, key, {
           from,
           to: [lead.email],
+          reply_to: to,
           template: {
             id: TEMPLATES.receipt.id,
-            variables: {
+            variables: withHtmlVariables({
               CUSTOMER_NAME: lead.name,
               CITY: lead.city,
-            },
+            }, ['CUSTOMER_NAME', 'CITY']),
           },
-        }).catch((error) => {
-          console.error('receipt-failed', error);
-        }),
+        }, shouldSendReceipt),
       );
     }
   }

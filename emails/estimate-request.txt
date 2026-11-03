@@ -1,0 +1,23 @@
+ClearView Windows & Trim LLC
+New estimate request
+
+{{{CUSTOMER_NAME}}} in {{{CITY}}} requested an estimate.
+Received: {{{RECEIVED_AT}}} Pacific
+
+CONTACT DETAILS
+Name: {{{CUSTOMER_NAME}}}
+Phone: {{{CUSTOMER_PHONE}}}
+Call: tel:{{{CUSTOMER_PHONE_HREF}}}
+Email: {{{CUSTOMER_EMAIL}}}
+City: {{{CITY}}}
+
+PROJECT NOTES
+{{{NOTES}}}
+
+SAVE THE CONTACT
+Open the attached contact card to add this customer to your phone.
+
+Open leads in Command Center:
+https://windowsbyclearview.com/internal/leads
+
+Internal lead notification. Reply to contact the customer when an email address was supplied. If the email is listed as "Not given," use the phone number above.

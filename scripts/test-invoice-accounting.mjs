@@ -26,6 +26,37 @@ assert.equal((await call(invoiceApi.onRequestPost,'POST',{...creditBody,amountCe
 assert.equal((await call(invoiceApi.onRequestPost,'POST',{action:'void',reason:'Wrong record',requestId:'accounting-void-001'},{id:invoiceId})).status,409,'paid invoices use a credit, not an untracked void');
 await call(payments.onRequestPatch,'PATCH',{amountPaidCents:80000},{},'?jobId='+j.body.id);record=(await get()).body;assert.equal(record.invoice.balance_cents,0);assert.equal(record.invoice.status,'paid');
 const payment=(await call(payments.onRequestGet,'GET',undefined,{},'?jobId='+j.body.id)).body;assert.equal(payment.payment.balance_cents,0);
+// Force the production quote-number collision rather than waiting for random
+// paging fixtures to collide. Only a quote primary-key collision is retryable.
+{
+  const originalRandom = crypto.getRandomValues;
+  const suffix = id.split('-').at(-1);
+  let randomCalls = 0;
+  crypto.getRandomValues = function(bytes) {
+    randomCalls++;
+    if (randomCalls === 1) {
+      bytes.set(Uint8Array.from(suffix.match(/../g), pair => parseInt(pair, 16)));
+      return bytes;
+    }
+    return originalRandom.call(crypto, bytes);
+  };
+  try {
+    const created = await call(create.onRequestPost, 'POST', {customer, items:[{label:'Collision recovery',quantity:1,unitPriceCents:100}]});
+    assert.equal(created.status, 201);
+    assert.notEqual(created.body.id, id);
+    assert.ok(randomCalls >= 2, 'quote ID collision generates a fresh number');
+    assert.equal(env.QUOTES_DB.raw.prepare('SELECT count(*) n FROM quote_items WHERE quote_id = ?').get(created.body.id).n, 1, 'retry writes exactly one item under the new quote number');
+    assert.equal(env.QUOTES_DB.raw.prepare('SELECT count(*) n FROM quote_items WHERE quote_id = ?').get(id).n, 1, 'collision does not change the existing quote items');
+    assert.equal(env.QUOTES_DB.raw.prepare('SELECT quote_id FROM invoices WHERE id = ?').get(created.body.invoiceId).quote_id, created.body.id, 'invoice links to the successfully inserted quote');
+  } finally { crypto.getRandomValues = originalRandom; }
+  const originalBatch = env.QUOTES_DB.batch;
+  let calls = 0;
+  env.QUOTES_DB.batch = async () => { calls++; throw new Error('UNIQUE constraint failed: quote_items.id'); };
+  try {
+    await assert.rejects(() => call(create.onRequestPost, 'POST', {customer, items:[{label:'Other failure',quantity:1,unitPriceCents:100}]}), /quote_items.id/);
+    assert.equal(calls, 1, 'unrelated unique failures are never retried');
+  } finally { env.QUOTES_DB.batch = originalBatch; }
+}
 for(let n=0;n<52;n++)assert.equal((await call(create.onRequestPost,'POST',{customer:{...customer,name:'Paging '+n},items:[{label:'Slider',quantity:1,unitPriceCents:100}]})).status,201);
 const page=await call(invoiceList.onRequestGet,'GET',undefined,{},'?page=2&search=Paging');assert.equal(page.body.total,52);assert.equal(page.body.invoices.length,2);
 const revision=await call(create.onRequestPost,'POST',{customer,signatureMethod:'pen',revisionOf:id,revisionKind:'revision',items:[{label:'Replacement slider',quantity:1,unitPriceCents:120000}]});assert.equal(revision.status,201);

@@ -90,7 +90,7 @@ const base = { name: 'Pat Doe', phone: '(360) 555-0100', city: 'Camas', email: '
   assert(leadCount(env.QUOTES_DB) === 2, 'every submission is still logged');
 }
 
-// 3. A different address is unaffected, and a D1 read failure fails open.
+// 3. A different address is unaffected, and a D1 read failure fails closed.
 {
   sent.length = 0;
   const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
@@ -169,5 +169,78 @@ const base = { name: 'Pat Doe', phone: '(360) 555-0100', city: 'Camas', email: '
   assert(valid.accepted === '1', 'delivered submission carries the conversion marker');
   assert(trap.body.ok === true && trap.accepted === null, 'honeypot keeps its success body without a conversion marker');
   assert(invalid.accepted === null && failed.accepted === null, 'invalid and undelivered requests cannot count as conversions');
+}
+// Receipt failures are durable and retryable without consuming the daily
+// successful-send allowance or changing provider idempotency payloads.
+{
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test', NOTIFY_EMAIL: 'owner@example.com' };
+  const realFetch = globalThis.fetch;
+  const attempts = [];
+  let fail = true;
+  globalThis.fetch = async (url, init) => {
+    const payload = JSON.parse(init.body);
+    if (payload.template?.id !== 'estimate-received') return realFetch(url, init);
+    attempts.push({ payload, key: init.headers['Idempotency-Key'] });
+    if (fail) return new Response(JSON.stringify({ name: 'validation_error' }), { status: 422 });
+    return new Response(JSON.stringify({ id: 'receipt_retry_success' }), { status: 200 });
+  };
+  try {
+    const first = await submit(env, base);
+    const failed = env.QUOTES_DB.raw.prepare('SELECT * FROM estimate_receipt_attempts').get();
+    assert(first.status === 200 && failed.status === 'rejected' && failed.provider_status === 422, 'receipt rejection is recorded without losing the accepted inquiry');
+    assert(env.QUOTES_DB.raw.prepare('SELECT COUNT(*) n FROM estimate_receipt_limits').get().n === 0, 'rejected receipt releases only its own daily reservation');
+    fail = false;
+    await submit(env, { ...base, name: 'Changed name on retry' });
+    assert(attempts.length === 2 && attempts[0].key === attempts[1].key && JSON.stringify(attempts[0].payload) === JSON.stringify(attempts[1].payload), 'retry uses the same provider key and exact original payload');
+    const accepted = env.QUOTES_DB.raw.prepare('SELECT * FROM estimate_receipt_attempts').get();
+    assert(accepted.status === 'accepted' && accepted.provider_id === 'receipt_retry_success', 'provider acceptance and message ID are persisted');
+    assert(attempts[1].payload.reply_to === 'owner@example.com', 'customer replies route to the configured owner inbox');
+    await submit(env, base);
+    assert(attempts.length === 2, 'a successful retry restores the normal daily receipt limit');
+  } finally { globalThis.fetch = realFetch; }
+}
+{
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
+  const realFetch = globalThis.fetch;
+  const attempts = [];
+  globalThis.fetch = async (url, init) => {
+    const payload = JSON.parse(init.body);
+    if (payload.template?.id !== 'estimate-received') return realFetch(url, init);
+    attempts.push(init.headers['Idempotency-Key']);
+    if (attempts.length === 1) throw new Error('connection lost after request');
+    return new Response(JSON.stringify({ id: 'same_provider_message' }), { status: 200 });
+  };
+  try {
+    await submit(env, base);
+    assert(env.QUOTES_DB.raw.prepare('SELECT status FROM estimate_receipt_attempts').get().status === 'uncertain', 'ambiguous transport failure is distinguishable from rejection');
+    await submit(env, base);
+    assert(attempts.length === 2 && attempts[0] === attempts[1], 'ambiguous retry cannot create a second provider message within the idempotency window');
+    env.QUOTES_DB.raw.prepare("UPDATE estimate_receipt_attempts SET status = 'uncertain', started_at = 0").run();
+    env.QUOTES_DB.raw.prepare('DELETE FROM estimate_receipt_limits').run();
+    await submit(env, base);
+    assert(attempts.length === 2 && env.QUOTES_DB.raw.prepare('SELECT status FROM estimate_receipt_attempts').get().status === 'needs_review', 'expired ambiguous attempt is held for review instead of risking a duplicate');
+  } finally { globalThis.fetch = realFetch; }
+}
+{
+  sent.length = 0;
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
+  await submit(env, { ...base, email: '' });
+  assert(sent.length === 1 && sent[0].template.id === 'estimate-request', 'request without an email notifies Mark and never invents a receipt recipient');
+  await Promise.all([submit(env, base), submit(env, base)]);
+  assert(sent.filter(m => m.template.id === 'estimate-received').length === 1, 'concurrent submissions atomically claim only one customer receipt');
+}
+// Raw subject/text values remain readable while every HTML text insertion is escaped.
+{
+  sent.length = 0;
+  const env = { QUOTES_DB: fakeDb(), RESEND_API_KEY: 'test' };
+  const hostile = { ...base, name: '<img src=x onerror="alert(1)"> & Pat', city: '<b>Camas</b>', notes: "<script>alert('x')</script> & details" };
+  await submit(env, hostile);
+  const notification = sent.find(m => m.template.id === 'estimate-request').template.variables;
+  const receipt = sent.find(m => m.template.id === 'estimate-received').template.variables;
+  assert(notification.CUSTOMER_NAME === hostile.name && notification.NOTES === hostile.notes && receipt.CUSTOMER_NAME === hostile.name, 'plain-text and subject variables retain original submitted content');
+  assert(notification.CUSTOMER_NAME_HTML === '&lt;img src=x onerror=&quot;alert(1)&quot;&gt; &amp; Pat' && notification.NOTES_HTML === '&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt; &amp; details', 'hostile names and notes cannot inject markup through HTML variables');
+  assert(receipt.CUSTOMER_NAME_HTML === notification.CUSTOMER_NAME_HTML && receipt.CITY_HTML === '&lt;b&gt;Camas&lt;/b&gt;', 'receipt HTML name and city use the same explicit escaping');
+  assert(['CUSTOMER_NAME', 'CITY', 'CUSTOMER_PHONE', 'CUSTOMER_EMAIL', 'NOTES', 'RECEIVED_AT'].every(key => typeof notification[`${key}_HTML`] === 'string'), 'all notification HTML text variables are supplied');
+  assert(notification.EMAIL_BUTTON_HTML.includes('#192a2b') && !notification.EMAIL_BUTTON_HTML.includes('<img'), 'secondary action preserves dark brand styling and escapes its customer label');
 }
 console.log('estimate endpoint tests passed');
