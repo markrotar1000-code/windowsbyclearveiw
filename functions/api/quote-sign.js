@@ -9,7 +9,6 @@
 // validation live in functions/internal/_lib/quote-signing.mjs.
 
 import { ensureSigningSchema, resolveLink, publicQuote, renderSignatureSvg } from '../internal/_lib/quote-signing.mjs';
-import { requireApprovedBuildPlan } from '../internal/_lib/quote-gates.mjs';
 import { ensureInvoiceForQuote } from '../internal/_lib/invoices.mjs';
 import { sendOpsAlert } from '../_lib/lead-alert.mjs';
 import { TERMS_VERSION } from '../internal/_lib/quotes.mjs';
@@ -76,12 +75,6 @@ export async function onRequestPost(context) {
   if (loaded.quote.terms_version !== TERMS_VERSION) {
     return json({ error: 'The contract terms for this quote have been updated. Please wait for a new link from Clearview.', code: 'TERMS_CHANGED' }, 409);
   }
-  const gate = await requireApprovedBuildPlan(db, quoteId);
-  if (gate) {
-    // The quote changed after the link was sent. Mark has to re-approve and resend.
-    return json({ error: 'This quote is being updated. Please wait for a new link from Clearview.', code: gate.code }, 409);
-  }
-
   const now = new Date().toISOString();
   const userAgent = String(request.headers.get('user-agent') || '').slice(0, 300) || null;
   const tokenHash = resolved.row.token_hash;

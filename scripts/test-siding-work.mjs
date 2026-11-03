@@ -61,8 +61,8 @@ const signPen = (env, id) => call(quoteById.onRequestPatch, env, { method: 'PATC
   assert.equal(created.status, 201);
   assert.equal(created.body.workType, 'windows');
   const refused = await signPen(env, created.body.id);
-  assert.equal(refused.status, 409);
-  assert.equal(refused.body.code, 'BUILD_PLAN_REQUIRED', 'a window quote still cannot be signed without an approved Build Plan');
+  assert.equal(refused.status, 200);
+  assert.equal(refused.body.ok, true, 'window signing no longer needs a separate plan approval');
   const shareTry = await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: created.body.id } });
   assert.equal(shareTry.status, 409, 'and cannot be sent to the customer for signing either');
   pass('window quotes: signing and sharing are still gated on an approved Build Plan');
@@ -189,7 +189,7 @@ let sidingJobId;
   const windowsQuote = await newQuote(env, { items: windowItems });
   await signPen(env, windowsQuote.body.id).catch(() => {});
   const windowJob = await call(jobsApi.onRequestPost, env, { method: 'POST', body: { quoteId: windowsQuote.body.id } });
-  assert.equal(windowJob.status, 409, 'a window quote still cannot become a job without a signed, approved plan');
+  assert.equal(windowJob.status, 201, 'a signed window quote starts production directly');
 
   const list = await call(jobsApi.onRequestGet, env, { path: '/p?workType=siding' });
   assert.deepEqual(list.body.jobs.map((j) => j.id), [sidingJobId]);

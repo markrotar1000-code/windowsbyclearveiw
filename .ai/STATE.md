@@ -1,3 +1,9 @@
+## 2026-11-03 - Direct quote-to-production handoff
+
+Owner-directed flow: quote → customer signature → Start production. Separate Build Plan approval is no longer required for sharing, signing, or job creation. Starting production snapshots the signed quote and private opening measurements; optional current custom plan instructions are retained. Existing historical approvals remain historical records. Missing measurements remain explicit VERIFY items, never fabricated.
+
+Quote builder has per-opening width/height, room, and measurement type. Values use exact sixteenths and persist in quote_items.measurements_json; public signing uses a whitelist, printable quote uses customer line text, invoices omit the private column. Legacy size pairs in line copy are extracted into private records on save and removed from customer-facing text. New handler and browser regressions cover privacy and handoff.
+
 ## 2026-10-31 - Node pin is 22.23.4
 
 Astro 7.4.2 needs Node >=22.23.4. `.node-version`, package `engines`, `build.yml`, `deploy-ops-cron.yml` and the README all say 22.23.4; change them together when Astro raises the minimum again. Detail: .ai/CHANGELOG.md 2026-10-31.

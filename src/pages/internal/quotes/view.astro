@@ -12,7 +12,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       <a class="btn btn-ghost" data-duplicate-link href="#">Duplicate</a>
       <a class="btn btn-ghost" data-edit-link hidden href="#">Edit quote</a>
       <button class="btn btn-ghost qv-danger" type="button" data-delete-btn hidden>Delete draft</button>
-      <button class="btn btn-ghost" type="button" data-create-job hidden>Create job</button>
+      <button class="btn btn-ghost" type="button" data-create-job hidden>Start production</button>
       <button class="btn btn-primary" type="button" data-print-btn>Print / Save PDF</button>
     </div>
   </div>
@@ -43,6 +43,11 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     <button class="btn btn-primary" type="button" data-price-save>Save prices</button>
   </section>
 
+  <details class="qv-measurements no-print" data-private-measurements hidden>
+    <summary>Private measurements &amp; production details</summary>
+    <p>These stay inside the Command Center and carry into the job.</p>
+    <ul data-private-measurement-list></ul>
+  </details>
   <p data-loading>Loading…</p>
   <div class="qv-error" data-error hidden role="alert"></div>
 
@@ -169,6 +174,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 </InternalLayout>
 
 <script>
+  import { customerLineText, readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
   import { printQuote } from '../../../lib/quote-print';
   import { formatCents } from '../../../lib/money';
   import { workTypeLabel } from '../../../lib/work-type';
@@ -441,6 +447,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
               items: items.map((item, index) => ({
                 label: item.label,
                 description: item.description || '',
+                measurements: readMeasurements(item),
                 quantity: item.quantity,
                 unitPriceCents: cents(inputs[index]),
               })),
@@ -507,6 +514,20 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       root.hidden = false;
 
       renderPricePanel(quote, items);
+      const measurementPanel = document.querySelector('[data-private-measurements]') as HTMLElement;
+      const measurementList = document.querySelector('[data-private-measurement-list]');
+      if (measurementPanel && measurementList) {
+        measurementPanel.hidden = quote.work_type === 'siding';
+        measurementList.replaceChildren();
+        items.forEach(item => readMeasurements(item).forEach((m: any, i: number) => {
+          const row = document.createElement('li');
+          row.textContent = `${customerLineText(item.label)} · ${m.location || `Opening ${i + 1}`} · ${m.width && m.height ? `${m.width} × ${m.height} in` : 'Measurements needed'} · ${m.kind === 'unit' ? 'Unit size' : m.kind === 'rough-opening' ? 'Rough opening' : 'Confirm measurement type'}`;
+          measurementList.append(row);
+        }));
+        if (!measurementList.children.length) {
+          const row = document.createElement('li'); row.textContent = 'No exact measurements entered yet. Add them in Edit quote before starting production.'; measurementList.append(row);
+        }
+      }
 
       const editLink = document.querySelector('[data-edit-link]');
       if (editLink instanceof HTMLAnchorElement) {
@@ -556,7 +577,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         itemsBody.innerHTML = '';
         for (const item of items) {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${esc(item.label)}</td><td>${esc(item.quantity)}</td><td>${money(item.unit_price_cents)}</td><td>${money(item.line_total_cents)}</td>`;
+          row.innerHTML = `<td>${esc(customerLineText(item.label))}</td><td>${esc(item.quantity)}</td><td>${money(item.unit_price_cents)}</td><td>${money(item.line_total_cents)}</td>`;
           itemsBody.append(row);
         }
       }
@@ -864,6 +885,9 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 </script>
 
 <style>
+  .qv-measurements { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); }
+  .qv-measurements summary { cursor: pointer; font-weight: 650; }
+  .qv-measurements li { margin: .4rem 0; }
   .qv-share{margin:0 0 1rem;padding:.7rem .9rem;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);background:var(--paper-sunk);font-size:var(--step--1)}
   .qv-share-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem}
   .qv-share-link{display:grid;gap:.5rem;margin-top:.6rem}

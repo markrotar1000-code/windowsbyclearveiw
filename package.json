@@ -101,7 +101,7 @@
     "test:quote-price-edit": "node --disable-warning=ExperimentalWarning scripts/test-quote-price-edit.mjs",
     "test:quote-view-hardening": "node --disable-warning=ExperimentalWarning scripts/test-quote-view-hardening.mjs",
     "test:quote-signing": "node --disable-warning=ExperimentalWarning scripts/test-quote-signing.mjs",
-    "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs",
+    "test:quote-to-job": "node --disable-warning=ExperimentalWarning scripts/test-quote-to-job-flow.mjs && node --disable-warning=ExperimentalWarning scripts/test-production-measurements.mjs",
     "find:google-place-id": "node scripts/find-google-place-id.mjs",
     "test:window-studio": "node scripts/test-window-studio.mjs",
     "test:google-tools": "node --disable-warning=ExperimentalWarning scripts/test-google-tools.mjs",

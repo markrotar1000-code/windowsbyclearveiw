@@ -21,15 +21,15 @@ const keys = (flow) => flow.steps.map((s) => `${s.key}:${s.state[0]}`).join(' ')
 // ── pure: windows ────────────────────────────────────────────────────────────────────────────────
 const quote = (over = {}) => ({ id: 'Q-1', status: 'draft', signatureMethod: 'digital', ...over });
 let f = computeFlow({ kind: 'windows', quote: quote() }, TODAY);
-assert.equal(keys(f), 'quote:d plan:c approved:t signed:t job:t scheduled:t field:t closed:t paid:t');
-assert.equal(f.next.label, 'Build the Build Plan');
-assert.equal(f.next.href, '/internal/quotes/build-plan?quoteId=Q-1');
+assert.equal(keys(f), 'quote:d signed:c job:t scheduled:t field:t closed:t paid:t');
+assert.equal(f.next.label, 'Sign the quote');
+assert.equal(f.next.href, '/internal/quotes/view?id=Q-1');
 
 f = computeFlow({ kind: 'windows', quote: quote(), plan: { exists: true, state: 'draft', stale: true } }, TODAY);
-assert.equal(f.next.label, 'Save the Build Plan again', 'a plan that no longer matches the quote is saved again, not approved');
+assert.equal(f.next.label, 'Sign the quote', 'a plan that no longer matches the quote is saved again, not approved');
 f = computeFlow({ kind: 'windows', quote: quote(), plan: { exists: true, state: 'draft', stale: false } }, TODAY);
-assert.equal(keys(f).split(' ').slice(0, 3).join(' '), 'quote:d plan:d approved:c');
-assert.equal(f.next.href, '/internal/quotes/build-plan-approval?quoteId=Q-1');
+assert.equal(keys(f).split(' ').slice(0, 3).join(' '), 'quote:d signed:c job:t');
+assert.equal(f.next.href, '/internal/quotes/view?id=Q-1');
 f = computeFlow({ kind: 'windows', quote: quote(), plan: { exists: true, state: 'approved', stale: false } }, TODAY);
 assert.equal(f.steps.find((s) => s.state === 'current').key, 'signed');
 assert.match(f.next.hint, /sign it on screen/i);
@@ -94,7 +94,7 @@ const qid = created.body.id;
 let live = await flowOf(`?quoteId=${qid}`);
 assert.equal(live.status, 'ok');
 assert.equal(live.kind, 'windows');
-assert.equal(live.next.label, 'Build the Build Plan', 'a new window quote starts at the Build Plan');
+assert.equal(live.next.label, 'Sign the quote', 'a new window quote starts at the Build Plan');
 
 assert.equal((await call(flowApi, 'GET', '/internal/api/flow')).status, 400);
 assert.equal((await call(flowApi, 'GET', '/internal/api/flow?quoteId=Q-NOPE')).status, 404);

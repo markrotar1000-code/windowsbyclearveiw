@@ -1,5 +1,7 @@
 # Stage 02 — Openings
 
+Exact private measurements are entered per opening in the quote builder, with width, height, room, and rough-opening/unit/unconfirmed type. Production generation consumes these fields directly. A typed measurement is distinct from manufacturer order verification.
+
 ## Inputs
 
 `01-scope` output plus explicit opening information from the quote.

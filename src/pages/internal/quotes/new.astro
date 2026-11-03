@@ -37,7 +37,7 @@ const catalog = {
         <label class="choice"><input type="radio" name="workType" value="windows" checked /> Windows</label>
         <label class="choice"><input type="radio" name="workType" value="siding" /> Siding</label>
       </div>
-      <p class="est-hint" data-work-type-hint>Window quotes go through the Build Plan before they can be signed. A siding quote is approved by its signature. The type is locked once the quote is saved.</p>
+      <p class="est-hint" data-work-type-hint>Enter the scope and private measurements here. After the customer signs, Start production creates the job with these details. The type is locked once saved.</p>
     </fieldset>
 
     <fieldset class="qb-block" data-notes-panel>
@@ -209,6 +209,9 @@ const catalog = {
 </InternalLayout>
 
 <script>
+  import { preparePrivateMeasurements, measurementEditor } from '../../../lib/quote-measurements';
+  import { readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
+  import { isOpeningLine } from '../../../../functions/_lib/build-plan-rules.mjs';
   import { formatCents } from '../../../lib/money';
   import { bindSupplierList } from '../../../scripts/supplier-list';
   import { QUANTITY_MESSAGE, wholeQuantity } from '../../../lib/quote-lines';
@@ -229,7 +232,7 @@ const catalog = {
     siding: { id: string; label: string }[];
   };
   type WorkType = 'windows' | 'siding';
-  type LineItem = { label: string; description: string; quantity: number; unitPrice: number };
+  type LineItem = { measurements?: any[]; label: string; description: string; quantity: number; unitPrice: number };
 
   // Unsent rough notes survive a reload or a phone lock for 12 hours, on this device only.
   const NOTES_KEY = 'cv-quote-rough-notes';
@@ -395,6 +398,7 @@ const catalog = {
       itemsEmpty.hidden = items.length > 0;
 
       items.forEach((item, index) => {
+        preparePrivateMeasurements(item);
         const row = document.createElement('tr');
 
         const labelCell = document.createElement('td');
@@ -408,6 +412,8 @@ const catalog = {
           items[index].label = labelInput.value;
         });
         labelCell.append(labelInput);
+        const measurements = workType === 'windows' && isOpeningLine(item.label) ? measurementEditor(item) : null;
+        if (measurements) labelCell.append(measurements.box);
 
         const qtyCell = document.createElement('td');
         qtyCell.className = 'qb-cell-qty';
@@ -437,6 +443,16 @@ const catalog = {
         qtyInputEl.addEventListener('invalid', () => {
           qtyInputEl.setAttribute('aria-invalid', 'true');
           lineProblem(qtyInputEl, QUANTITY_MESSAGE);
+        });
+        qtyInputEl.addEventListener('change', () => {
+          if (wholeQuantity(qtyInputEl.value) === null) return;
+          if ((item.measurements?.length || 0) > item.quantity) {
+            if (!confirm('Reducing quantity removes measurements for the extra openings. Continue?')) {
+              item.quantity = item.measurements!.length; qtyInputEl.value = String(item.quantity); updateTotals(); return;
+            }
+            item.measurements = item.measurements!.slice(0, item.quantity);
+          }
+          measurements?.refresh();
         });
         qtyCell.append(qtyInputEl);
 
@@ -1153,6 +1169,7 @@ const catalog = {
           items.push({
             label: item.label,
             description: item.description || '',
+            measurements: readMeasurements(item),
             quantity: item.quantity,
             unitPrice: item.unit_price_cents / 100,
           });
@@ -1258,6 +1275,7 @@ const catalog = {
         items: items.map((item) => ({
           label: item.label,
           description: item.description,
+          measurements: item.measurements || [],
           quantity: item.quantity,
           unitPriceCents: Math.round(item.unitPrice * 100),
         })),
@@ -1306,6 +1324,14 @@ const catalog = {
 </script>
 
 <style>
+  :global(.qb-measurements) { margin-top: .6rem; font-size: .85rem; white-space: normal; }
+  :global(.qb-measurements summary) { cursor: pointer; color: var(--accent-ink); font-weight: 650; }
+  :global(.qb-measurements p) { font-size: .8rem; line-height: 1.4; color: var(--ink-soft); }
+  :global(.qb-measurement-fields) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; border-top: 1px solid var(--line); padding: .65rem 0; }
+  :global(.qb-measurement-fields strong) { grid-column: 1 / -1; }
+  :global(.qb-measurement-fields label) { display: grid; gap: .2rem; min-width: 0; font-size: .8rem; }
+  :global(.qb-measurement-fields input), :global(.qb-measurement-fields select) { width: 100%; min-width: 0; box-sizing: border-box; }
+
 
   .qb-notes-actions { display: flex; flex-wrap: wrap; gap: var(--space-s); margin-top: var(--space-s); }
   .qb-notes-actions .btn { white-space: normal; overflow-wrap: normal; }

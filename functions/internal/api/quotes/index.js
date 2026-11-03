@@ -1,3 +1,4 @@
+import { ensureMeasurementsSchema } from '../../_lib/quote-measurements.mjs';
 import { TERMS_VERSION, json, parseQuoteBody } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
 import { ensureQuoteLeadColumn, parseLeadId, leadExists } from '../../_lib/lead-links.mjs';
@@ -32,6 +33,7 @@ export async function onRequestGet(context) {
   if (workType && !WORK_TYPES.includes(workType)) return json({ error: 'Choose Windows or Siding.' }, 400);
   const search = (url.searchParams.get('search') || '').trim().slice(0, 120);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
+  await ensureMeasurementsSchema(env.QUOTES_DB);
   const conditions = [], bindings = [];
   if (status) { conditions.push('q.status = ?'); bindings.push(status); }
   if (workType) { conditions.push('q.work_type = ?'); bindings.push(workType); }
@@ -96,6 +98,7 @@ export async function onRequestPost(context) {
   const { name, phone, email, address, city, role, notes, discountReason, cleanItems, subtotalCents, discountCents, totalCents, workType } = parsed;
   const signatureMethod = body.signatureMethod === 'digital' ? 'digital' : 'pen';
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
+  await ensureMeasurementsSchema(env.QUOTES_DB);
   const lead = parseLeadId(body.leadId);
   if (lead.error) return json({ error: lead.error }, 400);
   await ensureQuoteLeadColumn(env.QUOTES_DB);
@@ -116,9 +119,9 @@ export async function onRequestPost(context) {
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
-      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents)
-       VALUES (?,?,?,?,?,?,?)`,
-    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents)),
+      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json)
+       VALUES (?,?,?,?,?,?,?,?)`,
+    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements))),
   ]);
 
   const record = await ensureInvoiceForQuote(env.QUOTES_DB, id);

@@ -1,3 +1,4 @@
+import { customerLineText } from './quote-measurements.mjs';
 // Customer signing links for quotes.
 //
 // Mark creates a link for a draft quote; the customer opens it on their own
@@ -102,8 +103,8 @@ export function publicQuote(quote, items) {
       city: quote.customer_city || '',
     },
     items: (items || []).map((item) => ({
-      label: item.label,
-      description: item.description || '',
+      label: customerLineText(item.label),
+      description: customerLineText(item.description),
       quantity: Number(item.quantity) || 0,
       unitPriceCents: Number(item.unit_price_cents) || 0,
       lineTotalCents: Number(item.line_total_cents) || 0,
