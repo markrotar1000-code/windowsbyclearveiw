@@ -42,3 +42,5 @@ try {
   assert.deepEqual(contractTerms, originalTerms, 'PDF terms match the existing quote terms');
   console.log('PASS: attached customer/supplier PDFs, explicit supplier recipient, private downloads, missing configuration, unchanged terms, mocked Resend only');
 } finally { globalThis.fetch = originalFetch; }
+
+await import('./test-document-byte-budget.mjs');

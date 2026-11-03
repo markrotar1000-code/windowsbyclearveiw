@@ -305,6 +305,12 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       const send = document.querySelector('[data-share-send]');
       if (!(panel instanceof HTMLElement) || !(line instanceof HTMLElement) || !(actions instanceof HTMLElement)
         || !(linkBox instanceof HTMLElement) || !(urlInput instanceof HTMLInputElement) || !(send instanceof HTMLElement)) return;
+      const clearShownLink = () => {
+        linkBox.hidden = true;
+        urlInput.value = '';
+        send.replaceChildren();
+      };
+      clearShownLink();
       const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '');
       const button = (label: string, onClick: () => void, primary = false) => {
         const b = document.createElement('button');
@@ -322,6 +328,9 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         return a;
       };
       const request = async (method: 'POST' | 'DELETE') => {
+        // A replacement/revocation can succeed on the server even if its reply
+        // is lost. Stop exposing the once-shown URL before starting the write.
+        clearShownLink();
         actions.querySelectorAll('button').forEach((b) => { (b as HTMLButtonElement).disabled = true; });
         try {
           const r = await fetch(
@@ -334,7 +343,8 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
           if (!r.ok) throw new Error(data.error || 'Could not update the signing link.');
           loadShareLink(quoteId, method === 'POST' ? data : undefined);
         } catch (error) {
-          line.textContent = error instanceof Error ? error.message : 'Could not update the signing link.';
+          clearShownLink();
+          line.textContent = `${error instanceof Error ? error.message : 'Could not update the signing link.'} The previous link is hidden because its status could not be confirmed. Create a new link before sharing.`;
           actions.querySelectorAll('button').forEach((b) => { (b as HTMLButtonElement).disabled = false; });
         }
       };
@@ -344,8 +354,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
         const data = await r.json();
         const link = data.link || { state: 'none' };
         actions.replaceChildren();
-        send.replaceChildren();
-        linkBox.hidden = true;
+        clearShownLink();
         panel.hidden = false;
         if (data.quoteStatus !== 'draft') {
           line.textContent = link.state === 'signed'
@@ -371,7 +380,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
           actions.append(button(live ? 'New link' : 'Create signing link', () => request('POST'), !live));
           if (live) actions.append(button('Revoke', () => request('DELETE')));
         }
-        if (created?.url) {
+        if (created?.url && (link.state === 'sent' || link.state === 'viewed') && created.link?.createdAt === link.createdAt) {
           linkBox.hidden = false;
           urlInput.value = created.url;
           send.append(button('Copy link', async () => {

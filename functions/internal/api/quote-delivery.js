@@ -9,12 +9,23 @@ import { ensureSigningSchema, hashToken, LINK_TTL_DAYS } from '../_lib/quote-sig
 async function supplierContacts(db){await db.prepare('CREATE TABLE IF NOT EXISTS supplier_contacts(email TEXT PRIMARY KEY,name TEXT NOT NULL,updated_at TEXT NOT NULL)').run();return (await db.prepare('SELECT email,name FROM supplier_contacts ORDER BY name LIMIT 200').all()).results||[];}
 async function load(env,id){const quote=await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();if(!quote)return null;const {results:items}=await env.QUOTES_DB.prepare('SELECT * FROM quote_items WHERE quote_id = ? ORDER BY sort_order ASC, id ASC').bind(id).all();return{quote,items};}
 async function document(record,supplier,env){if(!supplier)return customerDocumentBytes(env,record);const bytes=await quotePdf(record.quote,record.items,{supplier:true,...await loadPdfAssets(env)});const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(record.items)))),b=>b.toString(16).padStart(2,'0')).join('');return{bytes,version:hash};}
-async function signingLink(env,quote,id){
+async function signingLink(env,quote,id,{allowCreate=true}={}){
   await ensureSigningSchema(env.QUOTES_DB);
   const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.INTERNAL_SESSION_SECRET||env.RESEND_API_KEY),{name:'HMAC',hash:'SHA-256'},false,['sign']);
   const raw=new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`quote-delivery:${quote.id}:${id}`)));
   const token=bytesToBase64(raw).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   const hash=await hashToken(token),now=new Date(),expires=new Date(now.getTime()+LINK_TTL_DAYS*86400000);
+  const existing=await env.QUOTES_DB.prepare('SELECT quote_id,revoked_at,signed_at,expires_at FROM quote_sign_links WHERE token_hash=?').bind(hash).first();
+  // A saved send may outlive its signing link: Mark can replace/revoke it while
+  // an email response is interrupted. Never resurrect that token or revoke the
+  // newer link merely because the old provider request is being retried.
+  if(existing){
+    if(existing.quote_id!==quote.id||existing.revoked_at||existing.signed_at||Date.parse(existing.expires_at)<=now.getTime())return null;
+    return `https://windowsbyclearview.com/sign#${token}`;
+  }
+  // A sealed/accepted send must reference the link in its original payload.
+  // Missing it (including after a signing-key change) requires a new send.
+  if(!allowCreate)return null;
   await env.QUOTES_DB.batch([
     env.QUOTES_DB.prepare('UPDATE quote_sign_links SET revoked_at=? WHERE quote_id=? AND token_hash<>? AND signed_at IS NULL AND revoked_at IS NULL').bind(now.toISOString(),quote.id,hash),
     env.QUOTES_DB.prepare('INSERT OR IGNORE INTO quote_sign_links(token_hash,quote_id,created_at,expires_at) VALUES(?,?,?,?)').bind(hash,quote.id,now.toISOString(),expires.toISOString()),
@@ -48,7 +59,10 @@ export async function onRequestPost(context){
   const prior=await env.QUOTES_DB.prepare('SELECT * FROM document_deliveries WHERE id=?').bind(requestId).first();
   if(prior && (prior.document_kind!==(supplier?'supplier':'quote')||prior.document_id!==record.quote.id||prior.document_version!==result.version||prior.recipient!==to))return json({error:'This send belongs to a different document or recipient. Start a new send.',status:409},409);
   let link='';
-  if(!supplier&&record.quote.status==='draft'&&!prior?.provider_id&&!prior?.sealed_payload)link=await signingLink(env,record.quote,requestId);
+  if(!supplier&&record.quote.status==='draft'){
+    link=await signingLink(env,record.quote,requestId,{allowCreate:!prior?.provider_id&&!prior?.sealed_payload});
+    if(!link)return json({error:'The signing link for this email was replaced, revoked or expired. Click Email quote + signing link again to start a new send.',code:'DELIVERY_LINK_UNAVAILABLE',resetDelivery:true},409);
+  }
   const subject=supplier?`ClearView supplier pricing request - ${record.quote.id}`:`${record.quote.status==='finalized'?'Your signed ClearView quote':'Your ClearView quote'} - ${record.quote.id}`;
   const message=supplier?'Please review the attached opening specification and return itemized pricing, availability, lead time and any exceptions. This is a pricing request. Confirm final specifications with Mark before ordering.':record.quote.status==='finalized'?'Your signed ClearView quote is attached for your records.':`Your quote is attached. Review and sign securely: ${link}`;
   const payload={from:env.RESEND_FROM||'Clearview Windows <estimates@windowsbyclearveiw.com>',to:[to],reply_to:env.INVOICE_REPLY_TO||env.NOTIFY_EMAIL||'owner@windowsbyclearveiw.com',subject,text:`${message}\n\nClearView Windows & Trim LLC\n(564) 208-0801`,...(link?{html:`<p>Your ClearView quote PDF is attached.</p><p><a href="${link}" style="display:inline-block;padding:12px 18px;background:#17616a;color:#fff;text-decoration:none;border-radius:6px">Review and sign your quote</a></p><p>Questions? Reply to this email or call (564) 208-0801.</p>`}:{}),attachments:[{filename:`ClearView-${supplier?'Supplier-Spec':'Quote'}-${record.quote.id}.pdf`,content:bytesToBase64(result.bytes)}]};

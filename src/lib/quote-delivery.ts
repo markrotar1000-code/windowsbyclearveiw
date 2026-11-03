@@ -1,4 +1,4 @@
-import { fetchJson } from './internal-fetch';
+import { fetchJson, InternalFetchError } from './internal-fetch';
 import { loadFailureMessage } from './load-failed';
 
 export function bindQuoteDelivery(quote: any) {
@@ -33,7 +33,16 @@ export function bindQuoteDelivery(quote: any) {
       try{sessionStorage.removeItem(storageKey);}catch{}
       await refreshHistory();
       status.textContent = `Email accepted for delivery to ${result.to}.`;
-    } catch (error) { status.textContent = loadFailureMessage(error); }
+    } catch (error) {
+      // Delivery conflicts require a fresh explicit send (changed document,
+      // replaced signing link or unrecoverable configuration). Retaining this
+      // ID would trap every later click in the same conflict. Never auto-send.
+      if(error instanceof InternalFetchError && error.status===409){
+        attempts.delete(attemptKey);
+        try{sessionStorage.removeItem(storageKey);}catch{}
+      }
+      status.textContent = loadFailureMessage(error);
+    }
     finally { button.disabled = false; }
   }));
   const prepare = root.querySelector('[data-prepare-share]') as HTMLButtonElement;

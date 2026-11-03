@@ -2,9 +2,9 @@ import { quotePdf } from './quote-pdf.mjs';
 import { contractTerms, TERMS_VERSION } from './pdf-terms.mjs';
 import { customerLineText } from './quote-measurements.mjs';
 import { loadPdfAssets } from './pdf-fonts.mjs';
-export const QUOTE_TEMPLATE_VERSION='2026-11-03.2';
-export const bytesToBase64=bytes=>{let value='';for(const byte of bytes)value+=String.fromCharCode(byte);return btoa(value);};
-export const base64ToBytes=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
+export const QUOTE_TEMPLATE_VERSION='2026-11-03.3';
+import { bytesToBase64, base64ToBytes } from './document-bytes.mjs';
+export { bytesToBase64, base64ToBytes } from './document-bytes.mjs';
 export async function ensureDocumentSchema(db) {
   await db.prepare(`CREATE TABLE IF NOT EXISTS quote_document_snapshots (quote_id TEXT PRIMARY KEY, template_version TEXT NOT NULL, terms_version TEXT, snapshot_json TEXT NOT NULL, pdf_base64 TEXT NOT NULL, sha256 TEXT NOT NULL, created_at TEXT NOT NULL)`).run();
   await db.prepare(`CREATE TRIGGER IF NOT EXISTS quote_document_snapshot_immutable BEFORE UPDATE ON quote_document_snapshots BEGIN SELECT RAISE(ABORT,'Signed document snapshots are immutable.'); END`).run();

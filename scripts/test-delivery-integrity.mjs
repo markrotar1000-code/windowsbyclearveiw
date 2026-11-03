@@ -88,3 +88,5 @@ try{
 
   console.log('PASS: PDF + signing link, retry idempotency, encrypted delivery attempts, Unicode frozen signed documents, immutable hash, verified replay-safe delivery events');
 }finally{globalThis.fetch=original;}
+
+await import('./test-delivery-signing-links.mjs');
