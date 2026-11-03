@@ -252,7 +252,7 @@ assert.match(hdr, /\.nav-group-toggle\s*\{\s*display:\s*none/, 'the group button
 assert.match(hdr, /@media \(min-width:\s*1401px\)\s*\{[\s\S]*?\.nav:not\(\[data-groups\]\) \.nav-group:focus-within \.nav-menu/, 'a dropdown must open on hover and focus without JavaScript');
 assert.ok(!/\.header-estimate\s*\{\s*display:\s*none;?\s*\}\s*\.header-inner/.test(hdr), '"Get an estimate" must not be hidden from 1401px up');
 const navLinkCount = [...hdr.matchAll(/\['\/[a-z-]+',\s*'[^']+'\]/g)].length;
-assert.equal(navLinkCount, 12, `the header must still link all twelve pages (found ${navLinkCount}); grouping them must not drop one`);
+assert.equal(navLinkCount, 13, `the header must link all thirteen pages (including Columbia Windows) (found ${navLinkCount}); grouping them must not drop one`);
 const topLevel = hdr.match(/const nav: NavItem\[\] = \[([\s\S]*?)\n\];/);
 assert.ok(topLevel, 'could not read the header nav list');
 assert.ok((topLevel[1].match(/^  (?:\{|\[)/gm) || []).length <= 7, 'the desktop header must keep at most seven top-level items; add new pages to a group');
