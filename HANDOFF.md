@@ -1,3 +1,7 @@
+## 2026-11-03 - Columbia mobile refinements
+
+Compact product headers pair each rendering with its series name on phones. Series shortcuts now explain the choice, and spec disclosures have unique accessible names. Responsive image sizes match the narrower phone renderings. All shared estimate links on `/columbia-windows` now carry Columbia scope (header, footer, and sticky mobile bar), including client-side navigation; individual series links retain their more specific scope. At 390px, closed-card stack measured 2816px versus 3092px before (about 9% shorter). Product facts and imagery unchanged. Validation and deployment recorded in the task report; physical-device testing not performed.
+
 ## 2026-11-03 - Full quote/invoice audit remediation (batch agents)
 
 Quote/invoice audit items are implemented across accounting, production, document delivery and recovery. Invoice balances/receipts derive payments and credits; original totals remain immutable. Optional due date/instructions, internal overdue reminders, audited credit/void, replacement invoice reconciliation hold, server invoice/payment search/paging are available. A replacement is never a second automatic receivable. No deposit, tax, due-date or payment-instruction defaults were invented.

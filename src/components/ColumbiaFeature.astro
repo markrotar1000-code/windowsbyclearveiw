@@ -16,7 +16,7 @@ import { columbiaSeries } from '../data/columbia';
       {columbiaSeries.map(series => (
         <a class="columbia-preview" href={`/columbia-windows#${series.id}`}>
           <div class="columbia-preview-image">
-            <Image src={series.image} alt={series.imageAlt} width={240} widths={[160, 240, 360]} sizes="160px" format="webp" loading="lazy" />
+            <Image src={series.image} alt={series.imageAlt} width={240} widths={[160, 240, 360]} sizes="(max-width: 800px) 72px, 160px" format="webp" loading="lazy" />
           </div>
           <div><p class="kicker">{series.label}</p><h3>{series.name} Series <span aria-hidden="true">↗</span></h3><p>{series.styles}</p></div>
         </a>
