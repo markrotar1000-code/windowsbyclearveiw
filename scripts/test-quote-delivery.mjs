@@ -37,10 +37,14 @@ try {
   assert.equal((await delivery.onRequestPost({ ...request('POST', { quoteId: id, kind: 'customer' }), env: { QUOTES_DB: env.QUOTES_DB } })).status, 503);
   const source = fs.readFileSync(new URL('../src/data/contractTerms.ts', import.meta.url), 'utf8');
   const from = source.indexOf('export const contractTerms =');
-  const expression = source.slice(from).replace('export const contractTerms =', 'return');
+  const end = source.indexOf('\n};', from) + 3;
+  assert.ok(end > from, 'Current terms declaration is present');
+  const expression = source.slice(from, end).replace('export const contractTerms =', 'return');
   const originalTerms = new Function('site', 'WARRANTY_YEARS', expression)({ legalName: 'Clearview Windows & Trim LLC' }, 1);
   assert.deepEqual(contractTerms, originalTerms, 'PDF terms match the existing quote terms');
   console.log('PASS: attached customer/supplier PDFs, explicit supplier recipient, private downloads, missing configuration, unchanged terms, mocked Resend only');
 } finally { globalThis.fetch = originalFetch; }
 
 await import('./test-document-byte-budget.mjs');
+
+await import('./test-pdf-text-wrap.mjs');

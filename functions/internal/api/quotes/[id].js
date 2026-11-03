@@ -1,7 +1,7 @@
 import { ensureQuoteRevisionSchema, guardedQuoteBatch, revisionConflict } from '../../_lib/quote-concurrency.mjs';
 import { freezeSignedQuote } from '../../_lib/quote-documents.mjs';
 import { ensureMeasurementsSchema } from '../../_lib/quote-measurements.mjs';
-import { json, clean, parseQuoteBody } from '../../_lib/quotes.mjs';
+import { json, clean, parseQuoteBody, TERMS_VERSION } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
 import { ensureSigningSchema, renderSignatureSvg } from '../../_lib/quote-signing.mjs';
 import { ensureFollowUpSchema } from '../../_lib/quote-follow-ups.mjs';
@@ -69,8 +69,8 @@ export async function onRequestPut(context) {
     env.QUOTES_DB.prepare(
       `UPDATE quotes SET updated_at = ?, customer_name = ?, customer_phone = ?, customer_email = ?, customer_address = ?,
         customer_city = ?, customer_role = ?, notes = ?, subtotal_cents = ?, discount_cents = ?,
-        discount_reason = ?, total_cents = ?, signature_method = ?, revision = revision + 1 WHERE id = ?`,
-    ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, id),
+        discount_reason = ?, total_cents = ?, signature_method = ?, terms_version = ?, revision = revision + 1 WHERE id = ?`,
+    ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, TERMS_VERSION, id),
     env.QUOTES_DB.prepare('DELETE FROM quote_items WHERE quote_id = ?').bind(id),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
       `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
@@ -116,6 +116,7 @@ export async function onRequestPatch(context) {
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is not awaiting a signature.' }, 409);
+  if (quote.terms_version !== TERMS_VERSION) return json({ error: 'Contract terms have changed. Edit and save this draft, then review the updated terms before signing.', code: 'TERMS_CHANGED' }, 409);
   if (body.expectedRevision !== undefined && Number(body.expectedRevision) !== Number(quote.revision)) return revisionConflict();
 
   const now = new Date().toISOString();

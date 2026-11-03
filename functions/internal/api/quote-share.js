@@ -6,7 +6,7 @@
 //
 // See functions/internal/_lib/quote-signing.mjs for the security model.
 
-import { json, clean } from '../_lib/quotes.mjs';
+import { json, clean, TERMS_VERSION } from '../_lib/quotes.mjs';
 import { ensureSigningSchema, newToken, hashToken, linkStatus, LINK_TTL_DAYS } from '../_lib/quote-signing.mjs';
 import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
@@ -22,9 +22,9 @@ export async function onRequestGet(context) {
   await ensureSigningSchema(db);
   const quoteId = clean(new URL(request.url).searchParams.get('quoteId'), 64);
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
-  const quote = await db.prepare(`SELECT id, status FROM quotes WHERE id = ?`).bind(quoteId).first();
+  const quote = await db.prepare(`SELECT id, status, terms_version FROM quotes WHERE id = ?`).bind(quoteId).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
-  const gate = null; // Production planning does not block customer signing.
+  const gate = quote.status === 'draft' && quote.terms_version !== TERMS_VERSION ? { code: 'TERMS_CHANGED', message: 'Edit and save this draft to update its contract terms, then send a fresh signing link.' } : null;
   return json({ quoteId, quoteStatus: quote.status, link: linkStatus(await latestLink(db, quoteId)), canCreate: quote.status === 'draft' && !gate, blockedBy: gate });
 }
 
@@ -37,9 +37,10 @@ export async function onRequestPost(context) {
   await ensureSigningSchema(db);
   const quoteId = clean(body?.quoteId, 64);
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
-  const quote = await db.prepare(`SELECT id, status, customer_name, customer_phone, customer_email FROM quotes WHERE id = ?`).bind(quoteId).first();
+  const quote = await db.prepare(`SELECT id, status, terms_version, customer_name, customer_phone, customer_email FROM quotes WHERE id = ?`).bind(quoteId).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is already signed.' }, 409);
+  if (quote.terms_version !== TERMS_VERSION) return json({ error: 'Edit and save this draft to update its contract terms, then send a fresh signing link.', code: 'TERMS_CHANGED' }, 409);
   // Never send a customer a quote that could not be signed.
 
   const token = newToken();
