@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import { createD1 } from './_lib/d1-sqlite.mjs';
 import * as quotes from '../functions/internal/api/quotes/index.js';
 import * as quote from '../functions/internal/api/quotes/[id].js';
+import * as delivery from '../functions/internal/api/quote-delivery.js';
 import * as flow from '../functions/internal/api/flow.js';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -19,14 +20,15 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 try {
   for (const width of [390, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 950 } });
+    await page.addInitScript(() => { navigator.canShare = () => true; navigator.share = async data => { window.__sharedPdf = data.files[0].name; }; });
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.route('**/internal/api/**', async route => {
       const req = route.request(), url = new URL(req.url());
       const id = url.pathname.match(/\/quotes\/(Q-[^/]+)$/)?.[1];
-      const handler = url.pathname === '/internal/api/quotes' ? quotes.onRequestPost : id ? (req.method() === 'PUT' ? quote.onRequestPut : quote.onRequestGet) : url.pathname === '/internal/api/flow' ? flow.onRequest : null;
+      const handler = url.pathname === '/internal/api/quotes' ? quotes.onRequestPost : id ? (req.method() === 'PUT' ? quote.onRequestPut : quote.onRequestGet) : url.pathname === '/internal/api/flow' ? flow.onRequest : url.pathname === '/internal/api/quote-delivery' ? delivery.onRequest : null;
       if (!handler) return route.fulfill({ json: {} });
       const response = await handler({ env, params: { id }, request: new Request(req.url(), { method: req.method(), headers: { 'content-type': 'application/json' }, body: req.method() === 'GET' ? undefined : req.postData() }), waitUntil() {} });
-      await route.fulfill({ status: response.status, contentType: 'application/json', body: await response.text() });
+      await route.fulfill({ status: response.status, contentType: response.headers.get('content-type') || 'application/json', body: Buffer.from(await response.arrayBuffer()) });
     });
     const base = `http://localhost:${server.address().port}`;
     await page.goto(base + '/internal/quotes/new');
@@ -46,6 +48,9 @@ try {
     await page.locator('[data-submit]').click();
     await page.waitForURL('**/internal/quotes/view?id=*');
     await page.locator('[data-contract]:not([hidden])').waitFor();
+    await page.locator('[data-share-pdf]:not([hidden])').waitFor();
+    await page.locator('[data-share-pdf]').click();
+    assert.match(await page.evaluate(() => window.__sharedPdf), /ClearView-Quote-Q-/);
     const id = new URL(page.url()).searchParams.get('id');
     assert.ok(!(await page.locator('[data-contract]').innerText()).includes('35 1/2'), 'customer copy excludes dimensions');
     assert.ok((await page.locator('[data-private-measurement-list]').textContent()).includes('35 1/2'), 'internal view retains dimensions');

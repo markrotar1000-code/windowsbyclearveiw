@@ -43,6 +43,20 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
     <button class="btn btn-primary" type="button" data-price-save>Save prices</button>
   </section>
 
+  <section class="qv-delivery no-print" data-delivery hidden aria-label="Send documents">
+    <h2>Send quote</h2>
+    <div class="qv-delivery-grid">
+      <div><label>Customer email<input type="email" data-delivery-email /></label><button class="btn btn-primary" type="button" data-send-kind="customer">Email quote PDF</button></div>
+      <div><label>Customer phone<input type="tel" data-delivery-phone /></label><button class="btn btn-ghost" type="button" data-prepare-share>Prepare PDF for text</button><button class="btn btn-primary" type="button" data-share-pdf hidden>Text / share PDF</button><button class="btn btn-ghost" type="button" data-open-text>Open text to this number</button></div>
+    </div>
+    <a class="btn btn-ghost" data-pdf-kind="customer">Download quote PDF</a>
+    <details><summary>Supplier specification sheet</summary><p>Opening schedule and private field measurements for supplier pricing. Customer prices and contact details are excluded. Unspecified product options are marked for confirmation.</p>
+      <label>Supplier email<input type="email" data-supplier-email /></label>
+      <a class="btn btn-ghost" data-pdf-kind="supplier" target="_blank" rel="noopener">Preview supplier PDF</a>
+      <button class="btn btn-primary" type="button" data-send-kind="supplier">Email supplier spec sheet</button>
+    </details>
+    <p data-delivery-status role="status" aria-live="polite"></p>
+  </section>
   <details class="qv-measurements no-print" data-private-measurements hidden>
     <summary>Private measurements &amp; production details</summary>
     <p>These stay inside the Command Center and carry into the job.</p>
@@ -175,6 +189,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 
 <script>
   import { customerLineText, readMeasurements } from '../../../../functions/internal/_lib/quote-measurements.mjs';
+  import { bindQuoteDelivery } from '../../../lib/quote-delivery';
   import { printQuote } from '../../../lib/quote-print';
   import { formatCents } from '../../../lib/money';
   import { workTypeLabel } from '../../../lib/work-type';
@@ -513,6 +528,7 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
       if (toolbar instanceof HTMLElement) toolbar.hidden = false;
       root.hidden = false;
 
+      bindQuoteDelivery(quote);
       renderPricePanel(quote, items);
       const measurementPanel = document.querySelector('[data-private-measurements]') as HTMLElement;
       const measurementList = document.querySelector('[data-private-measurement-list]');
@@ -885,6 +901,16 @@ import { contractTerms, WARRANTY_YEARS } from '../../../data/contractTerms';
 </script>
 
 <style>
+  .qv-delivery { padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); margin: 1rem 0; }
+  .qv-delivery h2 { font-size: 1.2rem; margin-top: 0; }
+  .qv-delivery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .qv-delivery label { display: grid; gap: .3rem; margin-bottom: .6rem; }
+  .qv-delivery input { font: inherit; width: 100%; min-width: 0; box-sizing: border-box; padding: .6rem; border: 1px solid var(--line); border-radius: 6px; }
+  .qv-delivery .btn { margin: .25rem 0; }
+  .qv-delivery details { margin-top: 1rem; }
+  .qv-delivery summary { cursor: pointer; font-weight: 650; }
+  @media(max-width:600px) { .qv-delivery-grid { grid-template-columns: minmax(0, 1fr); } }
+
   .qv-measurements { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--radius); }
   .qv-measurements summary { cursor: pointer; font-weight: 650; }
   .qv-measurements li { margin: .4rem 0; }
