@@ -1,3 +1,7 @@
+## 2026-11-03 - Columbia Windows product section
+
+Owner-authorized Columbia supplier section: `/columbia-windows`, homepage feature, Services/footer links, and window-features cross-link. Uses attributed, self-hosted supplier product renderings, gallery photos, and glass/frame cutaways, with series-specific specs and estimate scope handoff. Permission and asset/source provenance: `docs/COLUMBIA-WINDOWS.md`. No pricing/warranty or rating claims beyond verified options. Browser coverage: 320/390/768/1440, disclosures, image loading, estimate handoff, navigation, and 200% text. Physical-device testing not performed. All 89 canonical checks accounted for across the full run and focused fixes/rechecks; final 71-page build passed. Production verification pending merge.
+
 ## 2026-10-31 - Astro 7.4.2 and the Node pin
 
 If a Dependabot Astro bump raises `engines.node`, raise `.node-version`, `package.json` engines, `build.yml`, `deploy-ops-cron.yml` and README in the same PR, or Cloudflare Pages and CI fail. `pricing-health.yml` uses `node-version: 22` (floating) and needs no change.

@@ -1,0 +1,49 @@
+---
+import { Image } from 'astro:assets';
+import { columbiaSeries } from '../data/columbia';
+---
+<section class="section section-sunk" aria-labelledby="columbia-heading">
+  <div class="wrap">
+    <div class="columbia-intro">
+      <div>
+        <p class="rule-label">Featured supplier · Columbia Windows</p>
+        <h2 id="columbia-heading">More choices for your home.</h2>
+        <p class="lede">Explore three Columbia window series with ClearView. We’ll help you choose the style and glass for each room.</p>
+      </div>
+      <a class="btn btn-primary" href="/columbia-windows">Explore Columbia Windows <span aria-hidden="true">→</span></a>
+    </div>
+    <div class="columbia-preview-grid">
+      {columbiaSeries.map(series => (
+        <a class="columbia-preview" href={`/columbia-windows#${series.id}`}>
+          <div class="columbia-preview-image">
+            <Image src={series.image} alt={series.imageAlt} width={240} widths={[160, 240, 360]} sizes="160px" format="webp" loading="lazy" />
+          </div>
+          <div><p class="kicker">{series.label}</p><h3>{series.name} Series <span aria-hidden="true">↗</span></h3><p>{series.styles}</p></div>
+        </a>
+      ))}
+    </div>
+    <p class="fine-print columbia-credit">Product imagery courtesy of Columbia Windows.</p>
+  </div>
+</section>
+<style>
+  .columbia-intro { display: flex; align-items: center; justify-content: space-between; gap: var(--space-l); margin-bottom: var(--space-l); }
+  .columbia-intro .lede { max-width: 45ch; margin-bottom: 0; }
+  .columbia-intro .btn { flex-shrink: 0; }
+  .columbia-preview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
+  .columbia-preview { display: grid; grid-template-columns: minmax(0, 1fr); background: var(--paper-raised); padding: var(--space-m); border: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+  .columbia-preview:hover { border-color: var(--accent); }
+  .columbia-preview-image { height: 220px; display: grid; place-items: center; margin-bottom: var(--space-s); }
+  .columbia-preview-image img { height: 220px; width: 160px; object-fit: contain; }
+  .columbia-preview h3 { display: flex; justify-content: space-between; gap: var(--space-xs); }
+  .columbia-preview p:last-child { color: var(--ink-soft); font-size: var(--step--1); margin: 0; }
+  .columbia-credit { margin-top: var(--space-s); }
+  @media (max-width: 800px) {
+    .columbia-intro { display: block; }
+    .columbia-intro .btn { margin-top: var(--space-m); }
+    .columbia-preview-grid { grid-template-columns: minmax(0, 1fr); }
+    .columbia-preview { grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: var(--space-s); }
+    .columbia-preview-image { height: 140px; margin: 0; }
+    .columbia-preview-image img { width: 72px; height: 140px; }
+    .columbia-preview h3 { font-size: var(--step-1); }
+  }
+</style>

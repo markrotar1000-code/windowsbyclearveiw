@@ -1,0 +1,121 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CtaBar from '../components/CtaBar.astro';
+import { columbiaSeries } from '../data/columbia';
+import homePhoto from '../assets/columbia/synergy-home.webp';
+import glass from '../assets/columbia/insulated-glass.webp';
+import profile from '../assets/columbia/vinyl-profile.jpg';
+---
+<BaseLayout title="Columbia Windows | Styles & Options" description="Explore Columbia Victory, Synergy, and Nova windows with ClearView. See supplier photos, glass and frame diagrams, opening styles, and specifications." path="/columbia-windows" crumbs={[{ name: 'Columbia Windows', href: '/columbia-windows' }]} ogImageSrc={homePhoto} ogImageAlt="Columbia Windows supplier photo of white windows overlooking a deck.">
+  <section class="columbia-hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="rule-label">Columbia Windows + ClearView</p>
+        <h1>Find the window that fits your home.</h1>
+        <p class="lede">Columbia Windows is one of our main suppliers. Explore the styles, see what’s inside, and let ClearView help you choose the right configuration.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="/estimate?scope=Columbia%20Windows">Get a Columbia window estimate</a><a class="text-link" href="#series">Compare the series <span aria-hidden="true">↓</span></a></div>
+      </div>
+      <figure class="hero-photo">
+        <Image src={homePhoto} alt="White windows on a light-sided house overlooking a deck and garden." width={960} widths={[480, 720, 960]} sizes="(max-width: 800px) calc(100vw - 48px), 50vw" format="webp" quality={82} loading="eager" fetchpriority="high" />
+        <figcaption>From Columbia’s Synergy gallery · Supplier photo</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" id="series" aria-labelledby="series-heading">
+    <div class="wrap">
+      <p class="rule-label">Meet the collection</p>
+      <h2 id="series-heading">Three series. Start with how it opens.</h2>
+      <p class="lede section-intro">Compare the opening styles below. We’ll confirm the series, sizes, glass, and finish in your written estimate.</p>
+      <nav class="series-jumps" aria-label="Columbia window series">{columbiaSeries.map(s => <a href={`#${s.id}`}>{s.name}<span aria-hidden="true">↓</span></a>)}</nav>
+      <div class="series-grid">
+        {columbiaSeries.map((series, index) => (
+          <article class="series-card" id={series.id}>
+            <div class="series-product"><span class="series-number" aria-hidden="true">0{index + 1}</span><Image src={series.image} alt={series.imageAlt} width={280} widths={[200, 280, 400]} sizes="200px" format="webp" loading="lazy" /></div>
+            <div class="series-copy">
+              <p class="kicker">{series.label}</p><h3>{series.name} Series</h3><p>{series.description}</p>
+              <dl class="quick-spec"><dt>Opening styles</dt><dd>{series.styles}</dd><dt>Frame material</dt><dd>Vinyl</dd></dl>
+              <details><summary>Specifications &amp; options</summary><dl class="spec-details"><dt>Grille patterns</dt><dd>Colonial, prairie, top down</dd><dt>Grille profiles</dt><dd>5/8″ flat, 5/8″ sculptured, 1″ sculptured</dd><dt>Glass choices</dt><dd>Cardinal LoĒ²-272 and LoĒ³-366; bronze and gray tints; satin, rain, and 516 privacy glass</dd><dt>Frame construction</dt><dd>MikronBlend® vinyl with multiple internal chambers</dd></dl><p class="fine-print">Options are listed by Columbia for this series. Availability and performance depend on the selected size and configuration.</p><a class="source-link" href={series.source} target="_blank" rel="noopener noreferrer">Columbia’s {series.name} specifications <span aria-hidden="true">↗</span></a></details>
+              <a class="btn btn-primary series-cta" href={`/estimate?scope=${encodeURIComponent(`Columbia ${series.name} Series windows`)}`}>Ask about {series.name}</a>
+            </div>
+            <figure class="series-photo"><Image src={series.photo} alt={series.photoAlt} width={640} widths={[400, 640, 960]} sizes="(max-width: 800px) calc(100vw - 48px), 33vw" format="webp" quality={78} loading="lazy" /><figcaption>Columbia {series.name} gallery · Supplier photo</figcaption></figure>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-sunk" aria-labelledby="inside-heading">
+    <div class="wrap">
+      <p class="rule-label">A closer look</p><h2 id="inside-heading">What’s inside the glass and frame.</h2><p class="lede section-intro">Columbia’s cutaway graphics make the construction easier to see. The key details are written out below each image.</p>
+      <div class="cutaway-grid">
+        <article class="cutaway"><figure><Image src={glass} alt="Insulated-glass cutaway showing two panes, a spacer, desiccant beads, and the edge-seal assembly." width={560} widths={[320, 560, 800]} sizes="(max-width: 800px) calc(100vw - 80px), 500px" format="webp" loading="lazy" /><figcaption>Insulated-glass diagram supplied by Columbia Windows</figcaption></figure><h3>Insulated glass</h3><dl class="spec-details"><dt>Stainless steel spacer</dt><dd>Separates the panes at the edge of the glass unit.</dd><dt>PIB primary seal</dt><dd>Helps limit moisture entry and retain argon.</dd><dt>Desiccant beads</dt><dd>Absorb moisture within the sealed glass unit.</dd><dt>Silicone secondary seal</dt><dd>Supports adhesion and durability around the edge.</dd></dl></article>
+        <article class="cutaway"><figure><Image src={profile} alt="Close-up of a white vinyl window profile showing multiple internal chambers." width={560} widths={[320, 560]} sizes="(max-width: 800px) calc(100vw - 80px), 500px" format="webp" loading="lazy" /><figcaption>Vinyl profile graphic supplied by Columbia Windows</figcaption></figure><h3>Chambered vinyl frame</h3><p>Columbia lists MikronBlend® vinyl and multiple internal chambers across these series. The cavities create insulating air spaces within the frame.</p><p>The profile shown explains the construction concept. The exact frame shape depends on the window series and opening style.</p><a class="source-link" href="https://columbia-windows.com/synergy-series/" target="_blank" rel="noopener noreferrer">See Columbia’s construction details <span aria-hidden="true">↗</span></a></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap selection-grid"><div><p class="rule-label">Make it your own</p><h2>Choose the details room by room.</h2><p class="lede">A sunny living room and a private bathroom may need different glass. We’ll talk through the options when we measure.</p></div><div class="selection-list"><div><h3>Glass &amp; privacy</h3><p>Compare low-emissivity glass, bronze or gray tint, and satin, rain, or 516 privacy patterns.</p></div><div><h3>Color &amp; grilles</h3><p>Explore grille patterns and custom paint options with ClearView. Confirm current finishes and samples before ordering.</p></div><div><h3>Ratings &amp; fit</h3><p>Ask for the U-factor, solar heat gain coefficient, and applicable performance documentation for your exact window configuration. Sizes, glass packages, and opening styles affect the ratings.</p></div></div></div>
+    <div class="wrap source-note"><p class="fine-print">Photos and diagrams courtesy of Columbia Windows, used with permission. Product information checked November 3, 2026 against Columbia’s <a href="https://columbia-windows.com/victory-series/">Victory</a>, <a href="https://columbia-windows.com/synergy-series/">Synergy</a>, and <a href="https://columbia-windows.com/nova-series/">Nova</a> pages. Final availability, specifications, and warranty terms are confirmed for your order.</p></div>
+  </section>
+  <CtaBar heading="Let’s choose your Columbia windows." body="Tell us which rooms you’re updating. We’ll measure the openings and put the window series, options, and installation in a written estimate." estimateHref="/estimate?scope=Columbia%20Windows" showToolLink={false} showAskLink={false} />
+</BaseLayout>
+
+<style>
+  .columbia-hero { padding: var(--space-xl) 0; background: var(--paper-sunk); }
+  .hero-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); align-items: center; }
+  .hero-copy h1 { max-width: 14ch; }
+  .hero-copy .lede { max-width: 44ch; }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-m); }
+  .text-link { padding: var(--space-xs) 0; font-weight: 600; }
+  figure { margin: 0; }
+  .hero-photo img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+  figcaption { font-size: var(--step--2); color: var(--ink-soft); padding-top: var(--space-xs); }
+  .section-intro { max-width: 62ch; }
+  .series-jumps { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-l) 0; }
+  .series-jumps a { display: flex; gap: var(--space-m); align-items: center; min-height: 48px; padding: var(--space-xs) var(--space-m); border: 1px solid var(--line-strong); color: var(--ink); text-decoration: none; }
+  .series-jumps a:hover { background: var(--accent-wash); }
+  .series-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-m); align-items: start; }
+  .series-card { border: 1px solid var(--line); background: var(--paper-raised); scroll-margin-top: 110px; min-width: 0; }
+  .series-product { display: grid; place-items: center; position: relative; height: 300px; padding: var(--space-m); background: var(--paper-sunk); }
+  .series-product img { height: 250px; width: 200px; object-fit: contain; }
+  .series-number { position: absolute; left: var(--space-m); top: var(--space-m); color: var(--ink-soft); font-size: var(--step--1); }
+  .series-copy { padding: var(--space-m); }
+  .series-copy > p:not(.kicker) { min-height: 6em; color: var(--ink-soft); }
+  .quick-spec, .spec-details { margin: var(--space-m) 0; }
+  dt { font-weight: 650; font-size: var(--step--1); margin-top: var(--space-s); }
+  dd { margin: var(--space-3xs) 0 0; color: var(--ink-soft); font-size: var(--step--1); }
+  details { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  summary { cursor: pointer; padding: var(--space-s) 0; font-weight: 600; min-height: 48px; font-size: var(--step--1); }
+  details[open] { padding-bottom: var(--space-m); }
+  .source-link { display: inline-block; padding: var(--space-xs) 0; font-size: var(--step--1); }
+  .series-cta { width: 100%; margin-top: var(--space-m); }
+  .series-photo img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+  .series-photo figcaption { padding: var(--space-xs) var(--space-m); }
+  .cutaway-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-l); margin-top: var(--space-l); }
+  .cutaway { padding: var(--space-m); background: var(--paper-raised); min-width: 0; }
+  .cutaway figure { margin-bottom: var(--space-m); }
+  .cutaway img { width: 100%; height: 340px; object-fit: contain; }
+  .cutaway > p { color: var(--ink-soft); }
+  .selection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); }
+  .selection-list > div { padding: var(--space-m) 0; border-top: 1px solid var(--line); }
+  .selection-list h3 { font-size: var(--step-1); }
+  .selection-list p { color: var(--ink-soft); margin: 0; }
+  .source-note { margin-top: var(--space-l); }
+  #series { scroll-margin-top: 110px; }
+  @media (max-width: 800px) {
+    .hero-grid, .series-grid, .cutaway-grid, .selection-grid { grid-template-columns: minmax(0, 1fr); }
+    .hero-grid, .selection-grid { gap: var(--space-l); }
+    .hero-copy h1 { font-size: var(--step-5); max-width: 17ch; }
+    .hero-actions { align-items: stretch; flex-direction: column; gap: var(--space-xs); }
+    .hero-actions .btn { white-space: normal; text-align: center; }
+    .series-jumps { gap: var(--space-2xs); }
+    .series-jumps a { flex: 1; justify-content: space-between; gap: var(--space-2xs); padding: var(--space-xs); }
+    .series-product { height: 230px; }
+    .series-product img { height: 200px; }
+    .series-copy > p:not(.kicker) { min-height: 0; }
+    .cutaway img { height: 260px; }
+  }
+</style>
