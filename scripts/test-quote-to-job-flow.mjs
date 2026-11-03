@@ -55,7 +55,7 @@ const makeJob = (env, quoteId) => call(jobs.onRequestPost, env, { method: 'POST'
   const env = freshEnv();
   const id = await createQuote(env);
   await saveGeneratedPlan(env, id);
-  assert((await sign(env, id)).body.code === 'BUILD_PLAN_REQUIRED' || (await sign(env, id)).status === 409, 'quote cannot be signed before plan approval');
+  assert((await makeJob(env, id)).status === 409, 'unsigned quote cannot start production');
   assert((await transition(env, id, 'submit-review')).status === 200, 'plan moves to review');
   assert((await transition(env, id, 'approve')).status === 200, 'plan is approved');
   assert((await sign(env, id)).status === 200, 'quote is signed after approval');
@@ -107,7 +107,11 @@ const makeJob = (env, quoteId) => call(jobs.onRequestPost, env, { method: 'POST'
   const approve = await transition(env, id, 'approve');
   assert(approve.status === 409 && approve.body.code === 'BUILD_PLAN_STALE', 'approval is refused when the plan was built for different quote items');
   const signed = await sign(env, id);
-  assert(signed.status === 409, 'the customer cannot sign a quote whose plan does not match it');
+  assert(signed.status === 200, 'optional stale plan does not block signing');
+  const job = await makeJob(env, id);
+  assert(job.status === 201, 'production regenerates from the signed quote');
+  const snapshot = JSON.parse(env.QUOTES_DB.raw.prepare('SELECT build_plan_json FROM jobs WHERE id = ?').get(job.body.id).build_plan_json);
+  assert(snapshot.openings.length === 5, 'production uses current quantity, not the stale plan');
 }
 
 // 4. Money stays in whole cents even for fractional quantities (e.g. linear feet of trim).

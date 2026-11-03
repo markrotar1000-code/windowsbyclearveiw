@@ -1,3 +1,4 @@
+import { readMeasurements } from '../internal/_lib/quote-measurements.mjs';
 export const BUILD_PLAN_KNOWLEDGE_VERSION = '2026-09-08.2';
 
 // Durable rules are separated from product-specific requirements. Product-specific
@@ -78,6 +79,6 @@ export function lintPlan(plan,items=[]) {
 }
 // A price is not a build fact: Mark can change what a line costs at any time before the quote is signed
 // without invalidating an approved Build Plan. Only what is installed (label, quantity, description) counts.
-export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||'')}));}
+export function sourceSnapshot(items=[]){return items.map((item,index)=>({index,label:String(item.label||''),quantity:Number(item.quantity)||0,description:String(item.description||''),...(readMeasurements(item).length?{measurements:readMeasurements(item)}:{})}));}
 const withoutPrice=(rows)=>(rows||[]).map(({lineTotalCents,...rest})=>rest); // snapshots saved before 2026-10-16 carried the line total
 export function sameSource(a,b){return JSON.stringify(withoutPrice(a))===JSON.stringify(withoutPrice(b));}

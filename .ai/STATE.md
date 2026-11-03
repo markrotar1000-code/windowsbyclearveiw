@@ -1,3 +1,13 @@
+## 2026-11-03 - Quote and supplier PDF delivery
+
+Saved quote screen provides customer email through Resend with a PDF attachment, PDF download, native file sharing for text, and explicit supplier recipient plus PDF preview/send. Native sharing cannot preselect a recipient; separate sms: opens the supplied number without an attachment. UI says when a browser requires manual attachment. Server-generated PDF customer copy excludes exact measurements; supplier RFQ includes measured sizes/type and flags missing specifications, excluding customer contact/prices/internal notes. No real messages sent during automated checks. Resend acceptance is distinguished from delivery confirmation. Missing RESEND_API_KEY returns an actionable error.
+
+## 2026-11-03 - Direct quote-to-production handoff
+
+Owner-directed flow: quote → customer signature → Start production. Separate Build Plan approval is no longer required for sharing, signing, or job creation. Starting production snapshots the signed quote and private opening measurements; optional current custom plan instructions are retained. Existing historical approvals remain historical records. Missing measurements remain explicit VERIFY items, never fabricated.
+
+Quote builder has per-opening width/height, room, and measurement type. Values use exact sixteenths and persist in quote_items.measurements_json; public signing uses a whitelist, printable quote uses customer line text, invoices omit the private column. Legacy size pairs in line copy are extracted into private records on save and removed from customer-facing text. New handler and browser regressions cover privacy and handoff.
+
 ## 2026-10-31 - Node pin is 22.23.4
 
 Astro 7.4.2 needs Node >=22.23.4. `.node-version`, package `engines`, `build.yml`, `deploy-ops-cron.yml` and the README all say 22.23.4; change them together when Astro raises the minimum again. Detail: .ai/CHANGELOG.md 2026-10-31.

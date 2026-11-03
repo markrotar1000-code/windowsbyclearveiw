@@ -1,6 +1,6 @@
+import { ensureMeasurementsSchema } from '../../_lib/quote-measurements.mjs';
 import { json, clean, parseQuoteBody } from '../../_lib/quotes.mjs';
 import { ensureInvoiceForQuote, ensureInvoiceSchema } from '../../_lib/invoices.mjs';
-import { requireApprovedBuildPlan } from '../../_lib/quote-gates.mjs';
 import { ensureSigningSchema, renderSignatureSvg } from '../../_lib/quote-signing.mjs';
 import { ensureFollowUpSchema } from '../../_lib/quote-follow-ups.mjs';
 import { ensureQuoteWorkTypeColumn, workTypeOf } from '../../_lib/work-types.mjs';
@@ -11,6 +11,7 @@ export async function onRequestGet(context) {
   const id = String(params.id || '');
   await ensureInvoiceSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
+  await ensureMeasurementsSchema(env.QUOTES_DB);
 
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
@@ -34,6 +35,7 @@ export async function onRequestPut(context) {
   const body = guard.body;
   const id = String(params.id || '');
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
+  await ensureMeasurementsSchema(env.QUOTES_DB);
   const quote = await env.QUOTES_DB.prepare('SELECT * FROM quotes WHERE id = ?').bind(id).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is already finalized and can no longer be edited.' }, 409);
@@ -67,9 +69,9 @@ export async function onRequestPut(context) {
     ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, id),
     env.QUOTES_DB.prepare('DELETE FROM quote_items WHERE quote_id = ?').bind(id),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
-      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents)
-       VALUES (?,?,?,?,?,?,?)`,
-    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents)),
+      `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json)
+       VALUES (?,?,?,?,?,?,?,?)`,
+    ).bind(id, index, item.label, item.description, item.quantity, item.unitPriceCents, item.lineTotalCents, JSON.stringify(item.measurements))),
   ]);
 
   await ensureInvoiceForQuote(env.QUOTES_DB, id);
@@ -115,8 +117,6 @@ export async function onRequestPatch(context) {
     if (quote.signature_method !== 'pen') return json({ error: 'This quote is not on the print-and-sign path.' }, 409);
     const signatureName = clean(body.signatureName, 200);
     if (!signatureName) return json({ error: 'Enter the name of the person who signed.' }, 400);
-    const gate = await requireApprovedBuildPlan(env.QUOTES_DB, id);
-    if (gate) return json({ error: gate.error, code: gate.code }, 409);
     // Conditional on still being a draft so two taps/devices can never both "win" the signature.
     const signed = await env.QUOTES_DB.prepare(
       `UPDATE quotes SET signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ? WHERE id = ? AND status = 'draft'`,
@@ -135,8 +135,6 @@ export async function onRequestPatch(context) {
   const rendered = renderSignatureSvg(body.signatureStrokes);
   if (rendered.error) return json({ error: rendered.error }, 400);
   const signatureSvg = rendered.svg;
-  const gate = await requireApprovedBuildPlan(env.QUOTES_DB, id);
-  if (gate) return json({ error: gate.error, code: gate.code }, 409);
 
   const signed = await env.QUOTES_DB.prepare(
     `UPDATE quotes SET signature_svg = ?, signature_name = ?, signed_at = ?, status = 'finalized', updated_at = ? WHERE id = ? AND status = 'draft'`,

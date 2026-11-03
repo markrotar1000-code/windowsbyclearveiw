@@ -16,14 +16,14 @@ process.removeAllListeners('warning');
 const pass = (message) => console.log(`PASS: ${message}`);
 const ORIGIN = 'https://windowsbyclearview.com';
 
-async function call(handler, env, { method = 'GET', path = '/', body, headers = {} } = {}) {
+async function call(handler, env, { method = 'GET', path = '/', body, headers = {}, params = {} } = {}) {
   const request = new Request(`${ORIGIN}${path}`, {
     method,
     headers: { 'content-type': 'application/json', ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const waits = [];
-  const response = await handler({ request, env, params: {}, waitUntil: (p) => waits.push(p) });
+  const response = await handler({ request, env, params, waitUntil: (p) => waits.push(p) });
   await Promise.all(waits);
   return { status: response.status, headers: response.headers, body: await response.json() };
 }
@@ -88,11 +88,11 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   const env = freshEnv();
   const plain = await call(quotesIndex.onRequestPost, env, { method: 'POST', body: { customer, items } });
   const blocked = await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: plain.body.id } });
-  assert.equal(blocked.status, 409, 'no link for a quote without an approved Build Plan');
+  assert.equal(blocked.status, 201, 'a draft can be shared without a separate build plan');
   const status = await call(share.onRequestGet, env, { path: `/?quoteId=${plain.body.id}` });
-  assert.equal(status.body.canCreate, false);
+  assert.equal(status.body.canCreate, true);
   assert.equal((await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: 'Q-NOPE' } })).status, 404);
-  pass('a signing link can only be created for an existing draft with an approved Build Plan');
+  pass('a signing link can only be created for an existing draft without a separate plan approval');
 }
 
 {
@@ -173,10 +173,10 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   const env = freshEnv();
   const id = await approvedQuote(env);
   const t = tokenOf((await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: id } })).body.url);
-  env.QUOTES_DB.raw.prepare(`UPDATE quote_items SET quantity = 3, line_total_cents = 270000 WHERE quote_id = ?`).run(id);
+  await call(quoteById.onRequestPut, env, { method: 'PUT', params: { id }, body: { customer, items: items.map(item => ({ ...item, quantity: 3 })), signatureMethod: 'pen' } });
   const stale = await submit(env, { t, name: 'Pat Doe', strokes, consent: true });
-  assert.equal(stale.status, 409);
-  assert.equal(stale.body.code, 'BUILD_PLAN_STALE', 'a quote changed after approval cannot be signed from an old link');
+  assert.equal(stale.status, 410);
+  assert.ok(stale.body.error, 'edited quotes revoke the old signing link');
 
   const env2 = freshEnv();
   const id2 = await approvedQuote(env2);
@@ -185,7 +185,7 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   const terms = await submit(env2, { t: t2, name: 'Pat Doe', strokes, consent: true });
   assert.equal(terms.body.code, 'TERMS_CHANGED', 'a customer never signs terms other than the ones their quote recorded');
   assert.equal(env2.QUOTES_DB.raw.prepare(`SELECT status FROM quotes WHERE id = ?`).get(id2).status, 'draft');
-  pass('the Build Plan and terms gates apply to customer signing exactly as they do on Mark\'s device');
+  pass('quote edits revoke links and customer signing enforces the recorded terms');
 }
 
 {
@@ -300,8 +300,8 @@ const submit = (env, body) => call(sign.onRequest, env, { method: 'POST', path: 
   });
   assert.equal(resized.status, 200);
   const stalePlan = await call(share.onRequestPost, env, { method: 'POST', body: { quoteId: id } });
-  assert.equal(stalePlan.status, 409, 'a new link needs the Build Plan re-approved first');
-  assert.equal(stalePlan.body.code, 'BUILD_PLAN_STALE');
+  assert.equal(stalePlan.status, 201, 'updated quote can be shared without repeating plan approval');
+
   pass('editing a draft revokes unsigned signing links');
 }
 

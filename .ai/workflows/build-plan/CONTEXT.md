@@ -1,5 +1,9 @@
 # Build Plan Pipeline
 
+## Current production flow
+
+Owner decision 2026-11-03: quote → signature → Start production. The separate review/approval pipeline below remains an optional legacy editor; it does not block signing or job creation. Start production is the explicit human handoff. The job receives a snapshot generated from the signed quote, including private measurements from quote_items.measurements_json. Never expose this column in customer signing, quote PDFs, or invoices.
+
 ## Purpose
 
 Turn an approved quote's known scope into a field-executable installation plan without pretending that missing site/product information is known.

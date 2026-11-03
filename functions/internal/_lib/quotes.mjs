@@ -1,3 +1,4 @@
+import { customerLineText, legacyMeasurements, validateMeasurements } from './quote-measurements.mjs';
 import { parseWorkType } from './work-types.mjs';
 
 // Kept in sync with src/data/contractTerms.ts by hand, not by import.
@@ -63,9 +64,12 @@ export function parseQuoteBody(body) {
     if (quantity > MAX_QUANTITY || unitPriceCents > MAX_QUOTE_CENTS || !(lineTotalCents <= MAX_QUOTE_CENTS)) {
       return { error: `Line ${index + 1}: the amount looks too large (more than ${MAX_QUOTE_TEXT}), which looks like a typo. Check the quantity and price.` };
     }
+    const measured = validateMeasurements(raw?.measurements === undefined || (Array.isArray(raw.measurements) && !raw.measurements.some(m => m?.width || m?.height) && legacyMeasurements(raw).length) ? legacyMeasurements(raw) : raw.measurements, quantity);
+    if (measured.error) return { error: `Line ${index + 1}: ${measured.error}` };
     cleanItems.push({
-      label,
-      description: clean(raw?.description, 500),
+      label: customerLineText(label) || 'Window / door',
+      measurements: measured.value,
+      description: customerLineText(clean(raw?.description, 500)),
       quantity,
       unitPriceCents,
       // Rounded to whole cents: fractional quantities (linear feet of trim) must

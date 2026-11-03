@@ -1,7 +1,7 @@
 // "Where is this customer on the way from quote to paid?" One place that knows the path, for the stepper and the
 // single "Next" button on every quote and job page.
 //
-// A window quote goes: quote -> Build Plan -> approved -> signed -> job -> scheduled -> installing -> closed -> paid.
+// A window quote goes: quote -> signed -> job -> scheduled -> installing -> closed -> paid.
 // A siding quote has no Build Plan (it is approved by its signature). A general job has no quote at all. Which step a
 // customer is on is read from the records that already exist (quote, build plan, job, payments); nothing here is
 // stored, so it can never disagree with them. Deterministic code only: no AI decides what Mark does next.
@@ -10,7 +10,7 @@ import { sourceSnapshot, sameSource } from '../../_lib/build-plan-rules.mjs';
 import { workTypeOf } from './work-types.mjs';
 
 const STEPS = {
-  windows: [['quote', 'Quote'], ['plan', 'Build plan'], ['approved', 'Approved'], ['signed', 'Signed'], ['job', 'Job'], ['scheduled', 'Scheduled'], ['field', 'Installing'], ['closed', 'Closed'], ['paid', 'Paid']],
+  windows: [['quote', 'Quote'], ['signed', 'Signed'], ['job', 'Job'], ['scheduled', 'Scheduled'], ['field', 'Installing'], ['closed', 'Closed'], ['paid', 'Paid']],
   siding: [['quote', 'Quote'], ['signed', 'Signed'], ['job', 'Job'], ['scheduled', 'Scheduled'], ['closed', 'Complete'], ['paid', 'Paid']],
   general: [['job', 'Job'], ['scheduled', 'Scheduled'], ['closed', 'Complete'], ['paid', 'Paid']],
 };
@@ -57,17 +57,11 @@ export function computeFlow(facts, today = pacificDate()) {
   const quoteView = quote ? `/internal/quotes/view?id=${q(quote.id)}` : '';
   const jobView = job ? `/internal/jobs/view?id=${q(job.id)}` : '';
   let next = null;
-  if (key === 'plan') {
-    next = plan?.exists
-      ? { key, label: 'Save the Build Plan again', hint: 'The quote changed after its Build Plan was saved. Save the plan again, then approve it.', href: `/internal/quotes/build-plan?quoteId=${q(quote.id)}` }
-      : { key, label: 'Build the Build Plan', hint: 'A window quote has to have an approved Build Plan before it can be signed.', href: `/internal/quotes/build-plan?quoteId=${q(quote.id)}` };
-  } else if (key === 'approved') {
-    next = { key, label: 'Review and approve the plan', hint: 'Read it through, then approve it. This is the step a person has to do.', href: `/internal/quotes/build-plan-approval?quoteId=${q(quote.id)}` };
-  } else if (key === 'signed') {
+  if (key === 'signed') {
     const pen = quote.signatureMethod !== 'digital';
-    next = { key, label: 'Sign the quote', hint: kind === 'windows' ? (pen ? 'Plan approved. Print the quote, get it signed in pen, then confirm it is signed.' : 'Plan approved. Have the customer sign it on screen.') : (pen ? 'Check the price, print it, get it signed in pen, then confirm it is signed.' : 'Check the price, then have the customer sign it on screen.'), href: quoteView };
+    next = { key, label: 'Sign the quote', hint: (pen ? 'Check the price, print it, get it signed in pen, then confirm it is signed.' : 'Check the price, then have the customer sign it on screen.'), href: quoteView };
   } else if (key === 'job') {
-    next = { key, label: 'Create the job', hint: 'The quote is signed. Make it a job so it can be scheduled.', action: 'create-job', quoteId: quote.id };
+    next = { key, label: 'Start production', hint: 'Create the job with the scope and private measurements from this signed quote.', action: 'create-job', quoteId: quote.id };
   } else if (key === 'scheduled') {
     next = { key, label: 'Schedule the install', hint: 'Pick the install date and window.', href: jobView };
   } else if (key === 'field' || (key === 'closed' && kind === 'windows')) {

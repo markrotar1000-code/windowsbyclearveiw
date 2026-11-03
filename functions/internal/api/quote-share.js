@@ -7,7 +7,6 @@
 // See functions/internal/_lib/quote-signing.mjs for the security model.
 
 import { json, clean } from '../_lib/quotes.mjs';
-import { requireApprovedBuildPlan } from '../_lib/quote-gates.mjs';
 import { ensureSigningSchema, newToken, hashToken, linkStatus, LINK_TTL_DAYS } from '../_lib/quote-signing.mjs';
 import { guardWrite, methodNotAllowed } from '../_lib/request-guard.mjs';
 
@@ -25,7 +24,7 @@ export async function onRequestGet(context) {
   if (!quoteId) return json({ error: 'quoteId is required.' }, 400);
   const quote = await db.prepare(`SELECT id, status FROM quotes WHERE id = ?`).bind(quoteId).first();
   if (!quote) return json({ error: 'Not found.' }, 404);
-  const gate = quote.status === 'draft' ? await requireApprovedBuildPlan(db, quoteId) : null;
+  const gate = null; // Production planning does not block customer signing.
   return json({ quoteId, quoteStatus: quote.status, link: linkStatus(await latestLink(db, quoteId)), canCreate: quote.status === 'draft' && !gate, blockedBy: gate });
 }
 
@@ -42,8 +41,6 @@ export async function onRequestPost(context) {
   if (!quote) return json({ error: 'Not found.' }, 404);
   if (quote.status !== 'draft') return json({ error: 'This quote is already signed.' }, 409);
   // Never send a customer a quote that could not be signed.
-  const gate = await requireApprovedBuildPlan(db, quoteId);
-  if (gate) return json({ error: gate.error, code: gate.code }, 409);
 
   const token = newToken();
   const now = new Date();

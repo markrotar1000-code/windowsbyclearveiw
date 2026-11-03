@@ -1,3 +1,4 @@
+import { customerLineText } from './quote-measurements.mjs';
 import { clean } from './quotes.mjs';
 import { formatCents } from './money.mjs';
 import { ensureQuoteWorkTypeColumn, workTypeOf } from './work-types.mjs';
@@ -70,7 +71,7 @@ export async function getInvoice(db, invoiceId) {
   const invoice = await db.prepare('SELECT * FROM invoices WHERE id = ?').bind(invoiceId).first();
   if (!invoice) return null;
   const { results: items } = await db.prepare('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC').bind(invoiceId).all();
-  return { invoice, items };
+  return { invoice, items: items.map(item => ({ ...item, label: customerLineText(item.label), description: customerLineText(item.description) })) };
 }
 
 export async function ensureInvoiceForQuote(db, quoteId, { finalize = false } = {}) {
@@ -97,7 +98,7 @@ export async function ensureInvoiceForQuote(db, quoteId, { finalize = false } = 
           .bind(id, invoiceNumber, quoteId, now, now, nextStatus, quote.customer_name, quote.customer_phone, quote.customer_email, quote.customer_address, quote.customer_city, quote.subtotal_cents, quote.discount_cents, quote.discount_reason, quote.total_cents, workType),
     db.prepare('DELETE FROM invoice_items WHERE invoice_id = ?').bind(id),
     ...quoteItems.map((item, index) => db.prepare(`INSERT INTO invoice_items (invoice_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents) VALUES (?,?,?,?,?,?,?)`)
-      .bind(id, index, item.label, item.description, item.quantity, item.unit_price_cents, item.line_total_cents)),
+      .bind(id, index, customerLineText(item.label), customerLineText(item.description), item.quantity, item.unit_price_cents, item.line_total_cents)),
   ]);
 
   return getInvoice(db, id);

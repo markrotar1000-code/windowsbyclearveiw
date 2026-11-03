@@ -2,9 +2,10 @@
 import InternalLayout from '../../../layouts/InternalLayout.astro';
 import FlowBar from '../../../components/internal/FlowBar.astro';
 ---
-<InternalLayout title="Build plan">
+<InternalLayout title="Production details">
   <FlowBar by="quote" />
-  <div class="bp-head"><div><p class="kicker">Production planning · controlled by rules</p><h1>Build plan</h1><p class="lede" data-subtitle>Loading quote…</p></div><div class="bp-actions"><span class="bp-state" data-state>Draft</span><a class="btn btn-ghost" data-quote-link href="#">Quote</a><a class="btn btn-ghost" data-approval-link href="#" hidden>Review &amp; approve</a><button class="btn btn-primary" type="button" data-save>Save verified plan</button></div></div>
+  <div class="bp-head"><div><p class="kicker">Optional production details</p><h1>Production details</h1><p class="lede" data-subtitle>Loading quote…</p></div><div class="bp-actions"><span class="bp-state" data-state>Draft</span><a class="btn btn-ghost" data-quote-link href="#">Quote</a><button class="btn btn-primary" type="button" data-save>Save verified plan</button></div></div>
+  <p>Scope and private measurements carry from the quote when you start production. Use this editor only for additional instructions.</p>
   <p class="bp-status" data-status hidden role="status"></p><p class="bp-error" data-error hidden role="alert"></p>
   <section class="quality" data-quality hidden><div class="quality-main"><span class="quality-icon">✓</span><div><strong data-quality-title>Plan checked</strong><p data-quality-summary>Rules and source data have been checked.</p></div></div><div class="quality-meta"><span data-knowledge>Rules —</span><span data-quality-count>0 warnings</span></div><ul data-quality-list></ul></section>
   <section class="drift" data-drift hidden><strong>Quote changed since this plan was saved.</strong><span data-drift-text>Review the affected openings before ordering.</span><button type="button" class="link-button" data-refresh>Regenerate fresh baseline</button></section>

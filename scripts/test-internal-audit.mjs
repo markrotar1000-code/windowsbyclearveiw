@@ -95,9 +95,8 @@ const planRow = (env, id) => env.QUOTES_DB.prepare('SELECT * FROM quote_build_pl
   assert.equal(state.body.status, 'draft');
   assert.equal(state.body.approvedAt, null);
   assert.deepEqual(state.body.stateHistory, []);
-  const signed = await sign(env, id);
-  assert.notEqual(signed.status, 200, 'a forged plan cannot unlock signing');
-  assert.equal((await call(jobsApi.onRequestPost, env, { method: 'POST', body: { quoteId: id } })).status >= 400, true, 'nor a job');
+
+  assert.equal((await call(jobsApi.onRequestPost, env, { method: 'POST', body: { quoteId: id } })).status >= 400, true, 'a forged plan cannot start production from an unsigned quote');
   // The real route still works, and from there the editor is locked and cannot change the state either.
   assert.equal((await transition(env, id, 'submit-review')).status, 200);
   assert.equal((await savePlan(env, id, { ...forged, status: 'draft' })).body.status, 'review', 'a save during review keeps review, not what the browser asked for');
