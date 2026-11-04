@@ -5,11 +5,10 @@ import vinylFiberglassGraphic from '../assets/guides/vinyl-fiberglass-guide.png'
 import BaseLayout from '../layouts/BaseLayout.astro';
 import WindowStudio from '../components/WindowStudio.astro';
 import CtaBar from '../components/CtaBar.astro';
-import WorkCard from '../components/WorkCard.astro';
-import { SLOT_SIZES } from '../lib/image-sizes';
+import ColumbiaMediaCard from '../components/ColumbiaMediaCard.astro';
+import { styleMedia } from '../data/columbia-media';
 import { pricing, publicBlurb } from '../data/pricing';
 import { findWork } from '../data/work';
-import { galleryAdditions } from '../data/gallery-additions';
 import CanvaGuideEmbed from '../components/CanvaGuideEmbed.astro';
 import energyRatingsGraphic from '../assets/guides/window-energy-ratings-explained.png';
 
@@ -20,20 +19,6 @@ const brands = pricing.brands;
 const styles = pricing.openings.filter((opening) => !opening.isDoor);
 const doors = pricing.openings.filter((opening) => opening.isDoor);
 
-// Newer, sharper job photos from the 2026-10-07 and 2026-10-11 batches (src/data/gallery-additions.ts).
-// Looked up by caption so the build fails if one of them is renamed or removed.
-const pickGalleryPhoto = (caption: string) => {
-  const photo = galleryAdditions.find((entry) => entry.caption === caption);
-  if (!photo) throw new Error(`window-features: gallery photo not found: ${caption}`);
-  return photo;
-};
-
-const stylePhotos = [
-  { label: 'Slider', photo: pickGalleryPhoto('Sliding window on a dark house') },
-  { label: 'Double-hung', photo: pickGalleryPhoto('Tall windows with transoms') },
-  { label: 'Single-hung', photo: pickGalleryPhoto('Garden window beside the chimney') },
-  { label: 'Picture', photo: pickGalleryPhoto('Black-framed windows on a tall wall') },
-];
 ---
 <BaseLayout
   title="Window features"
@@ -47,11 +32,11 @@ const stylePhotos = [
     <div class="wrap hero-installation-layout">
       <div class="hero-copy">
       <p class="kicker">Window features</p>
-      <h1>What goes into a Clearview window.</h1>
+      <h1>Find the right window for your home.</h1>
       <p class="lede">
-        This page explains what a quote pays for: the frame material, the glass, the brand, and
-        the window style.
+        Compare opening styles, understand glass and frame options, and explore real product details from Columbia Windows.
       </p>
+      <nav class="features-jumps" aria-label="Explore window features"><a href="#window-studio">Opening styles ↓</a><a href="#materials">Frames &amp; glass ↓</a><a href="/columbia-windows#technology">Columbia technology →</a></nav>
       </div>
       <figure class="hero-installation-photo">
         <Image src={heroInstallationPhoto} alt="Clearview crew installing a white window beneath an arched transom on a house with taupe siding and a brick base." widths={[450, 750, 1050, 1500]} sizes="(max-width: 700px) calc(100vw - 48px), (max-width: 1000px) 42vw, 420px" format="webp" quality={88} loading="eager" fetchpriority="high" />
@@ -60,20 +45,9 @@ const stylePhotos = [
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap is-narrow" data-reveal>
-      <p class="rule-label">Why it matters</p>
-      <h2>Why windows matter.</h2>
-      <p>
-        Windows are a small part of a house's wall area but a large share of the heat it loses in
-        a Washington winter. A failed seal, worn weatherstripping, or a single pane of glass can
-        all show up the same way: a draft at the lock, a cold spot by the window, and higher
-        heating bills.
-      </p>
-    </div>
-  </section>
+  <WindowStudio />
 
-  <section class="section section-sunk">
+  <section class="section section-sunk" id="materials">
     <div class="wrap" data-reveal>
       <p class="rule-label">What it's made of</p>
       <h2>Vinyl or fiberglass.</h2>
@@ -149,7 +123,6 @@ width={1536}
     </div>
   </section>
 
-  <WindowStudio />
 
   <section class="section" id="styles">
     <div class="wrap is-wide" data-reveal>
@@ -165,13 +138,9 @@ width={1536}
         ))}
       </div>
 
-      {stylePhotos.length > 0 && (
-        <div class="work-grid style-photos">
-          {stylePhotos.map(({ label, photo }) => (
-            <WorkCard image={photo.image} alt={photo.alt} caption={photo.caption} kind={label} sizes={SLOT_SIZES.twoThenFour} />
-          ))}
-        </div>
-      )}
+      <h3 class="supplier-styles-heading">Columbia opening styles, illustrated.</h3>
+      <p class="fine-print">Original supplier illustrations. Configurations and availability depend on the series.</p>
+      <div class="supplier-styles">{styleMedia.map(media => <ColumbiaMediaCard {...media} />)}</div>
 
       <p class="fine-print">
         Arches, transoms, and other non-rectangular openings are measured and priced
@@ -190,11 +159,12 @@ width={1536}
   <section class="section section-sunk">
     <div class="wrap is-narrow" data-reveal>
       <p class="rule-label">Hardware and color</p>
-      <h2>Hardware and color options.</h2>
+      <h2>Make the details your own.</h2>
       <p>
         Locking hardware, interior and exterior color, and grid patterns depend on the line we
-        order, and Cascade's options are not identical to Milgard's.
+        order, and each manufacturer offers a different selection. Explore Columbia’s finish technology, grille patterns, and hardware details before discussing your choices with us.
       </p>
+      <a class="btn btn-secondary" href="/columbia-windows#product-details">See finishes, grilles &amp; hardware →</a>
     </div>
   </section>
 
@@ -203,8 +173,8 @@ width={1536}
       <p class="rule-label">Warranty</p>
       <h2>What the warranty covers.</h2>
       <p>
-        The glass and hardware carry the manufacturer's own warranty, and Cascade and Milgard
-        each write theirs differently. Review the manufacturer's paperwork for coverage,
+        The glass and hardware carry the manufacturer's own warranty, and each manufacturer
+        writes its terms differently. Review the manufacturer's paperwork for coverage,
         duration, and contact information. Customers contact the manufacturer directly and
         handle any manufacturer warranty claim; Clearview does not handle or assist with those claims.
       </p>
@@ -218,6 +188,13 @@ width={1536}
 </BaseLayout>
 
 <style>
+  .features-jumps { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-m); }
+  .features-jumps a { padding: .7rem .9rem; border: 1px solid currentColor; border-radius: var(--radius); font-size: var(--step--1); color: inherit; }
+  .supplier-styles-heading { margin-top: var(--space-l); }
+  .supplier-styles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
+  @media (max-width: 900px) { .supplier-styles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .supplier-styles { grid-template-columns: minmax(0, 1fr); } }
+
   .frame-materials-graphic {
     margin: var(--space-l) 0 0;
     border: 1px solid var(--line);

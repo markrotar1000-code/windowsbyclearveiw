@@ -31,7 +31,7 @@ for (const [kind, primaryCount] of [['picture', 0], ['casement', 1], ['double-hu
 const page = readFileSync(new URL('dist/window-features.html', root), 'utf8');
 assert.ok(page.includes('id="window-studio"'), 'viewer is in the existing features page');
 assert.ok(page.includes('Explore in 3D'), 'explicit loading control is available');
-assert.ok(page.includes('not exact Cascade or Milgard products'), 'product accuracy is qualified');
+assert.ok(page.includes('not exact Columbia, Cascade or Milgard products'), 'product accuracy is qualified');
 assert.ok(page.includes('/estimate?scope='), 'selection goes to the existing estimate flow');
 assert.ok(!page.includes('fonts.googleapis.com'), 'no external font stylesheet is added');
 assert.ok(!page.includes('three.module'), 'Three.js is not preloaded by the page');
