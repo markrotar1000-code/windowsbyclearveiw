@@ -1,3 +1,7 @@
+## 2026-11-03 - Window features scope
+
+Reviewed: window-features hero, style explorer, supplier style images, hardware/color links, and manufacturer warranty wording (existing owner policy preserved). Unrelated pages and guides not reviewed. Existing approved models remain illustrative; only original supplier images added to this page. Owner has authorized merge/publication in this chat.
+
 ## 2026-11-03 - Columbia media expansion scope
 
 Reviewed: Columbia technology/media component, captions and option descriptions, homepage/hero links. Existing unrelated content not reviewed. Supplier originals reused under owner-confirmed permission and explicit request; no generated diagrams. NFRC definitions checked against nfrc.org.

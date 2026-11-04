@@ -1,49 +1,48 @@
 ---
+import { Image, getImage } from 'astro:assets';
+import { styleMedia } from '../data/columbia-media';
+import { dimensionsOf } from '../lib/image-sizes';
 import '../styles/window-studio.css';
-const styles = [
-  { id: 'picture', name: 'Picture' },
-  { id: 'casement', name: 'Casement' },
-  { id: 'double-hung', name: 'Single-hung' },
-  { id: 'slider', name: 'Slider' },
-];
-const scope = 'Window style preview: Casement, Graphite appearance. Illustrative only; please confirm available products, finishes and dimensions.';
+const styles = await Promise.all([
+  { id: 'casement', index: 4, name: 'Casement', series: 'Nova' },
+  { id: 'double-hung', index: 1, name: 'Single-hung', series: 'Victory & Synergy' },
+  { id: 'slider', index: 0, name: 'Slider', series: 'Victory & Synergy' },
+  { id: 'picture', index: 2, name: 'Picture', series: 'Victory & Synergy' },
+].map(async style => {
+  const media = styleMedia[style.index];
+  const poster = await getImage({ src: media.image, width: Math.min(800, dimensionsOf(media.image).width), format: 'webp', quality: 90 });
+  return { ...style, media, poster };
+}));
+const scope = 'Interested in casement windows. Please confirm the product, finish and dimensions.';
 ---
 <section class="section section-sunk" id="window-studio" aria-labelledby="studio-heading">
   <div class="wrap">
-    <p class="rule-label">Explore the styles</p>
-    <h2 id="studio-heading">See how a window opens.</h2>
-    <p class="lede">Turn a window around, compare frame colors, and try the moving sash before you tell us about your project.</p>
+    <div class="wv-heading"><div><p class="rule-label">Find your window style</p><h2 id="studio-heading">Start with how it opens.</h2></div><p>Compare Columbia’s illustrations, then try an optional 3D model to see the movement.</p></div>
     <div class="window-studio" data-window-studio>
-      <div class="wv-stage" role="group" aria-label="Window preview">
-        <div class="wv-viewport" data-viewport>
-          <img data-poster src="/models/windows/v001/casement.webp" width="960" height="720" alt="Illustrative casement window, closed in a studio setting" loading="lazy" decoding="async" />
+      <fieldset class="wv-picker"><legend>Choose a window style</legend><div class="wv-styles">
+        {styles.map(({id,name,series,media,poster}) => <button type="button" data-kind={id} data-image={poster.src} data-alt={media.alt} data-series={series} aria-pressed={id === 'casement' ? 'true' : 'false'}><Image src={media.image} width={120} format="webp" alt="" loading="lazy" /><span>{name}<small>{series}</small></span><span class="wv-check" aria-hidden="true">✓</span></button>)}
+      </div></fieldset>
+      <div class="wv-workspace">
+        <div class="wv-stage" role="group" aria-label="Window preview">
+          <div class="wv-stage-heading"><span data-preview-label>Columbia product illustration</span><button type="button" data-photo hidden>Back to illustration</button></div>
+          <div class="wv-tools" hidden data-tools><div class="wv-angles" role="group" aria-label="Window view"><button type="button" data-view="exterior" aria-pressed="true">Exterior</button><button type="button" data-view="interior" aria-pressed="false">Interior</button><button type="button" data-view="detail" aria-pressed="false">Detail</button></div><button type="button" data-reset>Reset view</button></div>
+          <div class="wv-viewport" data-viewport><img data-poster src={styles[0].poster.src} width={800} height={600} alt={styles[0].media.alt} loading="lazy" decoding="async" /></div>
+          <p class="wv-caption" data-caption>Columbia Nova · Casement</p><p class="wv-gesture" hidden data-gesture>Drag to rotate. Pinch to zoom. Use Reset view to start again.</p>
         </div>
-        <div class="wv-start"><button class="btn btn-primary" type="button" data-start>Explore in 3D</button><p data-load-status role="status">3D loads only when you choose to explore.</p></div>
-        <div class="wv-tools" hidden data-tools>
-          <div class="wv-angles" role="group" aria-label="Window view">
-            <button type="button" data-view="exterior" aria-pressed="true">Exterior</button>
-            <button type="button" data-view="interior" aria-pressed="false">Interior</button>
-            <button type="button" data-view="detail" aria-pressed="false">Detail</button>
+        <div class="wv-options">
+          <p class="wv-eyebrow" data-series-name>Columbia Nova</p><h3 data-style-name>Casement</h3><p class="wv-description" data-description>A side-hinged sash that swings outward.</p>
+          <p class="wv-consideration" data-consideration>Consider the space outside the window for the sash to swing open.</p>
+          <div class="wv-start"><button class="btn btn-secondary" type="button" data-start>Explore in 3D <span aria-hidden="true">↗</span></button><p data-load-status role="status">Optional movement demo. Loads when you choose.</p></div>
+          <div class="wv-demo-controls" data-demo-controls hidden>
+            <div class="wv-operation"><label for="wv-opening">Try the opening <output data-open-value>Closed</output></label><input id="wv-opening" data-opening type="range" min="0" max="100" value="0" step="1" disabled /><p data-operation-note>Start the 3D preview to open the sash.</p></div>
+            <fieldset><legend>Illustrative frame color</legend><div class="wv-finishes"><button type="button" data-finish="graphite" aria-pressed="true"><i class="wv-graphite" aria-hidden="true"></i>Graphite</button><button type="button" data-finish="porcelain" aria-pressed="false"><i class="wv-porcelain" aria-hidden="true"></i>Porcelain</button><button type="button" data-finish="bronze" aria-pressed="false"><i class="wv-bronze" aria-hidden="true"></i>Bronze</button></div><p>Preview colors only. Actual finishes vary by product.</p></fieldset>
           </div>
-          <button type="button" data-reset>Reset view</button>
+          <div class="wv-selection"><p data-selection>Casement windows</p><a class="btn btn-primary" data-estimate href={`/estimate?scope=${encodeURIComponent(scope)}`}>Discuss this style <span aria-hidden="true">→</span></a><a class="wv-product-link" href="/columbia-windows#nova" data-product>Explore Columbia Nova →</a><p>We measure your openings and confirm the product and options in your written estimate.</p></div>
         </div>
-        <p class="wv-gesture" hidden data-gesture>Drag to rotate. Scroll or pinch to zoom.</p>
-      </div>
-      <div class="wv-options">
-        <fieldset><legend>Window style</legend><div class="wv-styles">
-          {styles.map(({id,name}) => <button type="button" data-kind={id} aria-pressed={id === 'casement' ? 'true' : 'false'}>{name}</button>)}
-        </div><p data-description>A side-hinged sash that swings outward.</p></fieldset>
-        <fieldset><legend>Frame color preview</legend><div class="wv-finishes">
-          <button type="button" data-finish="graphite" aria-pressed="true"><i class="wv-graphite" aria-hidden="true"></i>Graphite</button>
-          <button type="button" data-finish="porcelain" aria-pressed="false"><i class="wv-porcelain" aria-hidden="true"></i>Porcelain</button>
-          <button type="button" data-finish="bronze" aria-pressed="false"><i class="wv-bronze" aria-hidden="true"></i>Bronze</button>
-        </div><p>Start 3D to preview colors. Available finishes depend on the product.</p></fieldset>
-        <div class="wv-operation"><label for="wv-opening">Try the opening <output data-open-value>Closed</output></label><input id="wv-opening" data-opening type="range" min="0" max="100" value="0" step="1" disabled /><p data-operation-note>Start the 3D preview to open the sash.</p></div>
-        <div class="wv-selection"><p data-selection>Casement · Graphite appearance</p><a class="btn btn-primary" data-estimate href={`/estimate?scope=${encodeURIComponent(scope)}`}>Discuss this style <span aria-hidden="true">→</span></a><p>We measure every opening and confirm the options in your written estimate.</p></div>
       </div>
     </div>
-    <p class="fine-print wv-disclosure">These are illustrative models, not exact Cascade or Milgard products. Frame details, colors and dimensions need confirmation. <a href="#styles">Compare all window styles</a>.</p>
-    <noscript><p class="fine-print">The 3D preview needs JavaScript. You can still read about the styles below or <a href="/estimate">request an estimate</a>.</p></noscript>
+    <p class="fine-print wv-disclosure">Product illustrations supplied by Columbia Windows. The optional 3D models demonstrate movement only; they are not exact Columbia, Cascade or Milgard products. <a href="#styles">See more window styles</a>.</p>
+    <noscript><p class="fine-print">Interactive selection and 3D need JavaScript. <a href="#styles">Browse all Columbia style illustrations below</a> or <a href="/estimate">request an estimate</a>.</p></noscript>
   </div>
 </section>
 <script>

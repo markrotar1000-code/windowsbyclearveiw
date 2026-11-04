@@ -4,6 +4,7 @@ const styles = {
   'double-hung': { name: 'Single-hung', description: 'The lower sash slides up; the upper sash stays fixed.', operation: 'Move the slider to raise the lower sash.' },
   slider: { name: 'Slider', description: 'A sash that glides horizontally along the frame.', operation: 'Move the slider to slide the left sash.' },
 };
+const considerations = { picture: 'A fixed window does not provide ventilation. Consider a combination with an opening window.', casement: 'Consider the space outside the window for the sash to swing open.', 'double-hung': 'The lower sash moves upward within the frame, with no outward swing.', slider: 'The sash moves sideways within the frame, with no outward swing.' };
 const finishes = { graphite: 'Graphite', porcelain: 'Porcelain', bronze: 'Bronze' };
 export function bindWindowStudio() {
   let cleanup = () => {};
@@ -22,14 +23,21 @@ export function bindWindowStudio() {
         button.setAttribute('aria-pressed', String(button.dataset[key] === state[key]));
       });
       get('description').textContent = style.description;
-      get('selection').textContent = `${style.name} · ${finishes[state.finish]} appearance`;
-      get('poster').src = `/models/windows/v001/${state.kind}.webp`;
-      get('poster').alt = `Illustrative ${style.name.toLowerCase()} window, closed in a studio setting`;
+      const selected = root.querySelector(`[data-kind="${state.kind}"]`);
+      get('style-name').textContent = style.name;
+      get('series-name').textContent = `Columbia ${selected.dataset.series}`;
+      get('consideration').textContent = considerations[state.kind];
+      get('selection').textContent = viewer ? `${style.name} · ${finishes[state.finish]} preview` : `${style.name} windows`;
+      get('poster').src = selected.dataset.image;
+      get('poster').alt = selected.dataset.alt;
+      get('caption').textContent = viewer ? 'Illustrative movement model · not an exact supplier product' : `Columbia ${selected.dataset.series} · ${style.name}`;
+      get('product').textContent = `Explore Columbia ${selected.dataset.series} →`;
+      get('product').href = state.kind === 'casement' ? '/columbia-windows#nova' : '/columbia-windows#series';
       get('opening').value = String(state.opening);
       get('opening').disabled = !viewer || loading || state.kind === 'picture';
       get('open-value').textContent = state.kind === 'picture' ? 'Fixed' : state.opening ? `${state.opening}% open` : 'Closed';
       get('operation-note').textContent = state.kind === 'picture' || viewer ? style.operation : 'Start the 3D preview to open the sash.';
-      const scope = `Window style preview: ${style.name}, ${finishes[state.finish]} appearance. Illustrative only; please confirm available products, finishes and dimensions.`;
+      const scope = viewer ? `Window style preview: ${style.name}, ${finishes[state.finish]} appearance. Illustrative only; please confirm available products, finishes and dimensions.` : `Interested in ${style.name.toLowerCase()} windows. Please confirm the product, finish and dimensions.`;
       get('estimate').href = `/estimate?scope=${encodeURIComponent(scope)}`;
     }
     function status(message, ready) {
@@ -38,6 +46,9 @@ export function bindWindowStudio() {
       get('load-status').textContent = message;
       get('poster').hidden = ready;
       get('tools').hidden = !ready;
+      get('demo-controls').hidden = !ready;
+      get('photo').hidden = !ready;
+      get('preview-label').textContent = ready ? 'Interactive 3D demonstration' : 'Columbia product illustration';
       get('gesture').hidden = !ready;
       get('start').hidden = ready;
       get('start').disabled = !ready;
@@ -52,6 +63,16 @@ export function bindWindowStudio() {
       get('start').disabled = false;
       get('start').textContent = 'Try 3D again';
     }
+    get('photo').addEventListener('click', () => {
+      generation++;
+      viewer?.dispose(); viewer = null;
+      state.opening = 0;
+      status('Optional movement demo. Loads when you choose.', false);
+      loading = false;
+      get('start').disabled = false;
+      get('start').textContent = 'Explore in 3D';
+      get('start').focus();
+    }, { signal: events.signal });
     get('start').addEventListener('click', async () => {
       if (loading) return;
       const token = ++generation;
