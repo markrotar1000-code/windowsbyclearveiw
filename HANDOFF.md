@@ -1,3 +1,7 @@
+## 2026-11-03 - Expanded Columbia supplier media
+
+Owner requested substantially more supplier media. Added 24 original assets: Columbia/SuperCapSR/NFRC graphics, seasonal glass illustration, six frame/hardware details, six opening styles, six grille graphics, and two factory photographs. `/columbia-windows` now has technology cards and native expandable image galleries with larger self-hosted image links. Homepage and product hero link to the section. NFRC is explicitly educational product-rating context, not a ClearView certification. No new warranty, safety, promotional-price, or installer-credential claims. Source provenance: docs/COLUMBIA-WINDOWS.md. All 89 local checks passed. Browser gallery checks passed at 320/390/768/1440px, 200% text, all 20 larger image links, and no-JavaScript disclosures. Physical-device testing not performed.
+
 ## 2026-11-03 - Payment due upon completion and contract review
 
 Owner-directed payment timing now says payment is due in full upon completion of the agreed work and approved written change orders, with credit for payments received. Terms version2026-11-03.2 archives both previously published versions verbatim; signed documents remain immutable. Invoices keep their signed agreement's terms and are not made due merely by signing. Cancellation instructions now include the owner-authorized business address verified in L&I and the owner email. Current registration text corrects zero to the letter O in CLEARVW746O1.

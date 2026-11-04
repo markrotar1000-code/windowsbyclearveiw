@@ -1,3 +1,7 @@
+## 2026-11-03 - Columbia media expansion scope
+
+Reviewed: Columbia technology/media component, captions and option descriptions, homepage/hero links. Existing unrelated content not reviewed. Supplier originals reused under owner-confirmed permission and explicit request; no generated diagrams. NFRC definitions checked against nfrc.org.
+
 ## 2026-11-03 - Columbia public copy scope
 
 Reviewed: new Columbia page and homepage feature; added navigation/footer links; window-features supplier introduction and metadata. Remaining existing copy not reviewed in this task. Supplier graphics reused with owner-confirmed permission and explicit instruction to publish; no new generated diagram. Sources and boundaries: docs/COLUMBIA-WINDOWS.md.

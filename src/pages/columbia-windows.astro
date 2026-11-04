@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CtaBar from '../components/CtaBar.astro';
+import ColumbiaTechnology from '../components/ColumbiaTechnology.astro';
 import { columbiaSeries } from '../data/columbia';
 import homePhoto from '../assets/columbia/synergy-home.webp';
 import glass from '../assets/columbia/insulated-glass.webp';
@@ -14,7 +15,7 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
         <p class="rule-label">Columbia Windows + ClearView</p>
         <h1>Find the window that fits your home.</h1>
         <p class="lede">Columbia Windows is one of our main suppliers. Explore the styles, see what’s inside, and let ClearView help you choose the right configuration.</p>
-        <div class="hero-actions"><a class="btn btn-primary" href="/estimate?scope=Columbia%20Windows">Get a Columbia window estimate</a><a class="text-link" href="#series">Compare the series <span aria-hidden="true">↓</span></a></div>
+        <div class="hero-actions"><a class="btn btn-primary" href="/estimate?scope=Columbia%20Windows">Get a Columbia window estimate</a><a class="text-link" href="#series">Compare the series <span aria-hidden="true">↓</span></a><a class="text-link" href="#technology">Technology &amp; diagrams <span aria-hidden="true">↓</span></a></div>
       </div>
       <figure class="hero-photo">
         <Image src={homePhoto} alt="White windows on a light-sided house overlooking a deck and garden." width={960} widths={[480, 720, 960]} sizes="(max-width: 800px) calc(100vw - 48px), 50vw" format="webp" quality={82} loading="eager" fetchpriority="high" />
@@ -56,8 +57,9 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap selection-grid"><div><p class="rule-label">Make it your own</p><h2>Choose the details room by room.</h2><p class="lede">A sunny living room and a private bathroom may need different glass. We’ll talk through the options when we measure.</p></div><div class="selection-list"><div><h3>Glass &amp; privacy</h3><p>Compare low-emissivity glass, bronze or gray tint, and satin, rain, or 516 privacy patterns.</p></div><div><h3>Color &amp; grilles</h3><p>Explore grille patterns and custom paint options with ClearView. Confirm current finishes and samples before ordering.</p></div><div><h3>Ratings &amp; fit</h3><p>Ask for the U-factor, solar heat gain coefficient, and applicable performance documentation for your exact window configuration. Sizes, glass packages, and opening styles affect the ratings.</p></div></div></div>
+  <ColumbiaTechnology />
+
+  <section class="section is-tight">
     <div class="wrap source-note"><p class="fine-print">Photos and diagrams courtesy of Columbia Windows, used with permission. Product information checked November 3, 2026 against Columbia’s <a href="https://columbia-windows.com/victory-series/">Victory</a>, <a href="https://columbia-windows.com/synergy-series/">Synergy</a>, and <a href="https://columbia-windows.com/nova-series/">Nova</a> pages. Final availability, specifications, and warranty terms are confirmed for your order.</p></div>
   </section>
   <CtaBar heading="Let’s choose your Columbia windows." body="Tell us which rooms you’re updating. We’ll measure the openings and put the window series, options, and installation in a written estimate." estimateHref="/estimate?scope=Columbia%20Windows" showToolLink={false} showAskLink={false} />
@@ -106,7 +108,7 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
   .selection-list > div { padding: var(--space-m) 0; border-top: 1px solid var(--line); }
   .selection-list h3 { font-size: var(--step-1); }
   .selection-list p { color: var(--ink-soft); margin: 0; }
-  .source-note { margin-top: var(--space-l); }
+  .source-note { margin-top: 0; }
   #series { scroll-margin-top: 110px; }
   @media (max-width: 800px) {
     .hero-grid, .series-grid, .cutaway-grid, .selection-grid { grid-template-columns: minmax(0, 1fr); }
