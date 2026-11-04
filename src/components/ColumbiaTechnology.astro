@@ -1,0 +1,111 @@
+---
+import { Image } from 'astro:assets';
+import ColumbiaMediaCard from './ColumbiaMediaCard.astro';
+import { frameMedia, styleMedia, grilleMedia, factoryMedia } from '../data/columbia-media';
+import logo from '../assets/columbia/columbia-logo.png';
+import supercap from '../assets/columbia/supercap-sr.png';
+import solar from '../assets/columbia/glass-seasonal.webp';
+import nfrc from '../assets/columbia/nfrc-logo.webp';
+---
+<section class="section" id="technology" aria-labelledby="technology-heading">
+  <div class="wrap">
+    <div class="technology-heading">
+      <div><p class="rule-label">Technology &amp; design</p><h2 id="technology-heading">See the details behind the window.</h2><p class="lede">Explore Columbia’s original product graphics, finish technology, and factory photography.</p></div>
+      <figure class="supplier-mark"><Image src={logo} alt="Columbia Windows" width={240} widths={[240, 480, 720]} sizes="240px" format="webp" loading="lazy" /><figcaption>Our featured window supplier</figcaption></figure>
+    </div>
+    <div class="technology-grid">
+      <article class="technology-card glass-technology">
+        <Image src={solar} alt="Columbia’s glass illustration with a sun on one side and a snowflake on the other." width={260} widths={[260, 514]} sizes="220px" format="webp" loading="lazy" />
+        <div><p class="kicker">Cardinal glass options</p><h3>Glass for year-round comfort.</h3><div class="technology-labels"><span>LoĒ²-272</span><span>LoĒ³-366</span><span>Endur® IG</span></div><p>Columbia lists Cardinal low-emissivity glass options and Endur® insulated-glass construction. Glass coatings help manage heat transfer while the sealed unit separates the panes.</p><p class="fine-print">Choose the glass package for your rooms and exposure. Ratings depend on the complete window configuration.</p></div>
+      </article>
+      <article class="technology-card finish-technology">
+        <div class="finish-badge"><Image src={supercap} alt="SuperCapSR Heat-Reflective Color Technology" width={320} widths={[200, 320, 400]} sizes="(max-width: 600px) 240px, 320px" format="webp" loading="lazy" /></div>
+        <div><p class="kicker">Exterior finish technology</p><h3>Color with heat reflection in mind.</h3><p>Columbia features SuperCapSR heat-reflective color technology, designed to reduce heat absorbed by the vinyl profile.</p><p>Ask which finishes are available for your selected series. Review a physical color sample before ordering.</p><a href="https://columbia-windows.com/victory-series/" target="_blank" rel="noopener noreferrer">See Columbia’s finish details ↗</a></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section section-sunk" id="product-details" aria-labelledby="media-heading">
+  <div class="wrap">
+    <p class="rule-label">Visual product guide</p><h2 id="media-heading">Open a category. Take a closer look.</h2>
+    <p class="lede">Select any image to open a larger view. Original graphics and photos are supplied by Columbia Windows.</p>
+    <div class="media-groups">
+      <details class="media-group" open>
+        <summary><span><strong>Frame &amp; hardware</strong><span>Cross-sections, reinforcement, and sealing details</span></span></summary>
+        <div class="media-body"><p class="media-note">These supplier details show particular components and profiles. Confirm the frame and hardware for your chosen series and opening style.</p><div class="media-grid">{frameMedia.map(item => <ColumbiaMediaCard {...item} />)}</div></div>
+      </details>
+      <details class="media-group">
+        <summary><span><strong>Window opening styles</strong><span>Sliding, single-hung, picture, custom, casement, and awning</span></span></summary>
+        <div class="media-body"><div class="media-grid">{styleMedia.map(item => <ColumbiaMediaCard {...item} />)}</div><p class="media-note">Illustrations show how the styles work. Frame appearance, sizes, and combinations vary by product.</p></div>
+      </details>
+      <details class="media-group">
+        <summary><span><strong>Grille patterns &amp; profiles</strong><span>Compare three designs and three profile options</span></span></summary>
+        <div class="media-body"><p class="media-note">Columbia lists these options across Victory, Synergy, and Nova. Grille layout is confirmed for your window size.</p><div class="media-grid grille-grid">{grilleMedia.map(item => <ColumbiaMediaCard {...item} small />)}</div></div>
+      </details>
+      <details class="media-group">
+        <summary><span><strong>Inside Columbia’s factory</strong><span>A look at the supplier’s manufacturing space</span></span></summary>
+        <div class="media-body"><p class="media-note">Columbia describes its manufacturing facility as located in Vancouver, Washington. These are supplier photos from its website.</p><div class="media-grid factory-grid">{factoryMedia.map(item => <ColumbiaMediaCard {...item} />)}</div><a class="supplier-source" href="https://columbia-windows.com/" target="_blank" rel="noopener noreferrer">About Columbia’s manufacturing ↗</a></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="window-ratings" aria-labelledby="ratings-heading">
+  <div class="wrap ratings-panel">
+    <figure class="ratings-logo"><Image src={nfrc} alt="National Fenestration Rating Council (NFRC)" width={120} widths={[120, 190]} sizes="100px" format="webp" loading="lazy" /><figcaption>Understanding product ratings</figcaption></figure>
+    <div class="ratings-copy"><p class="rule-label">Compare the label</p><h2 id="ratings-heading">The numbers that help you choose.</h2><p>Ask for the NFRC label or performance documentation for the exact window in your estimate.</p><dl class="ratings-list"><div><dt>U-factor</dt><dd>How readily heat passes through the window.</dd></div><div><dt>Solar heat gain coefficient</dt><dd>How much solar heat the window lets through.</dd></div><div><dt>Visible transmittance</dt><dd>How much visible light passes through.</dd></div></dl><p class="fine-print">The NFRC logo identifies the rating organization. Individual product ratings apply to the tested configuration.</p><a href="https://nfrc.org/" target="_blank" rel="noopener noreferrer">Learn how to read NFRC ratings ↗</a></div>
+  </div>
+</section>
+<style>
+  #technology, #product-details, #window-ratings { scroll-margin-top: 110px; }
+  .technology-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-xl); margin-bottom: var(--space-l); }
+  .technology-heading .lede { max-width: 54ch; }
+  figure { margin: 0; }
+  .supplier-mark { flex: 0 0 240px; padding: var(--space-s); background: var(--paper-raised); text-align: center; }
+  .supplier-mark img { width: 100%; height: auto; }
+  figcaption { color: var(--ink-soft); font-size: var(--step--2); margin-top: var(--space-xs); }
+  .technology-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-m); }
+  .technology-card { padding: var(--space-l); border: 1px solid var(--line); background: var(--paper-raised); }
+  .technology-card > img { display: block; width: 220px; max-width: 100%; height: 280px; object-fit: contain; margin: 0 auto var(--space-l); }
+  .finish-badge { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; min-height: 280px; margin-bottom: var(--space-l); }
+  .finish-badge img { width: 320px; max-width: 100%; height: auto; }
+  .technology-card p:not(.kicker) { color: var(--ink-soft); }
+  .technology-labels { display: flex; flex-wrap: wrap; gap: var(--space-2xs); margin: var(--space-s) 0; }
+  .technology-labels span { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-2xs) var(--space-xs); color: var(--accent-ink); background: var(--accent-wash); font-size: var(--step--1); }
+  .media-groups { margin-top: var(--space-l); }
+  .media-group { border-top: 1px solid var(--line-strong); }
+  .media-group:last-child { border-bottom: 1px solid var(--line-strong); }
+  summary { padding: var(--space-m) var(--space-xs); cursor: pointer; min-height: 64px; }
+  summary > span { display: inline-block; max-width: calc(100% - 30px); vertical-align: middle; }
+  summary strong { display: block; font-size: var(--step-1); }
+  summary span span { display: block; color: var(--ink-soft); font-size: var(--step--1); margin-top: var(--space-3xs); }
+  summary:hover { background: var(--accent-wash); }
+  .media-body { padding: 0 var(--space-xs) var(--space-l); }
+  .media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
+  .factory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .media-note { color: var(--ink-soft); font-size: var(--step--1); max-width: 75ch; margin-block: var(--space-s); }
+  .supplier-source { display: inline-block; padding-block: var(--space-s); }
+  .ratings-panel { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+  .ratings-logo { text-align: center; }
+  .ratings-logo img { width: 100px; height: auto; margin-inline: auto; }
+  .ratings-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-m); margin-block: var(--space-l); }
+  .ratings-list dt { font-weight: 650; }
+  .ratings-list dd { margin: var(--space-2xs) 0 0; color: var(--ink-soft); font-size: var(--step--1); }
+  @media (max-width: 1000px) { .media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) {
+    .technology-heading { flex-direction: column; align-items: flex-start; gap: var(--space-s); }
+    .supplier-mark { flex-basis: auto; width: min(240px, 100%); }
+    .technology-grid, .media-grid, .ratings-panel, .ratings-list { grid-template-columns: minmax(0, 1fr); }
+    .technology-card { padding: var(--space-m); }
+    .technology-card > img { height: 240px; margin-bottom: var(--space-m); }
+    .finish-badge { min-height: 150px; margin-bottom: var(--space-m); }
+    .ratings-panel { gap: var(--space-m); }
+    .ratings-logo { display: flex; align-items: center; gap: var(--space-m); text-align: left; }
+    .ratings-logo img { margin: 0; width: 80px; }
+    .ratings-logo figcaption { max-width: 16ch; min-width: 0; overflow-wrap: anywhere; }
+    .ratings-list { gap: var(--space-s); margin-block: var(--space-m); }
+    .grille-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+  }
+  @media (max-width: 360px) { .grille-grid { grid-template-columns: minmax(0, 1fr); } }
+</style>
