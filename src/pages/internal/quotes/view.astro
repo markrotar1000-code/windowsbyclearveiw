@@ -644,7 +644,7 @@ import { site, telHref, mailHref } from '../../../data/site';
         itemsBody.innerHTML = '';
         for (const item of items) {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${esc(customerLineText(item.label))}${/^sales tax\b/i.test(customerLineText(item.label)) ? ` — ${money(item.line_total_cents)}` : ''}</td><td>${esc(item.quantity)}</td>`;
+          row.innerHTML = `<td>${esc(customerLineText(item.label))}${/^sales tax\b/i.test(customerLineText(item.label)) ? ` - ${money(item.line_total_cents)}` : ''}</td><td>${esc(item.quantity)}</td>`;
           itemsBody.append(row);
         }
       }
