@@ -2,7 +2,7 @@ import { quotePdf } from './quote-pdf.mjs';
 import { getContractTerms } from './pdf-terms.mjs';
 import { customerLineText } from './quote-measurements.mjs';
 import { loadPdfAssets } from './pdf-fonts.mjs';
-export const QUOTE_TEMPLATE_VERSION='2026-11-03.3';
+export const QUOTE_TEMPLATE_VERSION='2026-11-04.1';
 import { bytesToBase64, base64ToBytes } from './document-bytes.mjs';
 export { bytesToBase64, base64ToBytes } from './document-bytes.mjs';
 export async function ensureDocumentSchema(db) {
@@ -34,7 +34,7 @@ export async function customerDocumentBytes(env,record) {
   const terms=getContractTerms(record.quote.terms_version ?? null);
   if(!terms)throw new Error('The saved contract terms are unavailable. Edit and save this draft before generating its PDF.');
   const bytes=await quotePdf(record.quote,record.items,{...await loadPdfAssets(env),terms});
-  const q=record.quote; const source=JSON.stringify({id:q.id,revisionOf:q.revision_of||null,revisionKind:q.revision_kind||null,customer:[q.customer_name,q.customer_phone,q.customer_email,q.customer_address,q.customer_city],totals:[q.subtotal_cents,q.discount_cents,q.total_cents],terms:q.terms_version,customPaymentTerms:q.custom_payment_terms||'',items:record.items.map(i=>({label:customerLineText(i.label),description:customerLineText(i.description),quantity:i.quantity,unit:i.unit_price_cents,total:i.line_total_cents}))});
+  const q=record.quote; const source=JSON.stringify({templateVersion:QUOTE_TEMPLATE_VERSION,id:q.id,revisionOf:q.revision_of||null,revisionKind:q.revision_kind||null,customer:[q.customer_name,q.customer_phone,q.customer_email,q.customer_address,q.customer_city],totals:[q.subtotal_cents,q.discount_cents,q.total_cents],terms:q.terms_version,customPaymentTerms:q.custom_payment_terms||'',items:record.items.map(i=>({label:customerLineText(i.label),description:customerLineText(i.description),quantity:i.quantity,unit:i.unit_price_cents,total:i.line_total_cents}))});
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source))),b=>b.toString(16).padStart(2,'0')).join('');
   return {bytes,version:hash,snapshot:null};
 }

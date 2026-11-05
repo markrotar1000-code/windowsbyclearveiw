@@ -40,7 +40,7 @@ export async function quotePdf(quote, items, { supplier = false, logoBytes, font
     line([quote.customer_address, quote.customer_city].filter(Boolean).join(', '));
     line([quote.customer_phone, quote.customer_email].filter(Boolean).join(' | '));
   }
-  line(supplier ? 'ITEM / OPENING SCHEDULE' : 'SCOPE & PRICING', { heavy: true, size: 12 });
+  line(supplier ? 'ITEM / OPENING SCHEDULE' : 'SCOPE OF WORK', { heavy: true, size: 12 });
   for (const [index, item] of items.entries()) {
     line(`${index + 1}. ${customerLineText(item.label)}`, { heavy: true });
     if (supplier) {
@@ -53,7 +53,8 @@ export async function quotePdf(quote, items, { supplier = false, logoBytes, font
       if (rows.length < Number(item.quantity)) line(`${Number(item.quantity) - rows.length} opening(s) still need measurements.`);
       line(`Product / finish / glass / handing: ${customerLineText(item.description) || 'Use the line description above; unspecified details require confirmation.'}`, { size: 9 });
     } else {
-      line(`Qty ${item.quantity} | Unit ${money(item.unit_price_cents)} | Amount ${money(item.line_total_cents)}`);
+      line(`Qty ${item.quantity}`);
+      if (/^sales tax\b/i.test(customerLineText(item.label))) line(`Sales tax: ${money(item.line_total_cents)}`);
       if (item.description) line(customerLineText(item.description), { size: 9 });
     }
   }

@@ -180,7 +180,7 @@ import { site, telHref } from '../data/site';
           const label = document.createElement('strong');
           label.textContent = item.quantity > 1 ? `${item.label} × ${item.quantity}` : item.label;
           const total = document.createElement('span');
-          total.textContent = money(item.lineTotalCents);
+          total.textContent = typeof item.taxAmountCents === 'number' ? money(item.taxAmountCents) : '';
           head.append(label, total);
           li.append(head);
           if (item.description) {
