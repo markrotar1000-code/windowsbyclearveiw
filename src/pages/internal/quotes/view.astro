@@ -118,7 +118,7 @@ import { site, telHref, mailHref } from '../../../data/site';
     <section class="contract-section">
       <h2>Scope of work</h2>
       <table class="contract-items">
-        <thead><tr><th scope="col">Description of work</th><th scope="col">Qty</th><th scope="col">Unit price</th><th scope="col">Amount</th></tr></thead>
+        <thead><tr><th scope="col">Description of work</th><th scope="col">Qty</th></tr></thead>
         <tbody data-contract-items></tbody>
       </table>
       <div class="contract-totals">
@@ -644,7 +644,7 @@ import { site, telHref, mailHref } from '../../../data/site';
         itemsBody.innerHTML = '';
         for (const item of items) {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${esc(customerLineText(item.label))}</td><td>${esc(item.quantity)}</td><td>${money(item.unit_price_cents)}</td><td>${money(item.line_total_cents)}</td>`;
+          row.innerHTML = `<td>${esc(customerLineText(item.label))}${/^sales tax\b/i.test(customerLineText(item.label)) ? ` - ${money(item.line_total_cents)}` : ''}</td><td>${esc(item.quantity)}</td>`;
           itemsBody.append(row);
         }
       }
