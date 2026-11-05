@@ -569,7 +569,7 @@ import { site, telHref, mailHref } from '../../../data/site';
         const print = document.querySelector<HTMLButtonElement>('[data-print-btn]'); if (print) print.disabled = true;
         return;
       }
-      renderContractTerms(root, terms);
+      renderContractTerms(root, terms, quote.custom_payment_terms);
 
       root.dataset.quoteRevision = String(quote.revision || 1);
       root.dataset.quoteStatus = quote.status;

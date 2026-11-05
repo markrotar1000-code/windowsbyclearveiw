@@ -69,7 +69,7 @@ export async function quotePdf(quote, items, { supplier = false, logoBytes, font
     line(`TOTAL: ${money(quote.total_cents)}`, { heavy: true, size: 14 });
     next();
     line(`TERMS & ACCEPTANCE - ${quote.id}`, { heavy: true, size: 13 });
-    for (const key of ['paymentTerms', 'changeOrders', 'warranty', 'delays', 'governingLaw']) line(terms[key], { size: 9 });
+    for (const key of ['paymentTerms', 'changeOrders', 'warranty', 'delays', 'governingLaw']) line(key === 'paymentTerms' ? (quote.custom_payment_terms || terms[key]) : terms[key], { size: 9 });
     line(terms.rightToCancel.heading, { heavy: true });
     terms.rightToCancel.body.forEach(p => line(p, { size: 9 }));
     line(terms.acknowledgement, { size: 9 });

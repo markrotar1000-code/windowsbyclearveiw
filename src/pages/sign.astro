@@ -162,7 +162,7 @@ import { site, telHref } from '../data/site';
       const body = q('[data-sg-body]');
       const terms = getContractTerms(quote.termsVersion ?? null);
       if (!terms) { if (body) body.hidden = true; fail('The saved terms for this quote are unavailable. Please contact Clearview.'); return; }
-      renderContractTerms(body, terms);
+      renderContractTerms(body, terms, quote.customPaymentTerms);
       if (body) body.hidden = false;
       text('[data-sg-title]', `Quote for ${quote.customer.name || 'you'}`);
       text('[data-sg-lede]', 'Please review the work and terms below, then sign at the bottom.');

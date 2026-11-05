@@ -114,6 +114,7 @@ export function publicQuote(quote, items) {
     discountReason: quote.discount_reason || '',
     totalCents: Number(quote.total_cents) || 0,
     termsVersion: quote.terms_version || null,
+    customPaymentTerms: quote.custom_payment_terms || '',
     signedName: quote.status === 'finalized' ? quote.signature_name || '' : '',
     signedAt: quote.status === 'finalized' ? quote.signed_at || null : null,
   };
