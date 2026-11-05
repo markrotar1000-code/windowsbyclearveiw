@@ -35,6 +35,7 @@ export const clean = (v, max = 500) => String(v ?? '').trim().slice(0, max);
  * Returns { error } or { name, phone, customer, workType, cleanItems, subtotalCents, discountCents, totalCents, notes }.
  */
 export function parseQuoteBody(body) {
+  if (body.customPaymentTerms != null && (typeof body.customPaymentTerms !== 'string' || body.customPaymentTerms.length > 2000)) return { error: 'Custom payment terms must be text of 2,000 characters or fewer.' };
   const customer = body.customer || {};
   const name = clean(customer.name, 200);
   const phone = clean(customer.phone, 40);
@@ -98,6 +99,7 @@ export function parseQuoteBody(body) {
     city: clean(customer.city, 120),
     role: clean(customer.role, 40),
     notes: clean(body.notes, 4000),
+    customPaymentTerms: clean(body.customPaymentTerms, 2000),
     discountReason: clean(body.discountReason, 200),
     cleanItems,
     subtotalCents,

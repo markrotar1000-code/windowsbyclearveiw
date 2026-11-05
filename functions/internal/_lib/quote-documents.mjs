@@ -19,9 +19,10 @@ export async function freezeSignedQuote(env,id) {
   if(!terms)throw new Error('The archived terms for this signed quote are unavailable. Restore the matching terms version before generating its PDF.');
   const {results:items}=await db.prepare('SELECT * FROM quote_items WHERE quote_id=? ORDER BY sort_order ASC,id ASC').bind(id).all();
   const safeQuote={};
-  for(const key of ['id','created_at','status','customer_name','customer_phone','customer_email','customer_address','customer_city','subtotal_cents','discount_cents','discount_reason','total_cents','terms_version','signature_method','signature_svg','signature_name','signed_at','revision_of','revision_kind'])safeQuote[key]=quote[key]??null;
+  for(const key of ['id','created_at','status','customer_name','customer_phone','customer_email','customer_address','customer_city','subtotal_cents','discount_cents','discount_reason','total_cents','terms_version','custom_payment_terms','signature_method','signature_svg','signature_name','signed_at','revision_of','revision_kind'])safeQuote[key]=quote[key]??null;
   const safeItems=(items||[]).map(item=>({label:customerLineText(item.label),description:customerLineText(item.description),quantity:item.quantity,unit_price_cents:item.unit_price_cents,line_total_cents:item.line_total_cents}));
-  const snapshot={quote:safeQuote,items:safeItems,terms,templateVersion:QUOTE_TEMPLATE_VERSION};
+  const effectiveTerms={...terms,paymentTerms:quote.custom_payment_terms || terms.paymentTerms};
+  const snapshot={quote:safeQuote,items:safeItems,terms:effectiveTerms,templateVersion:QUOTE_TEMPLATE_VERSION};
   const assets=await loadPdfAssets(env);
   const pdf=await quotePdf(safeQuote,safeItems,{...assets,terms:snapshot.terms});
   const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pdf)),b=>b.toString(16).padStart(2,'0')).join('');
@@ -33,7 +34,7 @@ export async function customerDocumentBytes(env,record) {
   const terms=getContractTerms(record.quote.terms_version ?? null);
   if(!terms)throw new Error('The saved contract terms are unavailable. Edit and save this draft before generating its PDF.');
   const bytes=await quotePdf(record.quote,record.items,{...await loadPdfAssets(env),terms});
-  const q=record.quote; const source=JSON.stringify({id:q.id,revisionOf:q.revision_of||null,revisionKind:q.revision_kind||null,customer:[q.customer_name,q.customer_phone,q.customer_email,q.customer_address,q.customer_city],totals:[q.subtotal_cents,q.discount_cents,q.total_cents],terms:q.terms_version,items:record.items.map(i=>({label:customerLineText(i.label),description:customerLineText(i.description),quantity:i.quantity,unit:i.unit_price_cents,total:i.line_total_cents}))});
+  const q=record.quote; const source=JSON.stringify({id:q.id,revisionOf:q.revision_of||null,revisionKind:q.revision_kind||null,customer:[q.customer_name,q.customer_phone,q.customer_email,q.customer_address,q.customer_city],totals:[q.subtotal_cents,q.discount_cents,q.total_cents],terms:q.terms_version,customPaymentTerms:q.custom_payment_terms||'',items:record.items.map(i=>({label:customerLineText(i.label),description:customerLineText(i.description),quantity:i.quantity,unit:i.unit_price_cents,total:i.line_total_cents}))});
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source))),b=>b.toString(16).padStart(2,'0')).join('');
   return {bytes,version:hash,snapshot:null};
 }

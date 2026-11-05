@@ -40,6 +40,11 @@ const catalog = {
       <p class="est-hint" data-work-type-hint>Enter the scope and private measurements here. After the customer signs, Start production creates the job with these details. The type is locked once saved.</p>
     </fieldset>
 
+    <fieldset class="qb-block">
+      <legend>Custom payment terms (this quote only)</legend>
+      <label>Custom payment terms<textarea name="customPaymentTerms" rows="4" maxlength="2000" placeholder="Example: 30% deposit due at signing; remaining balance due upon completion."></textarea></label>
+      <p class="est-hint">Optional. Replaces the standard payment paragraph on this quote, the customer signing page and the contract PDF. Leave blank to use standard payment terms. Other contract terms remain unchanged.</p>
+    </fieldset>
     <fieldset class="qb-block" data-notes-panel>
       <legend>Rough notes</legend>
       <p class="est-hint">Talk through the house or type it: room, window type, how many, anything extra. Lines appear in the quote below and you change the prices any time.</p>
@@ -1168,6 +1173,7 @@ const catalog = {
         setField('address', quote.customer_address);
         setField('city', quote.customer_city);
         setField('notes', quote.notes);
+        setField('customPaymentTerms', quote.custom_payment_terms || '');
         if (quote.customer_role) setRadio('role', quote.customer_role);
         setRadio('signatureMethod', quote.signature_method);
 
@@ -1308,6 +1314,7 @@ const catalog = {
           role: data.get('role'),
         },
         notes: data.get('notes'),
+        customPaymentTerms: data.get('customPaymentTerms'),
         workType,
         items: items.map((item) => ({
           label: item.label,

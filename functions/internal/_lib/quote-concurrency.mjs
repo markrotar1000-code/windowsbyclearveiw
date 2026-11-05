@@ -2,6 +2,7 @@ export async function ensureQuoteRevisionSchema(db) {
   for (const sql of [
     'ALTER TABLE quotes ADD COLUMN revision INTEGER NOT NULL DEFAULT 1',
     'ALTER TABLE quotes ADD COLUMN revision_of TEXT',
+    'ALTER TABLE quotes ADD COLUMN custom_payment_terms TEXT',
     'ALTER TABLE quotes ADD COLUMN revision_kind TEXT',
   ]) {
     try { await db.prepare(sql).run(); }

@@ -25,6 +25,7 @@ export async function onRequestPost(context) {
     items, workType: source.work_type, signatureMethod: source.signature_method,
     discountCents: kind === 'revision' ? source.discount_cents : (body.discountCents || 0),
     discountReason: kind === 'revision' ? source.discount_reason : body.discountReason,
+    customPaymentTerms: kind === 'revision' ? (source.custom_payment_terms || '') : (body.customPaymentTerms || ''),
     notes: source.notes, leadId: source.lead_id, revisionOf: source.id, revisionKind: kind,
   }) });
   return createQuote({ ...context, request });

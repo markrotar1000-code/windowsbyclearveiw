@@ -51,7 +51,7 @@ export async function onRequestPut(context) {
   if (body.workType !== undefined && parsed.workType !== workTypeOf(quote)) {
     return json({ error: 'The type of work cannot be changed once a quote is created. Start a new quote instead.', code: 'WORK_TYPE_FIXED' }, 409);
   }
-  const { name, phone, email, address, city, role, notes, discountReason, cleanItems, subtotalCents, discountCents, totalCents } = parsed;
+  const { name, phone, email, address, city, role, notes, customPaymentTerms, discountReason, cleanItems, subtotalCents, discountCents, totalCents } = parsed;
   const signatureMethod = body.signatureMethod === 'digital' ? 'digital' : 'pen';
   const now = new Date().toISOString();
 
@@ -69,8 +69,8 @@ export async function onRequestPut(context) {
     env.QUOTES_DB.prepare(
       `UPDATE quotes SET updated_at = ?, customer_name = ?, customer_phone = ?, customer_email = ?, customer_address = ?,
         customer_city = ?, customer_role = ?, notes = ?, subtotal_cents = ?, discount_cents = ?,
-        discount_reason = ?, total_cents = ?, signature_method = ?, terms_version = ?, revision = revision + 1 WHERE id = ?`,
-    ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, TERMS_VERSION, id),
+        discount_reason = ?, total_cents = ?, signature_method = ?, terms_version = ?, custom_payment_terms = ?, revision = revision + 1 WHERE id = ?`,
+    ).bind(now, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, signatureMethod, TERMS_VERSION, body.customPaymentTerms === undefined ? (quote.custom_payment_terms || '') : customPaymentTerms, id),
     env.QUOTES_DB.prepare('DELETE FROM quote_items WHERE quote_id = ?').bind(id),
     ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
       `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)

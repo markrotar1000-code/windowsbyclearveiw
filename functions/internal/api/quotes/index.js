@@ -97,7 +97,7 @@ export async function onRequestPost(context) {
   const body = guard.body;
   const parsed = parseQuoteBody(body);
   if (parsed.error) return json({ error: parsed.error }, 400);
-  const { name, phone, email, address, city, role, notes, discountReason, cleanItems, subtotalCents, discountCents, totalCents, workType } = parsed;
+  const { name, phone, email, address, city, role, notes, customPaymentTerms, discountReason, cleanItems, subtotalCents, discountCents, totalCents, workType } = parsed;
   const signatureMethod = body.signatureMethod === 'digital' ? 'digital' : 'pen';
   await ensureQuoteRevisionSchema(env.QUOTES_DB);
   await ensureQuoteWorkTypeColumn(env.QUOTES_DB);
@@ -128,9 +128,9 @@ export async function onRequestPost(context) {
             id, created_at, updated_at, status,
             customer_name, customer_phone, customer_email, customer_address, customer_city, customer_role, notes,
             subtotal_cents, discount_cents, discount_reason, total_cents,
-            terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type, revision_of, revision_kind
-          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType, revisionOf, revisionKind),
+            terms_version, signature_method, created_by, lead_id, lead_linked_at, work_type, revision_of, revision_kind, custom_payment_terms
+          ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        ).bind(id, now, now, status, name, phone, email, address, city, role, notes, subtotalCents, discountCents, discountReason, totalCents, TERMS_VERSION, signatureMethod, 'mark', lead.leadId, lead.leadId ? now : null, workType, revisionOf, revisionKind, customPaymentTerms),
         ...cleanItems.map((item, index) => env.QUOTES_DB.prepare(
           `INSERT INTO quote_items (quote_id, sort_order, label, description, quantity, unit_price_cents, line_total_cents, measurements_json, product_specs_json)
            VALUES (?,?,?,?,?,?,?,?,?)`,
