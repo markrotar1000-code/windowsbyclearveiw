@@ -115,7 +115,7 @@ The production build is pinned to Node `22.23.4` through `.node-version` and the
 | Guide graphics (infographics) | `src/assets/guides/`, shown through `CanvaGuideEmbed.astro` or `src/components/diagrams/` |
 | Contract terms | `src/data/contractTerms.ts` |
 | License/insurance/bond disclosure tags | `src/data/site.ts` (`lniNumber`, `insurance`, `bond`) + `src/components/LicenseTag.astro`, `InsuranceTag.astro`, `BondTag.astro` |
-| Homepage video | `public/video/logo-reveal-1.mp4` (see `VideoHero.astro` — falls back to a static photo hero when absent) |
+| Homepage hero | Static responsive photo in `src/components/VideoHero.astro` (the reveal videos were removed; no `public/video/` folder) |
 
 ### Adding a work photo
 
