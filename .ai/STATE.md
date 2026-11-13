@@ -1,3 +1,7 @@
+## 2026-11-13 — Astro security update and orphaned video cleanup
+
+Updated Astro to 7.4.12 via `npm audit fix` (GHSA-mh32-jxcr-mh9f; audit reports 0 vulnerabilities; 37 transitive lockfile updates). Removed `public/video/` (17 MB of reveal clips unreferenced since the static hero) with its `_headers` rule and README row. Set the `/replacement` title to title case. Validation: `npm run test:all` passed all 89 steps including the production build. Not changed: `public/brand-downloads/` (has its own index page; owner decision), the stale `pages.dev` mirror, and a Content-Security-Policy (both still open).
+
 ## 2026-11-12 — Remove guide stock photo and homepage animation
 
 Removed the weathered-window stock photo and caption from `/guides/signs-you-need-new-windows`. Removed the homepage reveal video and playback script; retained the responsive static background and existing hero content. Updated the loading regression for a static hero. Build, SEO, terminology, loading, layout guards, rendered HTML assertions, and diff checks passed. Guide text and retrieval inputs are unchanged, so no embedding rebuild is needed. Publication remains blocked by repository write access.
