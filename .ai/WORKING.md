@@ -1,3 +1,11 @@
+## 2026-11-12 — Remove guide stock photo and homepage animation
+
+Removed the weathered-window stock photo and caption from `/guides/signs-you-need-new-windows`. Removed the homepage reveal video and playback script; retained the responsive static background and existing hero content. Updated the loading regression for a static hero. Build, SEO, terminology, loading, layout guards, rendered HTML assertions, and diff checks passed. Guide text and retrieval inputs are unchanged, so no embedding rebuild is needed. Publication remains blocked by repository write access.
+
+## 2026-11-12 — ClearView-first window copy
+
+Updated `/columbia-windows` with the owner-approved ClearView lead and “Get an estimate” hero button, plus ClearView-focused introductory and closing copy. Removed “main supplier” positioning from `/window-features`; retained manufacturer-specific product details and media credits. Validation: production build (71 pages), public terminology, SEO checks, and `git diff --check` passed. Publication pending. Scope reviewed: these two pages; other public pages not reviewed in this copy pass.
+
 ## 2026-11-03 - Window features scope
 
 Reviewed: window-features hero, style explorer, supplier style images, hardware/color links, and manufacturer warranty wording (existing owner policy preserved). Unrelated pages and guides not reviewed. Existing approved models remain illustrative; only original supplier images added to this page. Owner has authorized merge/publication in this chat.

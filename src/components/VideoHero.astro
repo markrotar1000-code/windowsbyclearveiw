@@ -1,38 +1,13 @@
 ---
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { Image, getImage } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import { site, telHref } from '../data/site';
-import { heroPhoto, findWork } from '../data/work';
+import { heroPhoto } from '../data/work';
 import LicenseTag from './LicenseTag.astro';
 import InsuranceTag from './InsuranceTag.astro';
 import BondTag from './BondTag.astro';
 import GoogleReviewBadge from './GoogleReviewBadge.astro';
 
-// The finished elevation says what you get. This says who does it — which is
-// the claim the trust strip makes one column to the left.
-const insetPhoto = findWork('blue-pair-installday');
-
-// import.meta.url is not safe here: Astro's production build renders this
-// component from a bundled chunk under dist/, not from its source location,
-// so a URL relative to import.meta.url resolves to the wrong tree entirely
-// (silently returning false and falling back to the photo hero). The
-// project root — where "public/" always lives — is process.cwd() in both
-// `astro dev` and `astro build`.
-//
-// Preserve the original ClearView reveal film as the hero background.
-// Phones and constrained connections use the responsive photo; desktop plays once.
-const HERO_VIDEO = 'logo-reveal-1-optimized';
-const hasVideo = existsSync(join(process.cwd(), `public/video/${HERO_VIDEO}.mp4`));
-
-// The static photo is what the hero settles on, and it fills the whole stage with
-// `object-fit: cover`. The source is a tall portrait, so on a phone the stage is
-// taller than the photo is wide and the browser scales the photo to the stage's
-// height: a 390px-wide iPhone at 3x needs about 2100px of file, a 1440px laptop at
-// 2x needs 2880px. The single 1200px file this used to be was 0.42-0.63x of that
-// (measured 2026-10-10), which read as soft on exactly the screens people have.
-// Widths run up to 2560; `sizes` says 160vw on phones (the stage is taller than wide)
-// and 100vw elsewhere. Quality 66: the top of the photo carries only a 20-38% wash.
+// Render the responsive photo immediately, without a decorative reveal video.
 const heroStatic = await getImage({
   src: heroPhoto.image,
   widths: [828, 1200, 1600, 2000, 2560],
@@ -41,18 +16,8 @@ const heroStatic = await getImage({
   quality: 66,
 });
 ---
-{hasVideo ? (
   <section class="video-hero">
     <div class="video-stage" aria-hidden="true">
-      <video
-        class="hero-media"
-        id="hero-video"
-        data-src={`/video/${HERO_VIDEO}.mp4?v=20261029-reveal`}
-        muted
-        playsinline
-        preload="none"
-      >
-      </video>
       <img
         class="hero-static"
         id="hero-static"
@@ -95,126 +60,6 @@ const heroStatic = await getImage({
       </div>
     </div>
   </section>
-) : (
-  <section class="photo-hero">
-    <div class="photo-hero-grain" aria-hidden="true"></div>
-    <div class="wrap photo-hero-inner">
-      <div class="photo-hero-copy">
-        <p class="hero-eyebrow">
-          <img class="hero-eyebrow-mark" src="/logo/icon-mark@64.webp?v=20261028" srcset="/logo/icon-mark@64.webp?v=20261028 64w, /logo/icon-mark@128.webp?v=20261028 128w, /logo/icon-mark@256.webp?v=20261028 256w" sizes="1.05rem" width="256" height="256" alt="" loading="eager" decoding="async" />
-          Vancouver, WA &middot; Clark County
-        </p>
-        <h1>Great prices.<br />Clean work.<br /><em>Clear windows.</em></h1>
-        <p class="lede">
-          {site.shortName} replaces old windows and sliding glass doors, and installs new ones for
-          builders — Vancouver, Camas, Washougal, Battle Ground, Brush Prairie, Ridgefield, and
-          the rest of Clark County.
-        </p>
-        <p class="hero-actions">
-          <a class="btn btn-light" href={telHref()}>Call {site.phoneDisplay}</a>
-          <a class="btn btn-ghost btn-on-dark" href="/estimate">Request an estimate</a>
-        </p>
-        <GoogleReviewBadge onDark />
-        <p class="hero-credentials"><LicenseTag onDark /><InsuranceTag onDark /><BondTag onDark /></p>
-        <p class="hero-note">
-          Free in-home measure. A written estimate before anything comes out of the wall.{' '}
-          <a href="/tools/window-replacement-cost-calculator">Plan your project first</a>.
-        </p>
-        <div class="trust-strip-wrap">
-          <ul class="trust-strip">
-            <li><strong>Clearview</strong><span>quotes every job in person</span></li>
-            <li><strong>Both</strong><span>replacement &amp; new construction</span></li>
-            <li><strong>Local</strong><span>Vancouver, WA based</span></li>
-            <li><strong>Free</strong><span>written estimate, no pressure</span></li>
-          </ul>
-        </div>
-      </div>
-      <figure class="photo-hero-frame">
-        <div class="photo-hero-plate">
-          <Image
-            src={heroPhoto.image}
-            alt={heroPhoto.alt}
-            widths={[450, 700, 900]}
-width={900}
-            sizes="(max-width: 800px) 100vw, 480px"
-            format="webp"
-            quality={78}
-            loading="eager"
-            fetchpriority="high"
-            decoding="sync"
-          />
-        </div>
-        {insetPhoto && (
-          <div class="photo-hero-inset">
-            <Image
-              src={insetPhoto.image}
-              alt={insetPhoto.alt}
-              widths={[220, 440]}
-width={440}
-              sizes="220px"
-              format="webp"
-              quality={74}
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        <figcaption>
-          <span class="photo-hero-tag">After</span>
-          Clark County replacement
-        </figcaption>
-      </figure>
-    </div>
-  </section>
-)}
-
-<script>
-  function calmHero() {
-    const stage = document.querySelector('.video-stage');
-    const video = document.getElementById('hero-video');
-    if (!(stage instanceof HTMLElement) || !(video instanceof HTMLVideoElement) || video.dataset.bound) return;
-    video.dataset.bound = 'true';
-
-    const settleOnStatic = () => {
-      stage.classList.remove('is-playing');
-      stage.classList.add('is-static');
-    };
-
-    // No autoplay attribute: a static one would start the clip before this
-    // check runs, and would play for people with JS off who never opted in.
-    // Reduced motion skips the animation entirely and lands straight on the
-    // static photo, rather than freezing mid-reveal.
-    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    // Phone visitors get the responsive photo immediately, without downloading
-    // decorative video. Desktop keeps the reveal on connections that can afford it.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-        window.matchMedia('(max-width: 640px)').matches || connection?.saveData ||
-        ['slow-2g', '2g', '3g'].includes(connection?.effectiveType || '')) {
-      video.pause();
-      settleOnStatic();
-      return;
-    }
-
-    // A fresh video element is rendered on each navigation. The dataset guard
-    // also prevents initial binding plus astro:page-load from starting it twice.
-    video.addEventListener('ended', settleOnStatic, { once: true });
-    video.addEventListener('error', settleOnStatic, { once: true });
-    video.addEventListener('playing', () => stage.classList.add('is-playing'), { once: true });
-
-    // If autoplay is blocked, or the file fails to load, land on the static
-    // photo instead of leaving a frozen first frame.
-    video.src = video.dataset.src || '';
-    video.play().catch(settleOnStatic);
-  }
-
-  calmHero();
-  document.addEventListener('astro:page-load', calmHero);
-  document.addEventListener('astro:before-swap', () => {
-    const video = document.getElementById('hero-video');
-    if (video instanceof HTMLVideoElement) video.pause();
-  });
-</script>
-
 <style>
   /* ───────────────────────────────────────────────────────────────────────
      The hero carries the whole first impression, so it owns its styling
@@ -225,13 +70,6 @@ width={440}
      full-bleed it reads as soft. Framed at an honest size, against a large
      dark field and large type, it reads as deliberate.
      ─────────────────────────────────────────────────────────────────────── */
-  /* The responsive photo is visible first and remains the fallback. Desktop
-     fades the reveal over it only once playback actually starts. */
-  .hero-media {
-    opacity: 0;
-    transition: opacity 1100ms ease;
-  }
-
   .hero-static {
     position: absolute;
     inset: 0;
@@ -242,19 +80,7 @@ width={440}
        wide desktop crop instead of sky and gable alone. */
     object-position: 50% 45%;
     opacity: 1;
-    transition: opacity 1100ms ease;
     pointer-events: none;
-  }
-
-  .video-stage.is-static .hero-media {
-    opacity: 0;
-  }
-
-  .video-stage.is-playing:not(.is-static) .hero-media { opacity: 1; }
-  .video-stage.is-playing:not(.is-static) .hero-static { opacity: 0; }
-
-  .video-stage.is-static .hero-static {
-    opacity: 1;
   }
 
   @media (max-width: 640px) {
