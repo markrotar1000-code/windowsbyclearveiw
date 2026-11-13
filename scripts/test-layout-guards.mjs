@@ -121,10 +121,10 @@ assert.ok(captionRule && /flex-wrap:\s*wrap/.test(captionRule[1]), 'WorkCard fig
 
 // 7. The phone menu panel is capped to the screen and scrolls (see 6).
 const header = readFileSync(`${root}src/components/Header.astro`, 'utf8').replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, '');
-const menuMedia = header.match(/@media \(max-width:\s*1400px\)\s*\{([\s\S]*?)\n  \}\n/);
-assert.ok(menuMedia, 'Header.astro must have the @media (max-width: 1400px) menu block');
+const menuMedia = header.match(/@media \(max-width:\s*1100px\)\s*\{([\s\S]*?)\n  \}\n/);
+assert.ok(menuMedia, 'Header.astro must have the @media (max-width: 1100px) menu block');
 const panel = menuMedia[1].match(/\.nav\s*\{([^}]*position:\s*absolute[^}]*)\}/);
-assert.ok(panel, 'the phone menu panel (.nav, position: absolute) must be in the 1400px block');
+assert.ok(panel, 'the phone menu panel (.nav, position: absolute) must be in the 1100px block');
 assert.match(panel[1], /max-height:\s*calc\(100d?vh\s*-/, 'the phone menu panel needs a max-height tied to the screen height, or its lower links are unreachable on a short screen');
 assert.match(panel[1], /max-height:\s*calc\(100dvh\s*-/, 'use dvh as well, so the mobile browser bar does not hide the bottom of the panel');
 assert.match(panel[1], /overflow-y:\s*auto/, 'the phone menu panel must scroll (`overflow-y: auto`)');
@@ -225,7 +225,7 @@ assert.match(globalCss, /\.areas-inline\s*\{\s*container-type:\s*inline-size/, '
 assert.match(globalCss, /@container \(max-width:\s*14rem\)\s*\{\s*\.areas-inline a\.is-phrase\s*\{\s*white-space:\s*normal/, 'the long "fiber cement and wood siding" link must be able to wrap at large text');
 
 // 15. Without JavaScript the primary navigation must still be reachable. The header collapses its nav into a
-//     Menu panel at 1400px and below and only JavaScript opens it, so with scripts off (a privacy setting, a
+//     Menu panel at 1100px and below and only JavaScript opens it, so with scripts off (a privacy setting, a
 //     blocked script, a crawler) every phone, tablet and most laptops showed a dead Menu button and no links.
 //     BaseLayout's <noscript> style shows the nav as a plain wrapped row and hides the button; it must use the
 //     same breakpoint as the header's collapse so there is never a width with neither.
@@ -245,12 +245,12 @@ assert.match(planner, /<noscript>[\s\S]*?needs JavaScript[\s\S]*?href="\/estimat
 
 // 16. The desktop header shows seven items (Services and Resources are dropdowns), not twelve flat links, which was
 //     cluttered and had squeezed the row (header widened to 1440px, "Get an estimate" hidden from 1401 to 1480px).
-//     Every page must stay reachable: the groups dissolve into the flat Menu list at 1400px and below, and on desktop
+//     Every page must stay reachable: the groups dissolve into the flat Menu list at 1100px and below, and on desktop
 //     the dropdowns open on hover and focus without JavaScript until the script takes over (`nav[data-groups]`).
 assert.match(hdr, /\.nav-group,\s*\.nav-menu,\s*\.nav-menu-list\s*\{\s*display:\s*contents/, 'the dropdown wrappers must be `display: contents` outside the desktop media query, or the phone Menu is not a flat list');
 assert.match(hdr, /\.nav-group-toggle\s*\{\s*display:\s*none/, 'the group buttons must be hidden outside the desktop media query (the phone Menu lists the links directly)');
-assert.match(hdr, /@media \(min-width:\s*1401px\)\s*\{[\s\S]*?\.nav:not\(\[data-groups\]\) \.nav-group:focus-within \.nav-menu/, 'a dropdown must open on hover and focus without JavaScript');
-assert.ok(!/\.header-estimate\s*\{\s*display:\s*none;?\s*\}\s*\.header-inner/.test(hdr), '"Get an estimate" must not be hidden from 1401px up');
+assert.match(hdr, /@media \(min-width:\s*1101px\)\s*\{[\s\S]*?\.nav:not\(\[data-groups\]\) \.nav-group:focus-within \.nav-menu/, 'a dropdown must open on hover and focus without JavaScript');
+assert.ok(!/\.header-estimate\s*\{\s*display:\s*none;?\s*\}\s*\.header-inner/.test(hdr), '"Get an estimate" must not be hidden from 1101px up');
 const navLinkCount = [...hdr.matchAll(/\['\/[a-z-]+',\s*'[^']+'\]/g)].length;
 assert.equal(navLinkCount, 13, `the header must link all thirteen pages (including Columbia Windows) (found ${navLinkCount}); grouping them must not drop one`);
 const topLevel = hdr.match(/const nav: NavItem\[\] = \[([\s\S]*?)\n\];/);

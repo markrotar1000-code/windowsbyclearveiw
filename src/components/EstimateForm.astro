@@ -129,6 +129,8 @@ function bindEstimate() {
     widgetId = window.turnstile.render(slot, {
       sitekey: slot.dataset.sitekey,
       size: room < 300 ? 'compact' : 'normal',
+      // The form card is light on every page; the default (auto) follows the visitor's OS and drew a dark box in it.
+      theme: 'light',
       'error-callback': () => { security.fail('The security check could not load. Please call ' + phoneDisplay + ' instead.'); },
       callback: () => { security.ready(); },
     });

@@ -590,6 +590,16 @@ input:focus, textarea:focus, select:focus {
   );
 }
 
+/* Wide screens: the copy sits in the left half, so shade that side and the stats strip at the bottom,
+   and let the photo show on the right instead of dimming the whole frame. */
+@media (min-width: 901px) {
+  .video-wash {
+    background:
+      linear-gradient(90deg, rgb(11 12 14 / 0.72) 0%, rgb(11 12 14 / 0.5) 38%, rgb(11 12 14 / 0.08) 72%, rgb(11 12 14 / 0) 100%),
+      linear-gradient(180deg, rgb(11 12 14 / 0.1) 0%, rgb(11 12 14 / 0.1) 62%, rgb(11 12 14 / 0.86) 84%, rgb(11 12 14 / 0.94) 100%);
+  }
+}
+
 .video-copy {
   position: relative;
   z-index: 1;

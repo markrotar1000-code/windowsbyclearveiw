@@ -1,21 +1,26 @@
 ---
 import { estimateLink } from '../lib/estimate-link';
 import { site, telHref } from '../data/site';
+
+// On the estimate page itself the "Free estimate" half pointed at the page the visitor is already on and sat
+// over the form's own submit button, so only the call action stays there.
+const here = (Astro.props.pathname ?? Astro.url.pathname).replace(/\/$/, '') || '/';
+const onEstimate = here === '/estimate';
 ---
-<nav class="mobile-cta-bar" aria-label="Quick contact">
+<nav class:list={['mobile-cta-bar', onEstimate && 'is-single']} aria-label="Quick contact">
   <a class="mobile-cta-item" href={telHref()}>
     <svg viewBox="0 0 22 22" aria-hidden="true">
       <path d="M5.5 3.5h3l1.2 3.6-2 1.6a11 11 0 0 0 5.6 5.6l1.6-2 3.6 1.2v3a1.5 1.5 0 0 1-1.6 1.5A15 15 0 0 1 4 5.1 1.5 1.5 0 0 1 5.5 3.5Z" />
     </svg>
     <span>Call us</span>
   </a>
-  <a class="mobile-cta-item mobile-cta-primary" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>
+  {!onEstimate && <a class="mobile-cta-item mobile-cta-primary" href={estimateLink(Astro.props.pathname ?? Astro.url.pathname)}>
     <svg viewBox="0 0 22 22" aria-hidden="true">
       <path d="M6 3h7l4 4v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
       <path d="M13 3v4h4M8 12h6M8 15.5h4" />
     </svg>
     <span>Free estimate</span>
-  </a>
+  </a>}
 </nav>
 
 <style>
@@ -38,6 +43,10 @@ import { site, telHref } from '../data/site';
       border-top: 1px solid var(--dark-line-strong);
       box-shadow: 0 -10px 24px rgb(0 0 0 / 0.35);
       padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .mobile-cta-bar.is-single {
+      grid-template-columns: minmax(0, 1fr);
     }
 
     .mobile-cta-item {

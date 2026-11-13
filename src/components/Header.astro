@@ -9,7 +9,7 @@ import NextdoorIcon from './icons/NextdoorIcon.astro';
 const here = (Astro.props.pathname ?? Astro.url.pathname).replace(/\/$/, '') || '/';
 type NavLink = [href: string, label: string];
 type NavItem = NavLink | { label: string; links: NavLink[] };
-// Desktop shows seven items: two are dropdowns. Phones and tablets (1400px and below) flatten the groups
+// Desktop shows seven items: two are dropdowns. Phones and tablets (1100px and below) flatten the groups
 // back into the single Menu list, so every page stays one tap away at every width.
 const nav: NavItem[] = [
   {
@@ -139,7 +139,7 @@ const nav: NavItem[] = [
 
   // Desktop dropdowns. Until this runs, CSS opens a group on hover and keyboard focus, so the links
   // work even without JavaScript. Once it runs (`nav[data-groups]`) it owns the state: hover and focus
-  // open a group, a click toggles it, Escape closes it, and aria-expanded stays truthful. At 1400px and below the groups are flattened into the Menu list and the
+  // open a group, a click toggles it, Escape closes it, and aria-expanded stays truthful. At 1100px and below the groups are flattened into the Menu list and the
   // group buttons are hidden, so none of this is reachable there.
   function bindGroups(nav: HTMLElement) {
     const groups = Array.from(nav.querySelectorAll<HTMLElement>('.nav-group'));
@@ -300,7 +300,7 @@ const nav: NavItem[] = [
     white-space: nowrap;
   }
 
-  /* Groups only exist on desktop. At 1400px and below they dissolve (`display: contents`) so the
+  /* Groups only exist on desktop. At 1100px and below they dissolve (`display: contents`) so the
      Menu panel is the same flat list it always was. */
   .nav-group,
   .nav-menu,
@@ -309,7 +309,7 @@ const nav: NavItem[] = [
 
   /* Desktop: seven items (two are dropdowns) instead of twelve flat links, so the row breathes and
      the page content width (1240px) is enough; the old 1440px header override is gone. */
-  @media (min-width: 1401px) {
+  @media (min-width: 1101px) {
     .nav { gap: 0.1rem 1.5rem; }
 
     .nav-group {
@@ -421,7 +421,7 @@ const nav: NavItem[] = [
     .nav-menu-list a[aria-current='page'] { background: color-mix(in srgb, var(--accent) 22%, transparent); }
   }
 
-  @media (min-width: 1401px) and (prefers-reduced-motion: reduce) {
+  @media (min-width: 1101px) and (prefers-reduced-motion: reduce) {
     .nav-menu, .nav-group-toggle::before { transition: none; }
   }
 
@@ -493,7 +493,7 @@ const nav: NavItem[] = [
   }
 
   /* Keep the phone header compact; all social links remain in the footer. */
-  @media (max-width: 1400px) and (min-width: 481px) {
+  @media (max-width: 1100px) and (min-width: 481px) {
     .header-social-extra { display: flex; }
   }
 
@@ -534,7 +534,7 @@ const nav: NavItem[] = [
     .nav { gap: .1rem .7rem; }
   }
 
-  @media (max-width: 1400px) {
+  @media (max-width: 1100px) {
     .header-inner,
     .site-header[data-scrolled='true'] .header-inner {
       position: relative;
@@ -586,7 +586,7 @@ const nav: NavItem[] = [
     .header-cta-short { display: inline; }
   }
 
-  @media (min-width: 701px) and (max-width: 1400px) {
+  @media (min-width: 701px) and (max-width: 1100px) {
     .header-estimate { display: inline-flex; }
   }
   @container header-row (max-width: 42rem) {

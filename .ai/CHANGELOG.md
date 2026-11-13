@@ -1,3 +1,7 @@
+## 2026-11-13 — Public visual pass: desktop nav, homepage hero, estimate page
+
+Header: the full link row (seven items, two dropdowns) now shows from 1101px instead of 1401px, so common laptop widths no longer get the Menu button; measured in the browser at 1101px (one row, 44px clear of the actions) and 1366px. The no-JavaScript fallback in `BaseLayout.astro` and the patterns in `scripts/test-layout-guards.mjs` moved with it. Homepage hero: on screens wider than 900px the wash shades the copy side and the stats strip instead of the whole photo. Estimate page: the phone quick-contact bar shows only Call there, and the Turnstile widget is forced to the light theme to match the form card. `/replacement` headline casing: Clark County. Not changed: inner-page heroes (HeroAurora), phone hero wash. Turnstile theme not verified locally (the widget does not run on localhost).
+
 ## 2026-11-13 — Astro security update and orphaned video cleanup
 
 Updated Astro to 7.4.12 via `npm audit fix` (GHSA-mh32-jxcr-mh9f; audit reports 0 vulnerabilities; 37 transitive lockfile updates). Removed the public video folder (17 MB of reveal clips unreferenced since the static hero) with its `_headers` rule and README row. Set the `/replacement` title to title case. Validation: `npm run test:all` passed all 89 steps including the production build. Not changed: `public/brand-downloads/` (has its own index page; owner decision), the stale `pages.dev` mirror, and a Content-Security-Policy (both still open).
