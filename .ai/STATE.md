@@ -1,6 +1,6 @@
 ## 2026-11-13 — Astro security update and orphaned video cleanup
 
-Updated Astro to 7.4.12 via `npm audit fix` (GHSA-mh32-jxcr-mh9f; audit reports 0 vulnerabilities; 37 transitive lockfile updates). Removed `public/video/` (17 MB of reveal clips unreferenced since the static hero) with its `_headers` rule and README row. Set the `/replacement` title to title case. Validation: `npm run test:all` passed all 89 steps including the production build. Not changed: `public/brand-downloads/` (has its own index page; owner decision), the stale `pages.dev` mirror, and a Content-Security-Policy (both still open).
+Updated Astro to 7.4.12 via `npm audit fix` (GHSA-mh32-jxcr-mh9f; audit reports 0 vulnerabilities; 37 transitive lockfile updates). Removed the public video folder (17 MB of reveal clips unreferenced since the static hero) with its `_headers` rule and README row. Set the `/replacement` title to title case. Validation: `npm run test:all` passed all 89 steps including the production build. Not changed: `public/brand-downloads/` (has its own index page; owner decision), the stale `pages.dev` mirror, and a Content-Security-Policy (both still open).
 
 ## 2026-11-12 — Remove guide stock photo and homepage animation
 
