@@ -1,3 +1,7 @@
+## 2026-11-13 — Window construction illustrations on window-features
+
+Added an "Inside the frame" section to `/window-features` with three generated cut-through illustrations (frame corner, bottom of the window, where the two halves meet) stored under `src/assets/sections/`. They were modelled in Blender to follow the construction visible in Columbia's published section photos; dimensions are assumed standard sizes, not a manufacturer profile, and the page says the views are typical construction and not any one manufacturer's frame. Captions avoid install-method terms. Keith reviewed the renders in chat and asked for them to be added (2026-11-13). VERIFY: installer review of the illustrations' accuracy has not happened. Body copy only; title, meta and FAQs unchanged. Other pages not reviewed in this pass.
+
 ## 2026-11-12 — Remove guide stock photo and homepage animation
 
 Removed the weathered-window stock photo and caption from `/guides/signs-you-need-new-windows`. Removed the homepage reveal video and playback script; retained the responsive static background and existing hero content. Updated the loading regression for a static hero. Build, SEO, terminology, loading, layout guards, rendered HTML assertions, and diff checks passed. Guide text and retrieval inputs are unchanged, so no embedding rebuild is needed. Publication remains blocked by repository write access.

@@ -11,6 +11,32 @@ import { pricing, publicBlurb } from '../data/pricing';
 import { findWork } from '../data/work';
 import CanvaGuideEmbed from '../components/CanvaGuideEmbed.astro';
 import energyRatingsGraphic from '../assets/guides/window-energy-ratings-explained.png';
+import frameCornerSection from '../assets/sections/frame-corner.png';
+import sashOnSillSection from '../assets/sections/sash-on-sill.png';
+import meetingRailSection from '../assets/sections/meeting-rail.png';
+
+// Generated illustrations (Blender, 2026-11-13) of typical vinyl window construction. Dimensions are assumed
+// standard sizes, not a manufacturer's profile, so the copy stays general and says so on the page.
+const sectionViews = [
+  {
+    src: frameCornerSection,
+    title: 'Frame corner',
+    caption: 'The frame is hollow, divided into chambers that slow heat moving through it. The glass sits in a pocket and is held by a strip that snaps in from the inside.',
+    alt: 'Cut-through corner of a white vinyl window frame showing hollow chambers inside the frame and a two-pane glass unit seated in it. Illustration.',
+  },
+  {
+    src: sashOnSillSection,
+    title: 'Bottom of the window',
+    caption: 'The bottom of the frame slopes toward the outside so water runs off. The part of the window that moves rests on brush seals.',
+    alt: 'Cut-through of the bottom of a vinyl window: a sloped frame with the moving sash above it and a two-pane glass unit with a metal spacer between the panes. Illustration.',
+  },
+  {
+    src: meetingRailSection,
+    title: 'Where the two halves meet',
+    caption: 'The two rails hook together when the window is closed. On some windows a metal channel inside each rail keeps it straight.',
+    alt: 'Cut-through of the middle of a vinyl window where two rails hook together, each with a metal channel inside and its own two-pane glass unit. Illustration.',
+  },
+];
 
 const ogPhoto = findWork('stone-craftsman')!;
 
@@ -75,6 +101,36 @@ width={1536}
       <p class="fine-print">
         We install both. Vinyl suits most standard openings; fiberglass suits wide sliders and
         picture windows that might otherwise flex.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="construction">
+    <div class="wrap" data-reveal>
+      <p class="rule-label">Inside the frame</p>
+      <h2>How a vinyl window is built.</h2>
+      <p class="lede">Three cut-through views of the parts you do not normally see.</p>
+      <div class="section-views">
+        {sectionViews.map((view) => (
+          <figure class="section-view">
+            <Image
+              src={view.src}
+              alt={view.alt}
+              widths={[400, 640, 900]}
+              sizes="(max-width: 900px) calc(100vw - 48px), 390px"
+              quality={82}
+              loading="lazy"
+            />
+            <figcaption>
+              <strong>{view.title}</strong>{' '}
+              {view.caption}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <p class="fine-print">
+        Illustrations of typical vinyl window construction. They are not drawings of any one
+        manufacturer's frame; shapes and sizes vary by brand and series.
       </p>
     </div>
   </section>
@@ -194,6 +250,25 @@ width={1536}
   .supplier-styles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
   @media (max-width: 900px) { .supplier-styles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px) { .supplier-styles { grid-template-columns: minmax(0, 1fr); } }
+
+  .section-views {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-m);
+    margin-top: var(--space-l);
+  }
+  @media (max-width: 900px) { .section-views { grid-template-columns: minmax(0, 1fr); } }
+  .section-view {
+    margin: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--paper-raised);
+    box-shadow: var(--shadow-soft);
+  }
+  .section-view img { display: block; width: 100%; height: auto; }
+  .section-view figcaption { padding: var(--space-s) var(--space-s) var(--space-m); font-size: var(--step--1); color: var(--ink-soft); }
+  .section-view figcaption strong { display: block; margin-bottom: 0.25rem; font-size: var(--step-0); color: var(--ink); }
 
   .frame-materials-graphic {
     margin: var(--space-l) 0 0;
