@@ -2,7 +2,6 @@
 import { Image } from 'astro:assets';
 import ColumbiaMediaCard from './ColumbiaMediaCard.astro';
 import { frameMedia, styleMedia, grilleMedia, factoryMedia } from '../data/columbia-media';
-import logo from '../assets/columbia/columbia-logo.png';
 import supercap from '../assets/columbia/supercap-sr.png';
 import solar from '../assets/columbia/glass-seasonal.webp';
 import nfrc from '../assets/columbia/nfrc-logo.webp';
@@ -11,7 +10,6 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
   <div class="wrap">
     <div class="technology-heading">
       <div><p class="rule-label">Technology &amp; design</p><h2 id="technology-heading">See the details behind the window.</h2><p class="lede">Explore Columbia’s original product graphics, finish technology, and factory photography.</p></div>
-      <figure class="supplier-mark"><Image src={logo} alt="Columbia Windows" width={240} widths={[240, 480, 720]} sizes="240px" format="webp" loading="lazy" /><figcaption>Our featured window supplier</figcaption></figure>
     </div>
     <div class="technology-grid">
       <article class="technology-card glass-technology">
@@ -20,7 +18,7 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
       </article>
       <article class="technology-card finish-technology">
         <div class="finish-badge"><Image src={supercap} alt="SuperCapSR Heat-Reflective Color Technology" width={320} widths={[200, 320, 400]} sizes="(max-width: 600px) 240px, 320px" format="webp" loading="lazy" /></div>
-        <div><p class="kicker">Exterior finish technology</p><h3>Color with heat reflection in mind.</h3><p>Columbia features SuperCapSR heat-reflective color technology, designed to reduce heat absorbed by the vinyl profile.</p><p>Ask which finishes are available for your selected series. Review a physical color sample before ordering.</p><a href="https://columbia-windows.com/victory-series/" target="_blank" rel="noopener noreferrer">See Columbia’s finish details ↗</a></div>
+        <div><p class="kicker">Exterior finish technology</p><h3>Color with heat reflection in mind.</h3><p>Columbia features SuperCapSR heat-reflective color technology, designed to reduce heat absorbed by the vinyl profile.</p><p>Ask which finishes are available for your selected series. Review a physical color sample before ordering.</p></div>
       </article>
     </div>
   </div>
@@ -45,7 +43,7 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
       </details>
       <details class="media-group">
         <summary><span><strong>Inside Columbia’s factory</strong><span>A look at the supplier’s manufacturing space</span></span></summary>
-        <div class="media-body"><p class="media-note">Columbia describes its manufacturing facility as located in Vancouver, Washington. These are supplier photos from its website.</p><div class="media-grid factory-grid">{factoryMedia.map(item => <ColumbiaMediaCard {...item} />)}</div><a class="supplier-source" href="https://columbia-windows.com/" target="_blank" rel="noopener noreferrer">About Columbia’s manufacturing ↗</a></div>
+        <div class="media-body"><p class="media-note">Columbia describes its manufacturing facility as located in Vancouver, Washington. These are supplier photos from its website.</p><div class="media-grid factory-grid">{factoryMedia.map(item => <ColumbiaMediaCard {...item} />)}</div></div>
       </details>
     </div>
   </div>
@@ -59,11 +57,9 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
 </section>
 <style>
   #technology, #product-details, #window-ratings { scroll-margin-top: 110px; }
-  .technology-heading { display: flex; justify-content: space-between; align-items: center; gap: var(--space-xl); margin-bottom: var(--space-l); }
+  .technology-heading { margin-bottom: var(--space-l); }
   .technology-heading .lede { max-width: 54ch; }
   figure { margin: 0; }
-  .supplier-mark { flex: 0 0 240px; padding: var(--space-s); background: var(--paper-raised); text-align: center; }
-  .supplier-mark img { width: 100%; height: auto; }
   figcaption { color: var(--ink-soft); font-size: var(--step--2); margin-top: var(--space-xs); }
   .technology-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-m); }
   .technology-card { padding: var(--space-l); border: 1px solid var(--line); background: var(--paper-raised); }
@@ -85,7 +81,6 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
   .media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s); }
   .factory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .media-note { color: var(--ink-soft); font-size: var(--step--1); max-width: 75ch; margin-block: var(--space-s); }
-  .supplier-source { display: inline-block; padding-block: var(--space-s); }
   .ratings-panel { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
   .ratings-logo { text-align: center; }
   .ratings-logo img { width: 100px; height: auto; margin-inline: auto; }
@@ -94,8 +89,6 @@ import nfrc from '../assets/columbia/nfrc-logo.webp';
   .ratings-list dd { margin: var(--space-2xs) 0 0; color: var(--ink-soft); font-size: var(--step--1); }
   @media (max-width: 1000px) { .media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px) {
-    .technology-heading { flex-direction: column; align-items: flex-start; gap: var(--space-s); }
-    .supplier-mark { flex-basis: auto; width: min(240px, 100%); }
     .technology-grid, .media-grid, .ratings-panel, .ratings-list { grid-template-columns: minmax(0, 1fr); }
     .technology-card { padding: var(--space-m); }
     .technology-card > img { height: 240px; margin-bottom: var(--space-m); }

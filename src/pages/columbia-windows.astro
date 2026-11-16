@@ -37,7 +37,7 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
             <div class="series-copy">
               <p>{series.description}</p>
               <dl class="quick-spec"><dt>Opening styles</dt><dd>{series.styles}</dd><dt>Frame material</dt><dd>Vinyl</dd></dl>
-              <details><summary>Specifications &amp; options<span class="visually-hidden"> for {series.name}</span></summary><dl class="spec-details"><dt>Grille patterns</dt><dd>Colonial, prairie, top down</dd><dt>Grille profiles</dt><dd>5/8″ flat, 5/8″ sculptured, 1″ sculptured</dd><dt>Glass choices</dt><dd>Cardinal LoĒ²-272 and LoĒ³-366; bronze and gray tints; satin, rain, and 516 privacy glass</dd><dt>Frame construction</dt><dd>MikronBlend® vinyl with multiple internal chambers</dd></dl><p class="fine-print">Options are listed by Columbia for this series. Availability and performance depend on the selected size and configuration.</p><a class="source-link" href={series.source} target="_blank" rel="noopener noreferrer">Columbia’s {series.name} specifications <span aria-hidden="true">↗</span></a></details>
+              <details><summary>Specifications &amp; options<span class="visually-hidden"> for {series.name}</span></summary><dl class="spec-details"><dt>Grille patterns</dt><dd>Colonial, prairie, top down</dd><dt>Grille profiles</dt><dd>5/8″ flat, 5/8″ sculptured, 1″ sculptured</dd><dt>Glass choices</dt><dd>Cardinal LoĒ²-272 and LoĒ³-366; bronze and gray tints; satin, rain, and 516 privacy glass</dd><dt>Frame construction</dt><dd>MikronBlend® vinyl with multiple internal chambers</dd></dl><p class="fine-print">Options are listed by Columbia for this series. Availability and performance depend on the selected size and configuration.</p></details>
               <a class="btn btn-primary series-cta" href={`/estimate?scope=${encodeURIComponent(`Columbia ${series.name} Series windows`)}`}>Ask about {series.name}</a>
             </div>
             <figure class="series-photo"><Image src={series.photo} alt={series.photoAlt} width={640} widths={[400, 640, 960]} sizes="(max-width: 800px) calc(100vw - 48px), 33vw" format="webp" quality={78} loading="lazy" /><figcaption>Columbia {series.name} gallery · Supplier photo</figcaption></figure>
@@ -52,7 +52,7 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
       <p class="rule-label">A closer look</p><h2 id="inside-heading">What’s inside the glass and frame.</h2><p class="lede section-intro">These cutaway graphics make the construction easier to see. The key details are written out below each image.</p>
       <div class="cutaway-grid">
         <article class="cutaway"><figure><Image src={glass} alt="Insulated-glass cutaway showing two panes, a spacer, desiccant beads, and the edge-seal assembly." width={560} widths={[320, 560, 800]} sizes="(max-width: 800px) calc(100vw - 80px), 500px" format="webp" loading="lazy" /><figcaption>Insulated-glass diagram supplied by Columbia Windows</figcaption></figure><h3>Insulated glass</h3><dl class="spec-details"><dt>Stainless steel spacer</dt><dd>Separates the panes at the edge of the glass unit.</dd><dt>PIB primary seal</dt><dd>Helps limit moisture entry and retain argon.</dd><dt>Desiccant beads</dt><dd>Absorb moisture within the sealed glass unit.</dd><dt>Silicone secondary seal</dt><dd>Supports adhesion and durability around the edge.</dd></dl></article>
-        <article class="cutaway"><figure><Image src={profile} alt="Close-up of a white vinyl window profile showing multiple internal chambers." width={560} widths={[320, 560]} sizes="(max-width: 800px) calc(100vw - 80px), 500px" format="webp" loading="lazy" /><figcaption>Vinyl profile graphic supplied by Columbia Windows</figcaption></figure><h3>Chambered vinyl frame</h3><p>Columbia lists MikronBlend® vinyl and multiple internal chambers across these series. The cavities create insulating air spaces within the frame.</p><p>The profile shown explains the construction concept. The exact frame shape depends on the window series and opening style.</p><a class="source-link" href="https://columbia-windows.com/synergy-series/" target="_blank" rel="noopener noreferrer">See Columbia’s construction details <span aria-hidden="true">↗</span></a></article>
+        <article class="cutaway"><figure><Image src={profile} alt="Close-up of a white vinyl window profile showing multiple internal chambers." width={560} widths={[320, 560]} sizes="(max-width: 800px) calc(100vw - 80px), 500px" format="webp" loading="lazy" /><figcaption>Vinyl profile graphic supplied by Columbia Windows</figcaption></figure><h3>Chambered vinyl frame</h3><p>Columbia lists MikronBlend® vinyl and multiple internal chambers across these series. The cavities create insulating air spaces within the frame.</p><p>The profile shown explains the construction concept. The exact frame shape depends on the window series and opening style.</p></article>
       </div>
     </div>
   </section>
@@ -60,7 +60,7 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
   <ColumbiaTechnology />
 
   <section class="section is-tight">
-    <div class="wrap source-note"><p class="fine-print">Photos and diagrams courtesy of Columbia Windows, used with permission. Product information checked November 3, 2026 against Columbia’s <a href="https://columbia-windows.com/victory-series/">Victory</a>, <a href="https://columbia-windows.com/synergy-series/">Synergy</a>, and <a href="https://columbia-windows.com/nova-series/">Nova</a> pages. Final availability, specifications, and warranty terms are confirmed for your order.</p></div>
+    <div class="wrap source-note"><p class="fine-print">Photos and diagrams courtesy of Columbia Windows, used with permission. Product information checked November 3, 2026 against Columbia’s Victory, Synergy, and Nova specifications. Final availability, specifications, and warranty terms are confirmed for your order.</p></div>
   </section>
   <CtaBar heading="Let’s choose the right windows for your home." body="Tell us which rooms you’re updating. We’ll measure the openings and put the window series, options, and installation in a written estimate." estimateHref="/estimate?scope=Columbia%20Windows" showToolLink={false} showAskLink={false} />
 </BaseLayout>
@@ -95,7 +95,6 @@ import profile from '../assets/columbia/vinyl-profile.jpg';
   details { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   summary { cursor: pointer; padding: var(--space-s) 0; font-weight: 600; min-height: 48px; font-size: var(--step--1); }
   details[open] { padding-bottom: var(--space-m); }
-  .source-link { display: inline-block; padding: var(--space-xs) 0; font-size: var(--step--1); }
   .series-cta { width: 100%; margin-top: var(--space-m); }
   .series-photo img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
   .series-photo figcaption { padding: var(--space-xs) var(--space-m); }
