@@ -101,6 +101,14 @@ function mockFetch({ tokenOk = true, reportsOk = true, reports = goodReports } =
   const body = JSON.parse(reportCall.init.body);
   assert.equal(body.requests.length, 5);
   assert.ok(body.requests.length <= 5, 'GA4 allows at most five reports per batch');
+  for (const request of body.requests) {
+    for (const range of request.dateRanges) {
+      const priorDays = Number(/^(\d+)daysAgo$/.exec(range.startDate)?.[1]);
+      const expectedDays = { last7: 7, last28: 28 }[range.name];
+      assert.equal(range.endDate, 'today', 'traffic reports include the current reporting day');
+      assert.equal(priorDays + 1, expectedDays, `${range.name} covers exactly ${expectedDays} calendar dates with inclusive endpoints`);
+    }
+  }
   assert.equal(body.requests[1].dimensionFilter.filter.stringFilter.value, 'generate_lead');
   assert.deepEqual(result.last7, { users: 40, sessions: 55, pageViews: 130, leadEvents: 2 });
   assert.deepEqual(result.last28, { users: 150, sessions: 210, pageViews: 520, leadEvents: 7 });

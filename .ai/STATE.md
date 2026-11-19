@@ -1,3 +1,9 @@
+## 2026-11-18 — Command Center totals and Analytics date windows
+
+Reconciled the live dashboard, Today, invoices, payments and business-pipeline displays with production D1 after synthetic workflow cleanup. Operational aggregates matched their source records. Dashboard refresh can generate a genuine cadence reminder; preserve it rather than treating every new reminder as leftover QA.
+
+GA4 includes both date-range endpoints. Reporting windows now start 6/27 days ago and end today, matching the displayed 7/28 calendar days. The traffic counter is labelled “Estimate form events,” with a note distinguishing historical analytics events from saved customer requests. No historical GA4 events are changed. The regression asserts the inclusive range length across all reports. Validation and hosted release status are recorded in the task report.
+
 ## 2026-11-13 — Window construction illustrations on window-features
 
 Added an "Inside the frame" section to `/window-features` with three generated cut-through illustrations (frame corner, bottom of the window, where the two halves meet) stored under `src/assets/sections/`. They were modelled in Blender to follow the construction visible in Columbia's published section photos; dimensions are assumed standard sizes, not a manufacturer profile, and the page says the views are typical construction and not any one manufacturer's frame. Captions avoid install-method terms. Keith reviewed the renders in chat and asked for them to be added (2026-11-13). VERIFY: installer review of the illustrations' accuracy has not happened. Body copy only; title, meta and FAQs unchanged. Other pages not reviewed in this pass.
