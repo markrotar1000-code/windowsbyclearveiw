@@ -1,3 +1,9 @@
+## 2026-11-18 — Command Center totals and Analytics date windows
+
+Reconciled the live dashboard, Today, invoices, payments and business-pipeline displays with production D1 after synthetic workflow cleanup. Operational aggregates matched their source records. Dashboard refresh can generate a genuine cadence reminder; preserve it rather than treating every new reminder as leftover QA.
+
+GA4 includes both date-range endpoints. Reporting windows now start 6/27 days ago and end today, matching the displayed 7/28 calendar days. The traffic counter is labelled “Estimate form events,” with a note distinguishing historical analytics events from saved customer requests. No historical GA4 events are changed. The regression asserts the inclusive range length across all reports. Validation and hosted release status are recorded in the task report.
+
 ## 2026-11-03 - Window features and style explorer overhaul
 
 Rebuilt the window studio around original Columbia illustrations and a four-style thumbnail selector. The optional 3D viewport has a bounded height independent of its controls; visitors can return to supplier illustrations, and failed loads preserve the selection. Product links and estimate context follow the selection. Moved styles directly below the hero, added section navigation, replaced unreliable style-labeled job photos with six supplier illustrations, and connected finish/hardware content to Columbia. No new generated diagrams or product claims. All 89 checks and a separate build passed; browser validation covers mobile, enlarged text, 3D controls and fallback behavior. Physical devices not tested.

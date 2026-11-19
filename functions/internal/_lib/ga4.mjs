@@ -94,8 +94,9 @@ async function accessToken(config, fetchImpl, now) {
 import { INTENT_EVENTS, INTENT_LABELS } from '../../_lib/intent.mjs';
 
 const RANGES = [
-  { startDate: '7daysAgo', endDate: 'today', name: 'last7' },
-  { startDate: '28daysAgo', endDate: 'today', name: 'last28' },
+  // GA4 includes both endpoints: today plus 6 or 27 prior dates is 7 or 28 days.
+  { startDate: '6daysAgo', endDate: 'today', name: 'last7' },
+  { startDate: '27daysAgo', endDate: 'today', name: 'last28' },
 ];
 
 export function buildRequests() {
