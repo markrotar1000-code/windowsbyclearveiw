@@ -1,4 +1,4 @@
-﻿# Live-site smoke check. Needs no secrets. Runs after every push to main (once
+# Live-site smoke check. Needs no secrets. Runs after every push to main (once
 # Cloudflare Pages has had time to deploy), every 6 hours, and on demand.
 # A failure emails the repo owner through GitHub's normal Actions notifications.
 name: Site smoke
@@ -25,7 +25,7 @@ jobs:
       SITE: https://windowsbyclearview.com
       WWW: https://www.windowsbyclearview.com
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Wait for Pages to publish the commit
         if: ${{ github.event_name == 'workflow_run' }}
